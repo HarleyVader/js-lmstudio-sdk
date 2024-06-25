@@ -50,7 +50,7 @@ let roleplay;
 client.llm.load('Ttimofeyka/MistralRP-Noromaid-NSFW-Mistral-7B-GGUF/MistralRP-Noromaid-NSFW-7B-Q4_0.gguf', {
     config: {
         gpuOffload: 0.9,
-        context_length: 32768,
+        context_length: 8176,
         embedding_length: 8176,
     },
 }).then(model => {

@@ -2,13 +2,13 @@
   "dependencies": {
     "@lmstudio/sdk": "^0.0.12",
     "express": "^4.19.2",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "ws": "^8.17.1"
   },
   "name": "js-lmstudio",
   "version": "0.8.8",
   "description": "AI GF implementation using express socket.io @lmstudio/sdk in pure javascript on node",
   "main": "server.js",
-  "devDependencies": {},
   "scripts": {
     "test": "node server.js",
     "start": "node server.js"
