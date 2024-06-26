@@ -36,18 +36,20 @@ process.on('message', (msg) => {
 async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
-        // Remove HTML tags from the content
-        const textOnly = data.replace(/<[^>]*>/g, '');
-        // Use the regular expression to find all text between quotes in the cleaned content
-        const matches = textOnly.match(/"(.*?)"/g);
-        if (matches) {
-            // Map through matches to remove the quotes and trim each match
-            const texts = matches.map(match => match.slice(1, -1).trim());
-            return texts.join(' '); // Join all texts into a single string with spaces
-        } else {
-            console.log('No matches found');
-            return '';
-        }
+        // Remove script and style tags along with their content
+        let cleanData = data.replace(/<script[^>]*>([\S\s]*?)<\/script>/gi, '')
+                             .replace(/<style[^>]*>([\S\s]*?)<\/style>/gi, '');
+        // Remove HTML comments
+        cleanData = cleanData.replace(/<!--[\s\S]*?-->/g, '');
+        // Remove inline styles and event handlers
+        cleanData = cleanData.replace(/style="[^"]*"/gi, '')
+                             .replace(/on\w+="[^"]*"/gi, '');
+        // Remove remaining HTML tags
+        cleanData = cleanData.replace(/<[^>]+>/g, '');
+        // Normalize whitespace
+        cleanData = cleanData.replace(/\s+/g, ' ').trim();
+
+        return cleanData; // Return the refined text content
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
