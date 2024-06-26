@@ -12,10 +12,7 @@ const io = new Server(server);
 
 const PORT = 6969;
 
-// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Serve images from the "images" directory
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.get('/images', async (req, res) => {
@@ -31,13 +28,11 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-// Initialize the LMStudio SDK
 const { LMStudioClient } = require('@lmstudio/sdk');
 const client = new LMStudioClient({
-    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
+    baseUrl: 'ws://192.168.0.178:1234',
 });
 
-// Load the model globally in the server
 client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
     config: {
         gpuOffload: 0.9,
@@ -46,41 +41,49 @@ client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Unce
     },
 }).then(model => {
     console.log('Model loaded successfully');
-    global.roleplay = model; // Make the model globally available
+    global.roleplay = model;
 }).catch(error => {
     console.error('Error loading the model:', error);
 });
 
-let userSessions = new Set(); // Use a Set to track unique user sessions
+let userSessions = new Set();
 
-// Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
-    userSessions.add(socket.id); // Add the new session
+    userSessions.add(socket.id);
     console.log(`Number of connected clients: ${userSessions.size}`);
 
     const worker = new Worker('./worker.js');
 
-    worker.on('message', (msg) => {
+    worker.on('message', async (msg) => {
         if (msg.type === 'log') {
-            console.log(msg.data); // Log worker messages
+            console.log(msg.data);
         } else if (msg.type === 'response') {
             io.to(msg.socketId).emit('message', msg.data);
+        } else if (msg.type === 'predict') {
+            try {
+                const prediction = await global.roleplay.respond(msg.data.history, { temperature: 0.9 });
+                let texts = [];
+                for await (let text of prediction) {
+                    texts.push(text);
+                }
+                worker.postMessage({ type: 'predictionResult', data: texts, requestId: msg.requestId });
+            } catch (error) {
+                console.error('Error during prediction:', error);
+            }
         }
     });
 
     socket.on('message', (message) => {
-        // Forward message to worker
-        worker.postMessage({ type: 'message', data: message, socketId: socket.id, roleplay: global.roleplay });
+        worker.postMessage({ type: 'message', data: message, socketId: socket.id });
     });
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
-        userSessions.delete(socket.id); // Remove the session
+        userSessions.delete(socket.id);
         console.log(`Number of connected clients: ${userSessions.size}`);
-        // Inform worker about the disconnection
         worker.postMessage({ type: 'disconnect', socketId: socket.id });
-        worker.terminate(); // Terminate the worker when the client disconnects
+        worker.terminate();
     });
 });
 

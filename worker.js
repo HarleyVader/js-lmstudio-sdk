@@ -5,12 +5,20 @@ const cheerio = require('cheerio');
 
 let sessionHistories = {};
 let userSessions = new Set();
+let requestIdCounter = 0;
+let pendingPredictions = new Map();
 
 parentPort.on('message', (msg) => {
     if (msg.type === 'message') {
-        handleMessage(msg.data, msg.socketId, msg.roleplay);
+        handleMessage(msg.data, msg.socketId);
     } else if (msg.type === 'disconnect') {
         handleDisconnect(msg.socketId);
+    } else if (msg.type === 'predictionResult') {
+        const callback = pendingPredictions.get(msg.requestId);
+        if (callback) {
+            callback(msg.data);
+            pendingPredictions.delete(msg.requestId);
+        }
     }
 });
 
@@ -19,25 +27,17 @@ async function scrapeWebsite(url) {
         const { data } = await axios.get(url);
         const $ = cheerio.load(data);
         let paragraphs = [];
-        
         $('p').each((i, elem) => {
             paragraphs.push($(elem).text().trim());
         });
-        
-        const finalData = paragraphs.join('\n\n');
-        return finalData; // Return the concatenated text content of all <p> elements
+        return paragraphs.join('\n\n');
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
     }
 }
 
-async function handleMessage(message, socketId, roleplay) {
-    if (!roleplay) {
-        console.error('Model not loaded yet.');
-        return;
-    }
-
+async function handleMessage(message, socketId) {
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [
@@ -49,22 +49,25 @@ async function handleMessage(message, socketId, roleplay) {
     let contentToProcess = message;
     if (message.startsWith('scrape:')) {
         const url = message.replace('scrape:', '').trim();
-        const scrapedText = await scrapeWebsite(url);
-        contentToProcess = scrapedText;
+        contentToProcess = await scrapeWebsite(url);
     }
 
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
 
     let history = sessionHistories[socketId];
-    const prediction = roleplay.respond(history, {
-        temperature: 0.9,
+    const requestId = ++requestIdCounter;
+    const predictionPromise = new Promise(resolve => {
+        pendingPredictions.set(requestId, resolve);
     });
 
+    parentPort.postMessage({ type: 'predict', data: { history }, requestId });
+
     try {
-        for await (let text of prediction) {
-            parentPort.postMessage({ type: 'response', data: text, socketId: socketId });
+        const texts = await predictionPromise;
+        texts.forEach(text => {
+            parentPort.postMessage({ type: 'response', data: text, socketId });
             sessionHistories[socketId].push({ role: "system", content: text });
-        }
+        });
     } catch (error) {
         console.error('Error during prediction or sending response:', error);
     }
