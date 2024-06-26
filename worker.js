@@ -36,14 +36,19 @@ process.on('message', (msg) => {
 async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
-        const matches = data.match(/"(.*?)"/g); // Regular expression to find text between quotes
+        // Use the regular expression to find all text between quotes
+        const matches = data.match(/"(.*?)"/g);
         if (matches) {
-            return matches.map(match => match.slice(1, -1)); // Remove the quotation marks from the results
+            // Map through matches to remove the quotes and trim each match
+            const texts = matches.map(match => match.slice(1, -1).trim());
+            return texts.join(' '); // Join all texts into a single string with spaces
+        } else {
+            console.log('No matches found');
+            return '';
         }
-        return [];
     } catch (error) {
-        console.error('Error scraping text between quotes:', error);
-        return [];
+        console.error('Error scraping website:', error);
+        return '';
     }
 }
 
