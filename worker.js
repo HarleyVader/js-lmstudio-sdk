@@ -36,26 +36,15 @@ process.on('message', (msg) => {
 async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
-        // Extract special phrases enclosed within === === and --- ---
-        const specialPhrases = [...data.matchAll(/(===[\s\S]*?===|---[\s\S]*?---)/g)].map(match => match[0]);
+        const $ = cheerio.load(data);
+        let paragraphs = [];
         
-        // Remove script and style tags along with their content
-        let cleanData = data.replace(/<script[^>]*>([\S\s]*?)<\/script>/gi, '')
-                             .replace(/<style[^>]*>([\S\s]*?)<\/style>/gi, '');
-        // Remove HTML comments
-        cleanData = cleanData.replace(/<!--[\s\S]*?-->/g, '');
-        // Remove inline styles and event handlers
-        cleanData = cleanData.replace(/style="[^"]*"/gi, '')
-                             .replace(/on\w+="[^"]*"/gi, '');
-        // Remove remaining HTML tags
-        cleanData = cleanData.replace(/<[^>]+>/g, '');
-        // Normalize whitespace
-        cleanData = cleanData.replace(/\s+/g, ' ').trim();
+        $('p').each((i, elem) => {
+            paragraphs.push($(elem).text().trim());
+        });
         
-        // Append special phrases back to the cleaned data
-        const finalData = cleanData + '\n\n' + specialPhrases.join('\n');
-
-        return finalData; // Return the refined text content with special phrases
+        const finalData = paragraphs.join('\n\n');
+        return finalData; // Return the concatenated text content of all <p> elements
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
