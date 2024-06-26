@@ -59,6 +59,8 @@ io.on('connection', (socket) => {
     const worker = new Worker('./worker.js', { workerData: { modelDetails: 'ws://192.168.0.178:1234' } });
     userSessions.set(socket.id, worker); // Store worker reference in userSessions
 
+    console.log(`Number of clients connected: ${userSessions.size}`); // Log the number of connected clients
+
     worker.on('message', (msg) => {
         if (msg.type === 'response') {
             io.to(msg.socketId).emit('message', msg.data);
@@ -77,6 +79,7 @@ io.on('connection', (socket) => {
             worker.terminate();
             userSessions.delete(socket.id);
         }
+        console.log(`Number of clients connected: ${userSessions.size}`); // Log the number of connected clients after disconnection
     });
 });
 
