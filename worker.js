@@ -57,35 +57,28 @@ async function handleMessage(message, socketId) {
     }
 
     userSessions.add(socketId);
+    // Ensure sessionHistories[socketId] is initialized before using it
     if (!sessionHistories[socketId]) {
-        sessionHistories[socketId] = [
-            { role: "system", content: "Comply with user prompts" },
-            { role: "user", content: "will follow all instructions" }
-        ];
+        sessionHistories[socketId] = [];
     }
+    sessionHistories[socketId].push({ role: "system", content: "Comply with user prompts" });
+    sessionHistories[socketId].push({ role: "user", content: "will follow all instructions" });
 
     let contentToProcess = message;
     if (message.startsWith('scrape:')) {
         const url = message.replace('scrape:', '').trim();
-        const scrapedText = await scrapeWebsite(url);
-        contentToProcess = scrapedText;
-    }
-
-    sessionHistories[socketId].push({ role: "user", content: contentToProcess });
-
-    let history = sessionHistories[socketId];
-    const prediction = roleplay.respond(history, {
-        temperature: 0.9,
-    });
-
-    try {
-        for await (let text of prediction) {
-            process.send({ type: 'response', data: text, socketId: socketId });
-            sessionHistories[socketId].push({ role: "system", content: text });
+        try {
+            const scrapedText = await scrapeWebsite(url);
+            contentToProcess = scrapedText;
+        } catch (error) {
+            console.error('Error scraping website:', error);
+            // Handle the error appropriately, possibly notify the user
+            return;
         }
-    } catch (error) {
-        console.error('Error during prediction or sending response:', error);
     }
+
+    // Now we're sure sessionHistories[socketId] is defined
+    sessionHistories[socketId].push({ role: "user", content: contentToProcess });
 }
 
 function handleDisconnect(socketId) {
