@@ -4,6 +4,7 @@ const http = require('http');
 const { Server } = require("socket.io");
 const { Worker } = require('worker_threads');
 const { LMStudioClient } = require('@lmstudio/sdk');
+const fs = require('fs').promises; // Added missing fs import for reading directory files
 
 // Initialize the LMStudio SDK
 const client = new LMStudioClient({
@@ -50,13 +51,13 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-let workers = {};
+let userSessions = new Map(); // Use Map to keep track of user sessions and workers
 
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
 
     const worker = new Worker('./worker.js', { workerData: { modelDetails: 'ws://192.168.0.178:1234' } });
-    workers[socket.id] = worker;
+    userSessions.set(socket.id, worker); // Store worker reference in userSessions
 
     worker.on('message', (msg) => {
         if (msg.type === 'response') {
@@ -70,12 +71,15 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
-        workers[socket.id].postMessage({ type: 'disconnect', socketId: socket.id });
-        workers[socket.id].terminate();
-        delete workers[socket.id];
+        const worker = userSessions.get(socket.id);
+        if (worker) {
+            worker.postMessage({ type: 'disconnect', socketId: socket.id });
+            worker.terminate();
+            userSessions.delete(socket.id);
+        }
     });
 });
 
 loadModel().then(() => {
-    server.listen(PORT, () => console.log(`Server listening on *:${PORT}`));
+    server.listen(PORT, () => console.log(`Server listening on port:${PORT}`));
 });
