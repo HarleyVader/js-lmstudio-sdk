@@ -44,20 +44,24 @@ async function scrapeWebsite(url) {
         let paragraphs = [];
         
         $('p').each((i, elem) => {
-            // Using .text() with cheerio already ignores HTML tags, returning only the text content
-            paragraphs.push($(elem).text().trim());
+            // Check if the paragraph is a child of or contains an <a> tag
+            if (!$(elem).closest('a').length && !$(elem).find('a').length) {
+                // Using .text() with cheerio already ignores HTML tags, returning only the text content
+                paragraphs.push($(elem).text().trim());
+            }
         });
         
         // Filter out any potential script or style content mistakenly picked up
         const cleanParagraphs = paragraphs.filter(p => !p.match(/<script>|<style>/gi));
         
         const finalData = cleanParagraphs.join('\n\n');
-        return finalData; // Return the concatenated text content of all <p> elements, ignoring scripts, styles, and HTML tags
+        return finalData; // Return the concatenated text content of all <p> elements, ignoring scripts, styles, HTML tags, and links
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
     }
 }
+
 async function handleMessage(message, socketId) {
     if (!roleplay) {
         console.error('Model not loaded yet.');
