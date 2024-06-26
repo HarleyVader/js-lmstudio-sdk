@@ -37,21 +37,27 @@ process.on('message', (msg) => {
 async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
-        const $ = cheerio.load(data);
+        const $ = cheerio.load(data, {
+            xmlMode: true, // Treats the input as XML; however, it's primarily for ignoring scripts and styles
+            decodeEntities: true // Ensures special characters are decoded
+        });
         let paragraphs = [];
         
         $('p').each((i, elem) => {
+            // Using .text() with cheerio already ignores HTML tags, returning only the text content
             paragraphs.push($(elem).text().trim());
         });
         
-        const finalData = paragraphs.join('\n\n');
-        return finalData; // Return the concatenated text content of all <p> elements
+        // Filter out any potential script or style content mistakenly picked up
+        const cleanParagraphs = paragraphs.filter(p => !p.match(/<script>|<style>/gi));
+        
+        const finalData = cleanParagraphs.join('\n\n');
+        return finalData; // Return the concatenated text content of all <p> elements, ignoring scripts, styles, and HTML tags
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
     }
 }
-
 async function handleMessage(message, socketId) {
     if (!roleplay) {
         console.error('Model not loaded yet.');
