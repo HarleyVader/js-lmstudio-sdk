@@ -1,33 +1,9 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs').promises;
 const http = require('http');
 const { Server } = require("socket.io");
 const { Worker } = require('worker_threads');
-const { LMStudioClient } = require('@lmstudio/sdk');
-const fs = require('fs').promises; // Added missing fs import for reading directory files
-
-// Initialize the LMStudio SDK
-const client = new LMStudioClient({
-    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
-});
-
-let roleplay;
-
-async function loadModel() {
-    if (!roleplay) {
-        try {
-            roleplay = await client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
-                config: {
-                    gpuOffload: 0.9,
-                    context_length: 8176,
-                    embedding_length: 8176,
-                },
-            });
-        } catch (error) {
-            console.error('Error loading the model:', error);
-        }
-    }
-}
 
 const app = express();
 const server = http.createServer(app);
@@ -35,7 +11,10 @@ const io = new Server(server);
 
 const PORT = 6969;
 
+// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve images from the "images" directory
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.get('/images', async (req, res) => {
@@ -51,38 +30,44 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-let userSessions = new Map(); // Use Map to keep track of user sessions and workers
+let userSessions = new Set(); // Use a Set to track unique user sessions
+let workers = {}; // Map socket IDs to their respective worker threads
 
+// Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
+    userSessions.add(socket.id); // Add the new session
+    console.log(`Number of connected clients: ${userSessions.size}`);
 
-    const worker = new Worker('./worker.js', { workerData: { modelDetails: 'ws://192.168.0.178:1234' } });
-    userSessions.set(socket.id, worker); // Store worker reference in userSessions
-
-    console.log(`Number of clients connected: ${userSessions.size}`); // Log the number of connected clients
-
-    worker.on('message', (msg) => {
-        if (msg.type === 'response') {
-            io.to(msg.socketId).emit('message', msg.data);
-        }
-    });
+    // Initialize a new worker thread for each client
+    const worker = new Worker('./worker.js');
+    workers[socket.id] = worker;
 
     socket.on('message', (message) => {
+        // Forward message to the corresponding worker
         worker.postMessage({ type: 'message', data: message, socketId: socket.id });
     });
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
-        const worker = userSessions.get(socket.id);
-        if (worker) {
-            worker.postMessage({ type: 'disconnect', socketId: socket.id });
-            worker.terminate();
-            userSessions.delete(socket.id);
+        userSessions.delete(socket.id); // Remove the session
+        console.log(`Number of connected clients: ${userSessions.size}`);
+        // Inform the corresponding worker about the disconnection and terminate it
+        workers[socket.id].postMessage({ type: 'disconnect', socketId: socket.id });
+        workers[socket.id].terminate();
+        delete workers[socket.id]; // Remove the worker from the map
+    });
+
+    // Receive messages from worker and forward them to the appropriate client
+    worker.on('message', (msg) => {
+        if (msg.type === 'log') {
+            console.log(msg.data); // Log worker messages
+        } else if (msg.type === 'response') {
+            io.to(msg.socketId).emit('message', msg.data);
         }
-        console.log(`Number of clients connected: ${userSessions.size}`); // Log the number of connected clients after disconnection
     });
 });
 
-loadModel().then(() => {
-    server.listen(PORT, () => console.log(`Server listening on port:${PORT}`));
+server.listen(PORT, () => {
+    console.log(`Server listening on *:${PORT}`);
 });

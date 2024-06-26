@@ -5,18 +5,6 @@ const cheerio = require('cheerio');
 let sessionHistories = {};
 let userSessions = new Set();
 
-// Updated functionality: Adding a new feature to handle custom commands
-const handleCustomCommand = async (command, socketId) => {
-    // Example custom command: "uppercase"
-    if (command.startsWith('uppercase:')) {
-        const text = command.replace('uppercase:', '').trim();
-        return text.toUpperCase();
-    }
-    // Placeholder for more custom commands
-    // Return the original command if it doesn't match any custom commands
-    return command;
-};
-
 parentPort.on('message', async (msg) => {
     if (msg.type === 'message') {
         await handleMessage(msg.data, msg.socketId);
@@ -55,9 +43,6 @@ async function handleMessage(message, socketId) {
     if (message.startsWith('scrape:')) {
         const url = message.replace('scrape:', '').trim();
         contentToProcess = await scrapeWebsite(url);
-    } else {
-        // Handle custom commands
-        contentToProcess = await handleCustomCommand(message, socketId);
     }
 
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
