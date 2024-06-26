@@ -38,7 +38,7 @@ async function scrapeWebsite(url) {
         const { data } = await axios.get(url);
         const $ = cheerio.load(data);
         let texts = [];
-        $('p').each((i, elem) => {
+        $('.post_body').each((i, elem) => {
             let text = $(elem).text().trim(); // Extract text and trim whitespace
             if (text) { // Check if text is not empty
                 texts.push(text.replace(/\s{2,}/g, ' ')); // Replace multiple spaces with a single space
