@@ -10,7 +10,7 @@ let sessionHistories = {};
 let userSessions = new Set();
 
 // Load the model
-client.llm.load('Ttimofeyka/MistralRP-Noromaid-NSFW-Mistral-7B-GGUF/MistralRP-Noromaid-NSFW-7B-Q4_0.gguf', {
+client.llm.load('QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/Meta-Llama-3-8B-Instruct.Q2_K.gguf', {
     config: {
         gpuOffload: 0.9,
         context_length: 8176,
