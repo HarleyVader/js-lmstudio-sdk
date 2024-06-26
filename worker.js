@@ -36,8 +36,10 @@ process.on('message', (msg) => {
 async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
-        // Use the regular expression to find all text between quotes
-        const matches = data.match(/"(.*?)"/g);
+        // Remove HTML tags from the content
+        const textOnly = data.replace(/<[^>]*>/g, '');
+        // Use the regular expression to find all text between quotes in the cleaned content
+        const matches = textOnly.match(/"(.*?)"/g);
         if (matches) {
             // Map through matches to remove the quotes and trim each match
             const texts = matches.map(match => match.slice(1, -1).trim());
