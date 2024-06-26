@@ -1,10 +1,11 @@
-// Import necessary libraries
+// server.js
 const express = require('express');
 const path = require('path');
 const fs = require('fs').promises;
 const http = require('http');
 const { Server } = require("socket.io");
 const { fork } = require('child_process');
+const { LMStudioClient } = require('@lmstudio/sdk');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,10 +13,28 @@ const io = new Server(server);
 
 const PORT = 6969;
 
-// Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
+// Initialize the LMStudio SDK
+const client = new LMStudioClient({
+    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
+});
 
-// Serve images from the "images" directory
+let roleplay;
+
+// Load the model once when the server starts
+client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
+    config: {
+        gpuOffload: 0.9,
+        context_length: 8176,
+        embedding_length: 8176,
+    },
+}).then(model => {
+    roleplay = model;
+    console.log('Model loaded successfully');
+}).catch(error => {
+    console.error('Error loading the model:', error);
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.get('/images', async (req, res) => {
@@ -31,57 +50,38 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-// Load the model
-client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
-    config: {
-        gpuOffload: 0.9,
-        context_length: 8176,
-        embedding_length: 8176,
-    },
-}).then(model => {
-    roleplay = model;
-}).catch(error => {
-    console.error('Error loading the model:', error);
-    process.send({ type: 'log', data: 'Error loading the model' });
-});
+let userSessions = new Map();
 
-let userSessions = new Map(); // Use a Map to track unique user sessions and their corresponding worker
-
-// Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
-    // Fork a new worker process for each connected client
     const worker = fork('./worker.js');
-    userSessions.set(socket.id, worker); // Map the socket.id to the worker
+    userSessions.set(socket.id, worker);
 
     console.log(`Number of connected clients: ${userSessions.size}`);
 
     socket.on('message', (message) => {
-        // Forward message to the corresponding worker
         const worker = userSessions.get(socket.id);
         if (worker) {
-            worker.send({ type: 'message', data: message, socketId: socket.id });
+            worker.send({ type: 'message', data: message, socketId: socket.id, model: roleplay });
         }
     });
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
-        // Inform the corresponding worker about the disconnection
         const worker = userSessions.get(socket.id);
         if (worker) {
             worker.send({ type: 'disconnect', socketId: socket.id });
-            worker.kill(); // Terminate the worker process
+            worker.kill();
         }
-        userSessions.delete(socket.id); // Remove the session
+        userSessions.delete(socket.id);
         console.log(`Number of connected clients: ${userSessions.size}`);
     });
 });
 
-// Handle messages from any worker and forward them to the appropriate client
 userSessions.forEach((worker, socketId) => {
     worker.on('message', (msg) => {
         if (msg.type === 'log') {
-            console.log(msg.data); // Log worker messages
+            console.log(msg.data);
         } else if (msg.type === 'response') {
             io.to(msg.socketId).emit('message', msg.data);
         }

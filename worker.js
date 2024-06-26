@@ -1,20 +1,14 @@
-const { LMStudioClient } = require('@lmstudio/sdk');
+// worker.js
 const axios = require('axios');
 const cheerio = require('cheerio');
-
-// Initialize the LMStudio SDK
-const client = new LMStudioClient({
-    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
-});
 
 let roleplay;
 let sessionHistories = {};
 let userSessions = new Set();
 
-
-process.on('message', (msg) => {
+process.on('message', async (msg) => {
     if (msg.type === 'message') {
-        handleMessage(msg.data, msg.socketId);
+        handleMessage(msg.data, msg.socketId, msg.model);
     } else if (msg.type === 'disconnect') {
         handleDisconnect(msg.socketId);
     }
@@ -26,19 +20,20 @@ async function scrapeWebsite(url) {
         const $ = cheerio.load(data);
         let texts = [];
         $('p').each((i, elem) => {
-            let text = $(elem).text().trim(); // Extract text and trim whitespace
-            if (text) { // Check if text is not empty
-                texts.push(text.replace(/\s{2,}/g, ' ')); // Replace multiple spaces with a single space
+            let text = $(elem).text().trim();
+            if (text) {
+                texts.push(text.replace(/\s{2,}/g, ' '));
             }
         });
-        return texts.join(' '); // Join all texts into a single string with spaces
+        return texts.join(' ');
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
     }
 }
 
-async function handleMessage(message, socketId) {
+async function handleMessage(message, socketId, model) {
+    roleplay = model; // Assign the model passed from the server
     if (!roleplay) {
         console.error('Model not loaded yet.');
         return;
@@ -55,8 +50,7 @@ async function handleMessage(message, socketId) {
     let contentToProcess = message;
     if (message.startsWith('scrape:')) {
         const url = message.replace('scrape:', '').trim();
-        const scrapedText = await scrapeWebsite(url);
-        contentToProcess = scrapedText;
+        contentToProcess = await scrapeWebsite(url);
     }
 
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
