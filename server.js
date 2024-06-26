@@ -34,9 +34,13 @@ app.get('/images', async (req, res) => {
 // Fork the worker process
 const worker = fork('./worker.js');
 
+let connectedClients = 0;
+
 // Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
+    connectedClients++; // Increment the number of connected clients
+    console.log(`Number of connected clients: ${connectedClients}`);
 
     socket.on('message', (message) => {
         // Forward message to worker
@@ -45,6 +49,8 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
+        connectedClients--; // Decrement the number of connected clients
+        console.log(`Number of connected clients: ${connectedClients}`);
         // Inform worker about the disconnection
         worker.send({ type: 'disconnect', socketId: socket.id });
     });
