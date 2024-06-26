@@ -40,8 +40,8 @@ async function handleMessage(message, socketId) {
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [
-            { role: "system", content: "Use this site https://pastebin.ai/2tbsjcx8n4 as reference." },
-            { role: "user", content: "will follow all your instructions" }
+            { role: "system", content: "behave like bambisleep & roleplay with me" },
+            { role: "user", content: "will follow all instructions" }
         ];
     }
 
