@@ -38,24 +38,26 @@ async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
         const $ = cheerio.load(data, {
-            xmlMode: true, // Treats the input as XML; however, it's primarily for ignoring scripts and styles
-            decodeEntities: true // Ensures special characters are decoded
+            xmlMode: true,
+            decodeEntities: true
         });
         let paragraphs = [];
         
         $('p').each((i, elem) => {
-            // Check if the paragraph is a child of or contains an <a> tag
             if (!$(elem).closest('a').length && !$(elem).find('a').length) {
-                // Using .text() with cheerio already ignores HTML tags, returning only the text content
                 paragraphs.push($(elem).text().trim());
             }
         });
         
-        // Filter out any potential script or style content mistakenly picked up
-        const cleanParagraphs = paragraphs.filter(p => !p.match(/<script>|<style>/gi));
+        // Filter out paragraphs that are too short or potentially contain code
+        const cleanParagraphs = paragraphs.filter(p => {
+            const words = p.split(/\s+/); // Split by whitespace to count words
+            const isCodeSnippet = /<[^>]+>|function|var|let|const|document\.|window\.|\.css\(|\.html\(|\.append\(/.test(p);
+            return words.length > 2 && !isCodeSnippet;
+        });
         
         const finalData = cleanParagraphs.join('\n\n');
-        return finalData; // Return the concatenated text content of all <p> elements, ignoring scripts, styles, HTML tags, and links
+        return finalData;
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
