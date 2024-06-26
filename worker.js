@@ -37,14 +37,14 @@ async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
         const $ = cheerio.load(data);
-        let paragraphs = [];
-        
+        let texts = [];
         $('p').each((i, elem) => {
-            paragraphs.push($(elem).text().trim());
+            let text = $(elem).text().trim(); // Extract text and trim whitespace
+            if (text) { // Check if text is not empty
+                texts.push(text.replace(/\s{2,}/g, ' ')); // Replace multiple spaces with a single space
+            }
         });
-        
-        const finalData = paragraphs.join('\n\n');
-        return finalData; // Return the concatenated text content of all <p> elements
+        return texts.join(' '); // Join all texts into a single string with spaces
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
