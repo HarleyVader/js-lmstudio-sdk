@@ -1,4 +1,4 @@
-//worker.js
+const { parentPort } = require('worker_threads');
 const { LMStudioClient } = require('@lmstudio/sdk');
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -23,10 +23,10 @@ client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Unce
     roleplay = model;
 }).catch(error => {
     console.error('Error loading the model:', error);
-    process.send({ type: 'log', data: 'Error loading the model' });
+    parentPort.postMessage({ type: 'log', data: 'Error loading the model' });
 });
 
-process.on('message', (msg) => {
+parentPort.on('message', (msg) => {
     if (msg.type === 'message') {
         handleMessage(msg.data, msg.socketId);
     } else if (msg.type === 'disconnect') {
@@ -82,7 +82,7 @@ async function handleMessage(message, socketId) {
 
     try {
         for await (let text of prediction) {
-            process.send({ type: 'response', data: text, socketId: socketId });
+            parentPort.postMessage({ type: 'response', data: text, socketId: socketId });
             sessionHistories[socketId].push({ role: "system", content: text });
         }
     } catch (error) {
