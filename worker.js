@@ -11,19 +11,6 @@ let roleplay;
 let sessionHistories = {};
 let userSessions = new Set();
 
-// Load the model
-client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
-    config: {
-        gpuOffload: 0.9,
-        context_length: 8176,
-        embedding_length: 8176,
-    },
-}).then(model => {
-    roleplay = model;
-}).catch(error => {
-    console.error('Error loading the model:', error);
-    process.send({ type: 'log', data: 'Error loading the model' });
-});
 
 process.on('message', (msg) => {
     if (msg.type === 'message') {

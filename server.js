@@ -31,6 +31,20 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
+// Load the model
+client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
+    config: {
+        gpuOffload: 0.9,
+        context_length: 8176,
+        embedding_length: 8176,
+    },
+}).then(model => {
+    roleplay = model;
+}).catch(error => {
+    console.error('Error loading the model:', error);
+    process.send({ type: 'log', data: 'Error loading the model' });
+});
+
 let userSessions = new Map(); // Use a Map to track unique user sessions and their corresponding worker
 
 // Handle connection
