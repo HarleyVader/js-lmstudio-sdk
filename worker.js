@@ -12,7 +12,7 @@ let sessionHistories = {};
 let userSessions = new Set();
 
 // Load the model
-client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
+client.llm.load('QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/Meta-Llama-3-8B-Instruct.Q2_K.gguf', {
     config: {
         gpuOffload: 0.9,
         context_length: 8176,
