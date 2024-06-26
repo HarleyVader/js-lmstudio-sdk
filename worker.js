@@ -45,8 +45,8 @@ async function scrapeWebsite(url) {
         });
         return textContent.trim();
     } catch (error) {
-        console.error('Error scraping website:', error);
-        return '';
+        console.error('Error scraping website:', error.toString());
+        throw new Error('Failed to scrape website');
     }
 }
 
@@ -57,12 +57,9 @@ async function handleMessage(message, socketId) {
     }
 
     userSessions.add(socketId);
-    // Ensure sessionHistories[socketId] is initialized before using it
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [];
     }
-    sessionHistories[socketId].push({ role: "system", content: "Comply with user prompts" });
-    sessionHistories[socketId].push({ role: "user", content: "will follow all instructions" });
 
     let contentToProcess = message;
     if (message.startsWith('scrape:')) {
@@ -71,14 +68,31 @@ async function handleMessage(message, socketId) {
             const scrapedText = await scrapeWebsite(url);
             contentToProcess = scrapedText;
         } catch (error) {
-            console.error('Error scraping website:', error);
-            // Handle the error appropriately, possibly notify the user
-            return;
+            console.error('Error processing scrape request:', error.message);
+            // Optionally, send an error message back to the client
+            process.send({ type: 'error', data: 'Failed to scrape website.', socketId: socketId });
+            return; // Stop further execution for this message
         }
     }
 
-    // Now we're sure sessionHistories[socketId] is defined
+    // At this point, sessionHistories[socketId] is guaranteed to be defined
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
+
+    let history = sessionHistories[socketId];
+    const prediction = roleplay.respond(history, {
+        temperature: 0.9,
+    });
+
+    try {
+        for await (let text of prediction) {
+            process.send({ type: 'response', data: text, socketId: socketId });
+            sessionHistories[socketId].push({ role: "system", content: text });
+        }
+    } catch (error) {
+        console.error('Error during prediction or sending response:', error);
+        // Optionally, send an error message back to the client
+        process.send({ type: 'error', data: 'Prediction or response failed.', socketId: socketId });
+    }
 }
 
 function handleDisconnect(socketId) {
