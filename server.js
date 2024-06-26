@@ -62,8 +62,15 @@ io.on('connection', (socket) => {
             io.to(msg.socketId).emit('message', msg.data);
         } else if (msg.type === 'predict') {
             try {
+                // Validate and transform the history array
+                const validatedHistory = msg.data.history.map(item => {
+                    // Assuming each item is an object with a 'content' property
+                    // Check if 'content' exists and is a string; otherwise, return an empty string or handle appropriately
+                    return typeof item.content === 'string' ? item.content : '';
+                });
+    
                 // Await the promise to resolve and directly use the result
-                const prediction = await global.roleplay.respond(msg.data.history, { temperature: 0.9 });
+                const prediction = await global.roleplay.respond(validatedHistory, { temperature: 0.9 });
                 // Assuming prediction is now a single value or object, directly send it
                 worker.postMessage({ type: 'predictionResult', data: [prediction], requestId: msg.requestId });
             } catch (error) {
