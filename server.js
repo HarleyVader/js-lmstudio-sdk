@@ -1,40 +1,21 @@
-//server.js
+// Import necessary libraries
 const express = require('express');
-const { fork } = require('child_process');
 const path = require('path');
 const fs = require('fs').promises;
 const http = require('http');
-const socketIO = require('socket.io');
-const { LMStudioClient } = require('@lmstudio/sdk');
-
-const PORT = 6969;
+const { Server } = require("socket.io");
+const { fork } = require('child_process');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+const io = new Server(server);
 
-// Initialize the LMStudio SDK
-const client = new LMStudioClient({
-    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
-});
+const PORT = 6969;
 
-let roleplay; // This will hold the model instance
-
-// Load the model once when the server starts
-client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
-    config: {
-        gpuOffload: 0.9,
-        context_length: 8176,
-        embedding_length: 8176,
-    },
-}).then(model => {
-    roleplay = model;
-    console.log('Model loaded successfully');
-}).catch(error => {
-    console.error('Error loading the model:', error);
-});
-
+// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve images from the "images" directory
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.get('/images', async (req, res) => {
@@ -50,33 +31,38 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-let userSessions = new Map();
+// Fork the worker process
+const worker = fork('./worker.js');
 
+let userSessions = new Set(); // Use a Set to track unique user sessions
+
+// Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
-    const worker = fork('./worker.js');
-    userSessions.set(socket.id, worker);
-
+    userSessions.add(socket.id); // Add the new session
     console.log(`Number of connected clients: ${userSessions.size}`);
 
     socket.on('message', (message) => {
-        const worker = userSessions.get(socket.id);
-        if (worker) {
-            // Sending a model ID or necessary configuration instead of the model instance
-            worker.send({ type: 'message', data: message, socketId: socket.id, modelConfig: roleplay.config });
-        }
+        // Forward message to worker
+        worker.send({ type: 'message', data: message, socketId: socket.id });
     });
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
-        const worker = userSessions.get(socket.id);
-        if (worker) {
-            worker.send({ type: 'disconnect', socketId: socket.id });
-            worker.kill();
-        }
-        userSessions.delete(socket.id);
+        userSessions.delete(socket.id); // Remove the session
         console.log(`Number of connected clients: ${userSessions.size}`);
+        // Inform worker about the disconnection
+        worker.send({ type: 'disconnect', socketId: socket.id });
     });
+});
+
+// Receive messages from worker and forward them to the appropriate client
+worker.on('message', (msg) => {
+    if (msg.type === 'log') {
+        console.log(msg.data); // Log worker messages
+    } else if (msg.type === 'response') {
+        io.to(msg.socketId).emit('message', msg.data);
+    }
 });
 
 server.listen(PORT, () => {

@@ -1,19 +1,35 @@
+const { LMStudioClient } = require('@lmstudio/sdk');
 const axios = require('axios');
 const cheerio = require('cheerio');
+
+// Initialize the LMStudio SDK
+const client = new LMStudioClient({
+    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
+});
 
 let roleplay;
 let sessionHistories = {};
 let userSessions = new Set();
 
-process.on('message', async (msg) => {
-    try {
-        if (msg.type === 'message') {
-            await handleMessage(msg.data, msg.socketId, msg.model);
-        } else if (msg.type === 'disconnect') {
-            handleDisconnect(msg.socketId);
-        }
-    } catch (error) {
-        console.error('Error handling process message:', error);
+// Load the model
+client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
+    config: {
+        gpuOffload: 0.9,
+        context_length: 8176,
+        embedding_length: 8176,
+    },
+}).then(model => {
+    roleplay = model;
+}).catch(error => {
+    console.error('Error loading the model:', error);
+    process.send({ type: 'log', data: 'Error loading the model' });
+});
+
+process.on('message', (msg) => {
+    if (msg.type === 'message') {
+        handleMessage(msg.data, msg.socketId);
+    } else if (msg.type === 'disconnect') {
+        handleDisconnect(msg.socketId);
     }
 });
 
@@ -21,24 +37,23 @@ async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
         const $ = cheerio.load(data);
-        let texts = [];
+        let paragraphs = [];
+        
         $('p').each((i, elem) => {
-            let text = $(elem).text().trim();
-            if (text) {
-                texts.push(text.replace(/\s{2,}/g, ' '));
-            }
+            paragraphs.push($(elem).text().trim());
         });
-        return texts.join(' ');
+        
+        const finalData = paragraphs.join('\n\n');
+        return finalData; // Return the concatenated text content of all <p> elements
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
     }
 }
 
-async function handleMessage(message, socketId, model) {
-    roleplay = model; // Consider a more dynamic approach if applicable
-    if (!roleplay || typeof roleplay.respond !== 'function') {
-        console.error('Model not loaded or respond method not available.');
+async function handleMessage(message, socketId) {
+    if (!roleplay) {
+        console.error('Model not loaded yet.');
         return;
     }
 
@@ -53,14 +68,18 @@ async function handleMessage(message, socketId, model) {
     let contentToProcess = message;
     if (message.startsWith('scrape:')) {
         const url = message.replace('scrape:', '').trim();
-        contentToProcess = await scrapeWebsite(url);
+        const scrapedText = await scrapeWebsite(url);
+        contentToProcess = scrapedText;
     }
 
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
 
     let history = sessionHistories[socketId];
+    const prediction = roleplay.respond(history, {
+        temperature: 0.9,
+    });
+
     try {
-        const prediction = await roleplay.respond(history, { temperature: 0.9 });
         for await (let text of prediction) {
             process.send({ type: 'response', data: text, socketId: socketId });
             sessionHistories[socketId].push({ role: "system", content: text });
