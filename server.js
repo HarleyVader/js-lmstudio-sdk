@@ -31,38 +31,47 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-// Fork the worker process
-const worker = fork('./worker.js');
-
-let userSessions = new Set(); // Use a Set to track unique user sessions
+let userSessions = new Map(); // Use a Map to track unique user sessions and their corresponding worker
 
 // Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
-    userSessions.add(socket.id); // Add the new session
+    // Fork a new worker process for each connected client
+    const worker = fork('./worker.js');
+    userSessions.set(socket.id, worker); // Map the socket.id to the worker
+
     console.log(`Number of connected clients: ${userSessions.size}`);
 
     socket.on('message', (message) => {
-        // Forward message to worker
-        worker.send({ type: 'message', data: message, socketId: socket.id });
+        // Forward message to the corresponding worker
+        const worker = userSessions.get(socket.id);
+        if (worker) {
+            worker.send({ type: 'message', data: message, socketId: socket.id });
+        }
     });
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
+        // Inform the corresponding worker about the disconnection
+        const worker = userSessions.get(socket.id);
+        if (worker) {
+            worker.send({ type: 'disconnect', socketId: socket.id });
+            worker.kill(); // Terminate the worker process
+        }
         userSessions.delete(socket.id); // Remove the session
         console.log(`Number of connected clients: ${userSessions.size}`);
-        // Inform worker about the disconnection
-        worker.send({ type: 'disconnect', socketId: socket.id });
     });
 });
 
-// Receive messages from worker and forward them to the appropriate client
-worker.on('message', (msg) => {
-    if (msg.type === 'log') {
-        console.log(msg.data); // Log worker messages
-    } else if (msg.type === 'response') {
-        io.to(msg.socketId).emit('message', msg.data);
-    }
+// Handle messages from any worker and forward them to the appropriate client
+userSessions.forEach((worker, socketId) => {
+    worker.on('message', (msg) => {
+        if (msg.type === 'log') {
+            console.log(msg.data); // Log worker messages
+        } else if (msg.type === 'response') {
+            io.to(msg.socketId).emit('message', msg.data);
+        }
+    });
 });
 
 server.listen(PORT, () => {
