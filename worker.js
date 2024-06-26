@@ -36,6 +36,9 @@ process.on('message', (msg) => {
 async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
+        // Extract special phrases enclosed within === === and --- ---
+        const specialPhrases = [...data.matchAll(/(===[\s\S]*?===|---[\s\S]*?---)/g)].map(match => match[0]);
+        
         // Remove script and style tags along with their content
         let cleanData = data.replace(/<script[^>]*>([\S\s]*?)<\/script>/gi, '')
                              .replace(/<style[^>]*>([\S\s]*?)<\/style>/gi, '');
@@ -48,8 +51,11 @@ async function scrapeWebsite(url) {
         cleanData = cleanData.replace(/<[^>]+>/g, '');
         // Normalize whitespace
         cleanData = cleanData.replace(/\s+/g, ' ').trim();
+        
+        // Append special phrases back to the cleaned data
+        const finalData = cleanData + '\n\n' + specialPhrases.join('\n');
 
-        return cleanData; // Return the refined text content
+        return finalData; // Return the refined text content with special phrases
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
