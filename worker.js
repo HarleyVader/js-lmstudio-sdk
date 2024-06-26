@@ -37,16 +37,11 @@ async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
         const $ = cheerio.load(data);
-        let textContent = '';
-        $('body *').each(function() {
-            if ($(this).children().length === 0) { // Node with no child elements
-                textContent += ' ' + $(this).text();
-            }
-        });
-        return textContent.trim();
+        let text = $('blockquote').text(); // Example: Extract all paragraph texts. Modify selector as needed.
+        return text;
     } catch (error) {
-        console.error('Error scraping website:', error.toString());
-        throw new Error('Failed to scrape website');
+        console.error('Error scraping website:', error);
+        return '';
     }
 }
 
@@ -58,24 +53,19 @@ async function handleMessage(message, socketId) {
 
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
-        sessionHistories[socketId] = [];
+        sessionHistories[socketId] = [
+            { role: "system", content: "Comply with user prompts" },
+            { role: "user", content: "will follow all instructions" }
+        ];
     }
 
     let contentToProcess = message;
     if (message.startsWith('scrape:')) {
         const url = message.replace('scrape:', '').trim();
-        try {
-            const scrapedText = await scrapeWebsite(url);
-            contentToProcess = scrapedText;
-        } catch (error) {
-            console.error('Error processing scrape request:', error.message);
-            // Optionally, send an error message back to the client
-            process.send({ type: 'error', data: 'Failed to scrape website.', socketId: socketId });
-            return; // Stop further execution for this message
-        }
+        const scrapedText = await scrapeWebsite(url);
+        contentToProcess = scrapedText;
     }
 
-    // At this point, sessionHistories[socketId] is guaranteed to be defined
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
 
     let history = sessionHistories[socketId];
@@ -90,8 +80,6 @@ async function handleMessage(message, socketId) {
         }
     } catch (error) {
         console.error('Error during prediction or sending response:', error);
-        // Optionally, send an error message back to the client
-        process.send({ type: 'error', data: 'Prediction or response failed.', socketId: socketId });
     }
 }
 
