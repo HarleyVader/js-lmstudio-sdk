@@ -12,19 +12,27 @@ let roleplay;
 let sessionHistories = {};
 let userSessions = new Set();
 
-// Load the model
-client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
-    config: {
-        gpuOffload: 0.9,
-        context_length: 8176,
-        embedding_length: 8176,
-    },
-}).then(model => {
-    roleplay = model;
-}).catch(error => {
-    console.error('Error loading the model:', error);
-    parentPort.postMessage({ type: 'log', data: 'Error loading the model' });
-});
+// Function to load the model
+async function loadModel() {
+    if (!roleplay) {
+        try {
+            const model = await client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
+                config: {
+                    gpuOffload: 0.9,
+                    context_length: 8176,
+                    embedding_length: 8176,
+                },
+            });
+            roleplay = model;
+        } catch (error) {
+            console.error('Error loading the model:', error);
+            parentPort.postMessage({ type: 'log', data: 'Error loading the model' });
+        }
+    }
+}
+
+// Load the model initially
+loadModel();
 
 parentPort.on('message', (msg) => {
     if (msg.type === 'message') {
@@ -53,6 +61,9 @@ async function scrapeWebsite(url) {
 }
 
 async function handleMessage(message, socketId) {
+    // Ensure the model is loaded before proceeding
+    await loadModel();
+
     if (!roleplay) {
         console.error('Model not loaded yet.');
         return;
