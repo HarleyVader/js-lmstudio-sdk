@@ -1,3 +1,4 @@
+//worker.js
 const { LMStudioClient } = require('@lmstudio/sdk');
 const axios = require('axios');
 const cheerio = require('cheerio');

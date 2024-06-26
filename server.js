@@ -1,10 +1,9 @@
-// Import necessary libraries
 const express = require('express');
 const path = require('path');
 const fs = require('fs').promises;
 const http = require('http');
 const { Server } = require("socket.io");
-const { fork } = require('child_process');
+const { Worker } = require('worker_threads');
 
 const app = express();
 const server = http.createServer(app);
@@ -31,8 +30,8 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-// Fork the worker process
-const worker = fork('./worker.js');
+// Initialize the worker thread
+const worker = new Worker('./worker.js');
 
 let userSessions = new Set(); // Use a Set to track unique user sessions
 
@@ -44,7 +43,7 @@ io.on('connection', (socket) => {
 
     socket.on('message', (message) => {
         // Forward message to worker
-        worker.send({ type: 'message', data: message, socketId: socket.id });
+        worker.postMessage({ type: 'message', data: message, socketId: socket.id });
     });
 
     socket.on('disconnect', () => {
@@ -52,7 +51,7 @@ io.on('connection', (socket) => {
         userSessions.delete(socket.id); // Remove the session
         console.log(`Number of connected clients: ${userSessions.size}`);
         // Inform worker about the disconnection
-        worker.send({ type: 'disconnect', socketId: socket.id });
+        worker.postMessage({ type: 'disconnect', socketId: socket.id });
     });
 });
 
