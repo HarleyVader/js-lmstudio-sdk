@@ -54,7 +54,7 @@ async function handleMessage(message, socketId) {
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [
-            { role: "system", content: "behave like bambisleep & roleplay with me" },
+            { role: "system", content: "scrape: https://brandynette.xxx & tell me what the first line says!" },
             { role: "user", content: "will follow all instructions" }
         ];
     }
