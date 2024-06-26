@@ -1,4 +1,6 @@
 const { LMStudioClient } = require('@lmstudio/sdk');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 // Initialize the LMStudio SDK
 const client = new LMStudioClient({
@@ -31,6 +33,18 @@ process.on('message', (msg) => {
     }
 });
 
+async function scrapeWebsite(url) {
+    try {
+        const { data } = await axios.get(url);
+        const $ = cheerio.load(data);
+        let text = $('p').text(); // Example: Extract all paragraph texts. Modify selector as needed.
+        return text;
+    } catch (error) {
+        console.error('Error scraping website:', error);
+        return '';
+    }
+}
+
 async function handleMessage(message, socketId) {
     if (!roleplay) {
         console.error('Model not loaded yet.');
@@ -45,7 +59,14 @@ async function handleMessage(message, socketId) {
         ];
     }
 
-    sessionHistories[socketId].push({ role: "user", content: message });
+    let contentToProcess = message;
+    if (message.startsWith('scrape:')) {
+        const url = message.replace('scrape:', '').trim();
+        const scrapedText = await scrapeWebsite(url);
+        contentToProcess = scrapedText;
+    }
+
+    sessionHistories[socketId].push({ role: "user", content: contentToProcess });
 
     let history = sessionHistories[socketId];
     const prediction = roleplay.respond(history, {
