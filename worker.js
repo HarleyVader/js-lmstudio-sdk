@@ -37,8 +37,13 @@ async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
         const $ = cheerio.load(data);
-        let text = $('blockquote').text(); // Example: Extract all paragraph texts. Modify selector as needed.
-        return text;
+        let textContent = '';
+        $('body *').each(function() {
+            if ($(this).children().length === 0) { // Node with no child elements
+                textContent += ' ' + $(this).text();
+            }
+        });
+        return textContent.trim();
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
