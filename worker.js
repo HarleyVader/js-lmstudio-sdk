@@ -1,33 +1,16 @@
-//worker.js
-const { LMStudioClient } = require('@lmstudio/sdk');
+const { parentPort } = require('worker_threads');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-// Initialize the LMStudio SDK
-const client = new LMStudioClient({
-    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
-});
+let roleplayReady = false;
 
-let roleplay;
-let sessionHistories = {};
-let userSessions = new Set();
-
-// Load the model
-client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
-    config: {
-        gpuOffload: 0.9,
-        context_length: 8176,
-        embedding_length: 8176,
-    },
-}).then(model => {
-    roleplay = model;
-}).catch(error => {
-    console.error('Error loading the model:', error);
-    process.send({ type: 'log', data: 'Error loading the model' });
-});
-
-process.on('message', (msg) => {
-    if (msg.type === 'message') {
+parentPort.on('message', (msg) => {
+    if (msg.type === 'modelReady') {
+        roleplayReady = true;
+        console.log('Model is ready to use.');
+    } else if (msg.type === 'modelError') {
+        console.error(msg.data);
+    } else if (msg.type === 'message') {
         handleMessage(msg.data, msg.socketId);
     } else if (msg.type === 'disconnect') {
         handleDisconnect(msg.socketId);
@@ -44,8 +27,7 @@ async function scrapeWebsite(url) {
             paragraphs.push($(elem).text().trim());
         });
         
-        const finalData = paragraphs.join('\n\n');
-        return finalData; // Return the concatenated text content of all <p> elements
+        return paragraphs.join('\n\n');
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
@@ -69,8 +51,7 @@ async function handleMessage(message, socketId) {
     let contentToProcess = message;
     if (message.startsWith('scrape:')) {
         const url = message.replace('scrape:', '').trim();
-        const scrapedText = await scrapeWebsite(url);
-        contentToProcess = scrapedText;
+        contentToProcess = await scrapeWebsite(url);
     }
 
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
@@ -82,7 +63,7 @@ async function handleMessage(message, socketId) {
 
     try {
         for await (let text of prediction) {
-            process.send({ type: 'response', data: text, socketId: socketId });
+            parentPort.postMessage({ type: 'response', data: text, socketId: socketId });
             sessionHistories[socketId].push({ role: "system", content: text });
         }
     } catch (error) {
