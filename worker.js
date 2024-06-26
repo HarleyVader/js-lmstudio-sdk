@@ -1,4 +1,3 @@
-// worker.js
 const axios = require('axios');
 const cheerio = require('cheerio');
 
@@ -7,10 +6,14 @@ let sessionHistories = {};
 let userSessions = new Set();
 
 process.on('message', async (msg) => {
-    if (msg.type === 'message') {
-        handleMessage(msg.data, msg.socketId, msg.model);
-    } else if (msg.type === 'disconnect') {
-        handleDisconnect(msg.socketId);
+    try {
+        if (msg.type === 'message') {
+            await handleMessage(msg.data, msg.socketId, msg.model);
+        } else if (msg.type === 'disconnect') {
+            handleDisconnect(msg.socketId);
+        }
+    } catch (error) {
+        console.error('Error handling process message:', error);
     }
 });
 
@@ -33,9 +36,9 @@ async function scrapeWebsite(url) {
 }
 
 async function handleMessage(message, socketId, model) {
-    roleplay = model; // Assign the model passed from the server
-    if (!roleplay) {
-        console.error('Model not loaded yet.');
+    roleplay = model; // Consider a more dynamic approach if applicable
+    if (!roleplay || typeof roleplay.respond !== 'function') {
+        console.error('Model not loaded or respond method not available.');
         return;
     }
 
@@ -56,11 +59,8 @@ async function handleMessage(message, socketId, model) {
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
 
     let history = sessionHistories[socketId];
-    const prediction = roleplay.respond(history, {
-        temperature: 0.9,
-    });
-
     try {
+        const prediction = await roleplay.respond(history, { temperature: 0.9 });
         for await (let text of prediction) {
             process.send({ type: 'response', data: text, socketId: socketId });
             sessionHistories[socketId].push({ role: "system", content: text });

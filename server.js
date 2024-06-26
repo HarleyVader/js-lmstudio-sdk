@@ -1,24 +1,24 @@
-// server.js
+//server.js
 const express = require('express');
+const { fork } = require('child_process');
 const path = require('path');
 const fs = require('fs').promises;
 const http = require('http');
-const { Server } = require("socket.io");
-const { fork } = require('child_process');
+const socketIO = require('socket.io');
 const { LMStudioClient } = require('@lmstudio/sdk');
+
+const PORT = 6969;
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
-
-const PORT = 6969;
+const io = socketIO(server);
 
 // Initialize the LMStudio SDK
 const client = new LMStudioClient({
     baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
 });
 
-let roleplay;
+let roleplay; // This will hold the model instance
 
 // Load the model once when the server starts
 client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
@@ -62,7 +62,8 @@ io.on('connection', (socket) => {
     socket.on('message', (message) => {
         const worker = userSessions.get(socket.id);
         if (worker) {
-            worker.send({ type: 'message', data: message, socketId: socket.id, model: roleplay });
+            // Sending a model ID or necessary configuration instead of the model instance
+            worker.send({ type: 'message', data: message, socketId: socket.id, modelConfig: roleplay.config });
         }
     });
 
@@ -75,16 +76,6 @@ io.on('connection', (socket) => {
         }
         userSessions.delete(socket.id);
         console.log(`Number of connected clients: ${userSessions.size}`);
-    });
-});
-
-userSessions.forEach((worker, socketId) => {
-    worker.on('message', (msg) => {
-        if (msg.type === 'log') {
-            console.log(msg.data);
-        } else if (msg.type === 'response') {
-            io.to(msg.socketId).emit('message', msg.data);
-        }
     });
 });
 
