@@ -62,12 +62,10 @@ io.on('connection', (socket) => {
             io.to(msg.socketId).emit('message', msg.data);
         } else if (msg.type === 'predict') {
             try {
+                // Await the promise to resolve and directly use the result
                 const prediction = await global.roleplay.respond(msg.data.history, { temperature: 0.9 });
-                let texts = [];
-                for await (let text of prediction) {
-                    texts.push(text);
-                }
-                worker.postMessage({ type: 'predictionResult', data: texts, requestId: msg.requestId });
+                // Assuming prediction is now a single value or object, directly send it
+                worker.postMessage({ type: 'predictionResult', data: [prediction], requestId: msg.requestId });
             } catch (error) {
                 console.error('Error during prediction:', error);
             }
