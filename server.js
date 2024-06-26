@@ -1,10 +1,10 @@
-// server.js
+// Import necessary libraries
 const express = require('express');
 const path = require('path');
 const fs = require('fs').promises;
 const http = require('http');
 const { Server } = require("socket.io");
-const { Worker } = require('worker_threads');
+const { fork } = require('child_process');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,7 +12,10 @@ const io = new Server(server);
 
 const PORT = 6969;
 
+// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve images from the "images" directory
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.get('/images', async (req, res) => {
@@ -28,68 +31,38 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-const { LMStudioClient } = require('@lmstudio/sdk');
-const client = new LMStudioClient({
-    baseUrl: 'ws://192.168.0.178:1234',
-});
+// Fork the worker process
+const worker = fork('./worker.js');
 
-client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
-    config: {
-        gpuOffload: 0.9,
-        context_length: 8176,
-        embedding_length: 8176,
-    },
-}).then(model => {
-    console.log('Model loaded successfully');
-    global.roleplay = model;
-}).catch(error => {
-    console.error('Error loading the model:', error);
-});
+let userSessions = new Set(); // Use a Set to track unique user sessions
 
-let userSessions = new Set();
-
+// Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
-    userSessions.add(socket.id);
+    userSessions.add(socket.id); // Add the new session
     console.log(`Number of connected clients: ${userSessions.size}`);
 
-    const worker = new Worker('./worker.js');
-
-    worker.on('message', async (msg) => {
-        if (msg.type === 'log') {
-            console.log(msg.data);
-        } else if (msg.type === 'response') {
-            io.to(msg.socketId).emit('message', msg.data);
-        } else if (msg.type === 'predict') {
-            try {
-                // Validate and transform the history array
-                const validatedHistory = msg.data.history.map(item => {
-                    // Assuming the expected format for each item is an object with a 'content' property
-                    // Check if 'content' exists and is a string; otherwise, create an object with an empty 'content' string
-                    return { content: typeof item.content === 'string' ? item.content : '' };
-                });
-    
-                // Await the promise to resolve and directly use the result
-                const prediction = await global.roleplay.respond(validatedHistory, { temperature: 0.9 });
-                // Assuming prediction is now a single value or object, directly send it
-                worker.postMessage({ type: 'predictionResult', data: [prediction], requestId: msg.requestId });
-            } catch (error) {
-                console.error('Error during prediction:', error);
-            }
-        }
-    });
-
     socket.on('message', (message) => {
-        worker.postMessage({ type: 'message', data: message, socketId: socket.id });
+        // Forward message to worker
+        worker.send({ type: 'message', data: message, socketId: socket.id });
     });
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
-        userSessions.delete(socket.id);
+        userSessions.delete(socket.id); // Remove the session
         console.log(`Number of connected clients: ${userSessions.size}`);
-        worker.postMessage({ type: 'disconnect', socketId: socket.id });
-        worker.terminate();
+        // Inform worker about the disconnection
+        worker.send({ type: 'disconnect', socketId: socket.id });
     });
+});
+
+// Receive messages from worker and forward them to the appropriate client
+worker.on('message', (msg) => {
+    if (msg.type === 'log') {
+        console.log(msg.data); // Log worker messages
+    } else if (msg.type === 'response') {
+        io.to(msg.socketId).emit('message', msg.data);
+    }
 });
 
 server.listen(PORT, () => {
