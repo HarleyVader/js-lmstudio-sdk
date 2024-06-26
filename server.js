@@ -34,13 +34,13 @@ app.get('/images', async (req, res) => {
 // Fork the worker process
 const worker = fork('./worker.js');
 
-let connectedClients = 0;
+let userSessions = new Set(); // Use a Set to track unique user sessions
 
 // Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
-    connectedClients++; // Increment the number of connected clients
-    console.log(`Number of connected clients: ${connectedClients}`);
+    userSessions.add(socket.id); // Add the new session
+    console.log(`Number of connected clients: ${userSessions.size}`);
 
     socket.on('message', (message) => {
         // Forward message to worker
@@ -49,8 +49,8 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
-        connectedClients--; // Decrement the number of connected clients
-        console.log(`Number of connected clients: ${connectedClients}`);
+        userSessions.delete(socket.id); // Remove the session
+        console.log(`Number of connected clients: ${userSessions.size}`);
         // Inform worker about the disconnection
         worker.send({ type: 'disconnect', socketId: socket.id });
     });
