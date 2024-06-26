@@ -64,9 +64,9 @@ io.on('connection', (socket) => {
             try {
                 // Validate and transform the history array
                 const validatedHistory = msg.data.history.map(item => {
-                    // Assuming each item is an object with a 'content' property
-                    // Check if 'content' exists and is a string; otherwise, return an empty string or handle appropriately
-                    return typeof item.content === 'string' ? item.content : '';
+                    // Assuming the expected format for each item is an object with a 'content' property
+                    // Check if 'content' exists and is a string; otherwise, create an object with an empty 'content' string
+                    return { content: typeof item.content === 'string' ? item.content : '' };
                 });
     
                 // Await the promise to resolve and directly use the result
