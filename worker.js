@@ -45,8 +45,14 @@ async function handleInteraction(message) {
         const serializableResult = JSON.parse(JSON.stringify(result));
         parentPort.postMessage(serializableResult);
     } catch (error) {
-        console.error("Error in handleInteraction:", error);
-        parentPort.postMessage({ success: false, error: `Error generating response: ${error.message}` });
+        // Improved error serialization
+        const errorResponse = {
+            success: false,
+            error: `Error generating response: ${error.message}`,
+            stack: error.stack // Consider removing for production to avoid leaking sensitive info
+        };
+        console.error("Error in handleInteraction:", errorResponse);
+        parentPort.postMessage(errorResponse);
     }
 }
 
