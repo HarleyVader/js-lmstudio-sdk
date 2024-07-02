@@ -52,6 +52,7 @@ app.get('/images', async (req, res) => {
 });
 
 let workers = {}; // Map to store workers by socket ID
+let userSessions = new Set(); // Set to store active user sessions
 
 // Handle connection
 io.on('connection', (socket) => {
