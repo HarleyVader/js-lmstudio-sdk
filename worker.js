@@ -3,8 +3,6 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 roleplayReady = false;
-const userSessions = new Set(); // Initialize userSessions as a Set
-const sessionHistories = {}; // Initialize sessionHistories as an empty object
 
 parentPort.on('message', (msg) => {
     if (msg.type === 'modelReady') {
@@ -37,6 +35,10 @@ async function scrapeWebsite(url) {
 }
 
 async function handleMessage(message, socketId) {
+    if (!roleplay) {
+        console.error('Model not loaded yet.');
+        return;
+    }
 
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
