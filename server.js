@@ -73,7 +73,7 @@ const client = new LMStudioClient({
     baseUrl: 'ws://192.168.0.178:1234',
 });
 
-client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
+client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
     config: {
         gpuOffload: 0.9,
         context_length: 8176,
