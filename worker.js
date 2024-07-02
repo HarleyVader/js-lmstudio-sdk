@@ -2,11 +2,12 @@ const { parentPort } = require('worker_threads');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-roleplayReady = false;
+let roleplay;
+let sessionHistories = {};
+let userSessions = new Set();
 
 parentPort.on('message', (msg) => {
     if (msg.type === 'modelReady') {
-        roleplayReady = true;
         console.log('Model is ready to use.');
     } else if (msg.type === 'modelError') {
         console.error(msg.data);
