@@ -3,8 +3,9 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 roleplayReady = false;
-const sessionHistories = {};
-const userSessions = new Set();
+roleplay = null;
+userSessions = new Set();
+sessionHistories = {};
 
 parentPort.on('message', (msg) => {
     if (msg.type === 'modelReady') {
@@ -37,6 +38,11 @@ async function scrapeWebsite(url) {
 }
 
 async function handleMessage(message, socketId) {
+    if (!roleplay) {
+        console.error('Model not loaded yet.');
+        return;
+    }
+
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [
@@ -54,7 +60,7 @@ async function handleMessage(message, socketId) {
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
 
     let history = sessionHistories[socketId];
-    const prediction = respond(history, {
+    const prediction = roleplay.respond(history, {
         temperature: 0.9,
     });
 
