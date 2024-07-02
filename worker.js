@@ -2,8 +2,6 @@ const { parentPort } = require('worker_threads');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-let roleplay;
-
 roleplayReady = false;
 const sessionHistories = {};
 const userSessions = new Set();
@@ -39,11 +37,6 @@ async function scrapeWebsite(url) {
 }
 
 async function handleMessage(message, socketId) {
-    if (!roleplay) {
-        console.error('Model not loaded yet.');
-        return;
-    }
-
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [
@@ -61,7 +54,7 @@ async function handleMessage(message, socketId) {
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
 
     let history = sessionHistories[socketId];
-    const prediction = roleplay.respond(history, {
+    const prediction = respond(history, {
         temperature: 0.9,
     });
 
