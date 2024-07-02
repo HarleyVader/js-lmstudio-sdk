@@ -61,15 +61,15 @@ io.on('connection', (socket) => {
     // Log the amount of connected users
     console.log(`Total connected users: ${userConnections.size}`);
 
-    socket.on('message', (msg) => {
-        console.log('Message from client:', msg);
-        // Spawn a worker to handle the LLMS interactions
-        const worker = new Worker('./worker.js', {
-            workerData: {
-                message: msg,
-                client: client
-            }
-        });
+socket.on('message', (msg) => {
+            console.log('Message from client:', msg);
+            // Pass only necessary data to the worker
+            const worker = new Worker('./worker.js', {
+                workerData: {
+                    message: msg,
+                    clientConfig: client.config // Assuming client.config contains the necessary configuration
+                }
+            });
 
         worker.on('message', (result) => {
             console.log('Message from worker:', result);
