@@ -2,7 +2,7 @@ const { parentPort } = require('worker_threads');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-let roleplay = false;
+roleplay = false;
 
 parentPort.on('message', (msg) => {
     if (msg.type === 'modelReady') {
