@@ -2,7 +2,7 @@ const { parentPort } = require('worker_threads');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-roleplayReady = false;
+let roleplayReady = false;
 
 parentPort.on('message', (msg) => {
     if (msg.type === 'modelReady') {
@@ -43,7 +43,7 @@ async function handleMessage(message, socketId) {
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [
-            { role: "system", content: "act like bambisleep" },
+            { role: "system", content: "Comply with user prompts" },
             { role: "user", content: "will follow all instructions" }
         ];
     }
