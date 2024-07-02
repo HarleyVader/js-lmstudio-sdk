@@ -74,7 +74,6 @@ const client = new LMStudioClient({
 });
 
 client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
-    signal: controller.signal,
     config: {
         gpuOffload: 0.9,
         context_length: 8176,
