@@ -2,11 +2,8 @@ const { parentPort } = require('worker_threads');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-roleplayReady = false;
-
 parentPort.on('message', (msg) => {
     if (msg.type === 'modelReady') {
-        roleplayReady = true;
         console.log('Model is ready to use.');
     } else if (msg.type === 'modelError') {
         console.error(msg.data);
@@ -35,11 +32,6 @@ async function scrapeWebsite(url) {
 }
 
 async function handleMessage(message, socketId) {
-    if (!roleplay) {
-        console.error('Model not loaded yet.');
-        return;
-    }
-
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [
