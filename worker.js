@@ -35,7 +35,7 @@ async function scrapeWebsite(url) {
 }
 
 async function handleMessage(message, socketId) {
-    if (!roleplay) {
+    if (!roleplayReady) {
         console.error('Model not loaded yet.');
         return;
     }
