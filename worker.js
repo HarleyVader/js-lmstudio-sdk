@@ -3,7 +3,7 @@ const { LMStudioClient } = require('@lmstudio/sdk');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-// Recreate the client with configuration passed from the main thread
+// Ensure the LMStudioClient is initialized with the correct configuration
 const client = new LMStudioClient(workerData.clientConfig);
 
 async function scrapeURL(url) {
@@ -27,6 +27,7 @@ async function handleInteraction(message) {
             const url = message.replace('scrape: ', '').trim();
             result = await scrapeURL(url);
         } else {
+            // Use the SDK according to the documentation for generating responses
             const response = await client.llm.generate({
                 prompt: message,
                 maxTokens: 150,
@@ -37,7 +38,7 @@ async function handleInteraction(message) {
             });
 
             if (response && response.data) {
-                result = { success: true, data: response.data };
+                result = { success: true, data: response.data.choices[0].text.trim() }; // Adjusted according to SDK response structure
             } else {
                 result = { success: false, error: "Unexpected response format from LMStudioClient" };
             }
