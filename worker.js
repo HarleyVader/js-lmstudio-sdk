@@ -1,12 +1,10 @@
 const { parentPort, workerData } = require('worker_threads');
 const { LMStudioClient } = require('@lmstudio/sdk');
-const axios = require('axios'); // Ensure axios is installed for HTTP requests
-const cheerio = require('cheerio'); // Ensure cheerio is installed for HTML parsing
+const axios = require('axios');
+const cheerio = require('cheerio');
 
-// Initialize the LMStudio SDK with the client passed from the main thread
 const client = new LMStudioClient(workerData.client.config);
 
-// Function to scrape URLs
 async function scrapeURL(url) {
     try {
         const { data } = await axios.get(url);
@@ -15,25 +13,19 @@ async function scrapeURL(url) {
         $('h1, h2, h3, p').each((i, elem) => {
             texts.push($(elem).text());
         });
-        return texts.join(', ');
+        return { success: true, data: texts.join(', ') };
     } catch (error) {
-        return `Error scraping URL: ${error.message}`;
+        return { success: false, error: `Error scraping URL: ${error.message}` };
     }
 }
 
-// Function to handle the interaction with the LMStudio model
 async function handleInteraction(message) {
     try {
         if (message.startsWith('scrape: ')) {
-            // Extract URL from the message
             const url = message.replace('scrape: ', '').trim();
-            // Scrape the URL
             const scrapeResult = await scrapeURL(url);
-            // Send the scrape result back to the main thread
             parentPort.postMessage(scrapeResult);
         } else {
-            // Assuming 'message' contains the input from the user
-            // and 'client' is properly initialized and configured to interact with the model
             const response = await client.llm.generate({
                 prompt: message,
                 maxTokens: 150,
@@ -43,17 +35,19 @@ async function handleInteraction(message) {
                 presencePenalty: 0,
             });
 
-            // Send the generated response back to the main thread
-            parentPort.postMessage(response);
+            if (response && response.data) {
+                // Ensure the response is serializable
+                parentPort.postMessage({ success: true, data: response.data });
+            } else {
+                // Handle unexpected response format
+                parentPort.postMessage({ success: false, error: "Unexpected response format from LMStudioClient" });
+            }
         }
     } catch (error) {
-        // In case of an error, send the error message back to the main thread
-        parentPort.postMessage(`Error generating response: ${error.message}`);
+        parentPort.postMessage({ success: false, error: `Error generating response: ${error.message}` });
     }
 }
 
-// Listen for messages from the main thread
 parentPort.on('message', (message) => {
-    // Call the function to handle the interaction with the received message
     handleInteraction(message);
 });
