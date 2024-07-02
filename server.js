@@ -74,6 +74,7 @@ const client = new LMStudioClient({
 });
 
 client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
+    signal: controller.signal,
     config: {
         gpuOffload: 0.9,
         context_length: 8176,

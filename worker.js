@@ -3,9 +3,6 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 roleplayReady = false;
-roleplay = null;
-userSessions = new Set();
-sessionHistories = {};
 
 parentPort.on('message', (msg) => {
     if (msg.type === 'modelReady') {
