@@ -1,16 +1,12 @@
 const { parentPort } = require('worker_threads');
 const axios = require('axios');
 const cheerio = require('cheerio');
-// Hypothetical require statement for the RoleplayModel class
-const RoleplayModel = require('./RoleplayModel');
 
-let roleplayReady = false;
-// Initialize roleplay with a new instance of RoleplayModel
-let roleplay = new RoleplayModel();
+let roleplay = false;
 
 parentPort.on('message', (msg) => {
     if (msg.type === 'modelReady') {
-        roleplayReady = true;
+        roleplay = true;
         console.log('Model is ready to use.');
     } else if (msg.type === 'modelError') {
         console.error(msg.data);
@@ -39,12 +35,11 @@ async function scrapeWebsite(url) {
 }
 
 async function handleMessage(message, socketId) {
-    if (!roleplayReady) {
+    if (!roleplay) {
         console.error('Model not loaded yet.');
         return;
     }
 
-    // Assuming userSessions and sessionHistories are initialized somewhere in your code
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [
