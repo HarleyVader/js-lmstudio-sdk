@@ -6,7 +6,7 @@ const cheerio = require('cheerio');
 // Ensure the LMStudioClient is initialized with the correct configuration
 const client = new LMStudioClient({
     ...workerData.clientConfig,
-    port: 1234, // Update this line with the correct port
+    baseUrl: "ws://192.168.0.59:1234",
   });
 
 async function scrapeURL(url) {
