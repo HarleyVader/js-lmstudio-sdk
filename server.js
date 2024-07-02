@@ -67,7 +67,8 @@ socket.on('message', (msg) => {
             const worker = new Worker('./worker.js', {
                 workerData: {
                     message: msg,
-                    clientConfig: client.config // Assuming client.config contains the necessary configuration
+                    clientConfig: client.config, // Assuming client.config contains the necessary configuration
+                    llmConfig: modelConfig // Pass the llm configuration to the worker
                 }
             });
 

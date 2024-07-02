@@ -3,8 +3,10 @@ const { LMStudioClient } = require('@lmstudio/sdk');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-// Initialize the LMStudioClient with the configuration passed from the main thread
-const client = new LMStudioClient(workerData.clientConfig);
+const client = new LMStudioClient({
+    ...workerData.clientConfig,
+    llm: workerData.llmConfig // Use the llm configuration
+});
 
 async function scrapeURL(url) {
     try {
