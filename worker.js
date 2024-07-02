@@ -2,6 +2,8 @@ const { parentPort } = require('worker_threads');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+const userSessions = new Set();
+
 parentPort.on('message', (msg) => {
     if (msg.type === 'modelReady') {
         console.log('Model is ready to use.');
