@@ -1,12 +1,6 @@
 const { parentPort, workerData } = require('worker_threads');
-const { LMStudioClient } = require('@lmstudio/sdk');
 const axios = require('axios');
 const cheerio = require('cheerio');
-
-const client = new LMStudioClient({
-    ...workerData.clientConfig,
-    llm: workerData.llmConfig // Use the llm configuration
-});
 
 async function scrapeURL(url) {
     try {
@@ -29,20 +23,12 @@ async function handleInteraction(message) {
             const url = message.replace('scrape: ', '').trim();
             result = await scrapeURL(url);
         } else {
-            // Use the SDK according to the documentation for generating responses
-            const response = await client.llm.generate({
-                prompt: message,
-                maxTokens: 150,
-                temperature: 0.7,
-                topP: 1,
-                frequencyPenalty: 0,
-                presencePenalty: 0,
-            });
-
-            if (response && response.data) {
-                result = { success: true, data: response.data.choices[0].text.trim() }; // Adjusted according to SDK response structure
+            // Send request to server for handling LMStudioClient operations
+            const serverResponse = await axios.post('YOUR_SERVER_ENDPOINT', { message });
+            if (serverResponse.data) {
+                result = serverResponse.data;
             } else {
-                result = { success: false, error: "Unexpected response format from LMStudioClient" };
+                result = { success: false, error: "Unexpected response format from server" };
             }
         }
         // Ensure result is serializable
