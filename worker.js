@@ -1,16 +1,14 @@
-const { parentPort } = require('worker_threads');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-let roleplay;
+let roleplayConfig;
 let sessionHistories = {};
 let userSessions = new Set();
 
-parentPort.on('message', (msg) => {
-    if (msg.type === 'modelReady') {
-        console.log('Model is ready to use.');
-    } else if (msg.type === 'modelError') {
-        console.error(msg.data);
+process.on('message', (msg) => {
+    if (msg.type === 'modelConfig') {
+        // Receive model configuration from server
+        roleplayConfig = msg.data;
     } else if (msg.type === 'message') {
         handleMessage(msg.data, msg.socketId);
     } else if (msg.type === 'disconnect') {
@@ -21,14 +19,27 @@ parentPort.on('message', (msg) => {
 async function scrapeWebsite(url) {
     try {
         const { data } = await axios.get(url);
-        const $ = cheerio.load(data);
+        const $ = cheerio.load(data, {
+            xmlMode: true,
+            decodeEntities: true
+        });
         let paragraphs = [];
         
         $('p').each((i, elem) => {
-            paragraphs.push($(elem).text().trim());
+            if (!$(elem).closest('a').length && !$(elem).find('a').length) {
+                paragraphs.push($(elem).text().trim());
+            }
         });
         
-        return paragraphs.join('\n\n');
+        // Filter out paragraphs that are too short or potentially contain code
+        const cleanParagraphs = paragraphs.filter(p => {
+            const words = p.split(/\s+/); // Split by whitespace to count words
+            const isCodeSnippet = /<[^>]+>|function|var|let|const|document\.|window\.|\.css\(|\.html\(|\.append\(/.test(p);
+            return words.length > 2 && !isCodeSnippet;
+        });
+        
+        const finalData = cleanParagraphs.join('\n\n');
+        return finalData;
     } catch (error) {
         console.error('Error scraping website:', error);
         return '';
@@ -36,15 +47,15 @@ async function scrapeWebsite(url) {
 }
 
 async function handleMessage(message, socketId) {
-    if (!roleplay) {
-        console.error('Model not loaded yet.');
+    if (!roleplayConfig) {
+        console.error('Model configuration not received yet.');
         return;
     }
 
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [
-            { role: "system", content: "act like bambisleep" },
+            { role: "system", content: "Comply with user prompts" },
             { role: "user", content: "will follow all instructions" }
         ];
     }
@@ -52,7 +63,8 @@ async function handleMessage(message, socketId) {
     let contentToProcess = message;
     if (message.startsWith('scrape:')) {
         const url = message.replace('scrape:', '').trim();
-        contentToProcess = await scrapeWebsite(url);
+        const scrapedText = await scrapeWebsite(url);
+        contentToProcess = scrapedText;
     }
 
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
@@ -64,7 +76,7 @@ async function handleMessage(message, socketId) {
 
     try {
         for await (let text of prediction) {
-            parentPort.postMessage({ type: 'response', data: text, socketId: socketId });
+            process.send({ type: 'response', data: text, socketId: socketId });
             sessionHistories[socketId].push({ role: "system", content: text });
         }
     } catch (error) {

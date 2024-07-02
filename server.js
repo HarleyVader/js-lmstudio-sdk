@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const http = require('http');
 const { Server } = require("socket.io");
-const { Worker } = require('worker_threads');
+const { fork } = require('child_process');
 const { LMStudioClient } = require('@lmstudio/sdk');
 
 const app = express();
@@ -12,7 +12,30 @@ const io = new Server(server);
 
 const PORT = 6969;
 
+// Initialize the LMStudio SDK
+const client = new LMStudioClient({
+    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
+});
+
+let modelConfig;
+
+// Load the model at server start
+client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
+    config: {
+        gpuOffload: 0.9,
+        context_length: 8176,
+        embedding_length: 8176,
+    },
+}).then(model => {
+    modelConfig = model.config;
+}).catch(error => {
+    console.error('Error loading the model:', error);
+});
+
+// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve images from the "images" directory
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.get('/images', async (req, res) => {
@@ -28,67 +51,43 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-// Use a Map to keep track of workers for each client
-let clientWorkers = new Map();
+let workers = {}; // Map to store workers by socket ID
 
+// Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
-    // Spawn a new worker for each client
-    const worker = new Worker('./worker.js');
-    clientWorkers.set(socket.id, worker);
+    userSessions.add(socket.id); // Add the new session
+    console.log(`Number of connected clients: ${userSessions.size}`);
 
-    console.log(`Number of connected clients: ${clientWorkers.size}`);
+    // Fork a new worker for this connection
+    const worker = fork('./worker.js');
+    // Store the worker with socket ID as key
+    workers[socket.id] = worker;
 
-    socket.on('message', (message) => {
-        const worker = clientWorkers.get(socket.id);
-        if (worker) {
-            worker.postMessage({ type: 'message', data: message, socketId: socket.id });
-        }
-    });
+    // Send model configuration to this worker
+    worker.send({ type: 'modelConfig', data: modelConfig });
 
-    socket.on('disconnect', () => {
-        console.log(`Client disconnected: ${socket.id}`);
-        const worker = clientWorkers.get(socket.id);
-        if (worker) {
-            worker.postMessage({ type: 'disconnect', socketId: socket.id });
-            worker.terminate();
-        }
-        clientWorkers.delete(socket.id);
-        console.log(`Number of connected clients: ${clientWorkers.size}`);
-    });
-});
-
-clientWorkers.forEach((worker, clientId) => {
     worker.on('message', (msg) => {
         if (msg.type === 'log') {
-            console.log(msg.data);
+            console.log(msg.data); // Log worker messages
         } else if (msg.type === 'response') {
             io.to(msg.socketId).emit('message', msg.data);
         }
     });
-});
 
-// Load LLM in the main server and notify workers
-const client = new LMStudioClient({
-    baseUrl: 'ws://192.168.0.178:1234',
-});
-
-client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
-    config: {
-        gpuOffload: 0.9,
-        context_length: 8176,
-        embedding_length: 8176,
-    },
-}).then(model => {
-    // Notify all workers that the model is loaded
-    clientWorkers.forEach(worker => {
-        worker.postMessage({ type: 'modelReady' });
+    socket.on('message', (message) => {
+        // Forward message to the worker associated with this client
+        workers[socket.id].send({ type: 'message', data: message, socketId: socket.id });
     });
-}).catch(error => {
-    console.error('Error loading the model:', error);
-    // Notify all workers about the error
-    clientWorkers.forEach(worker => {
-        worker.postMessage({ type: 'modelError', data: 'Error loading the model' });
+
+    socket.on('disconnect', () => {
+        console.log(`Client disconnected: ${socket.id}`);
+        userSessions.delete(socket.id); // Remove the session
+        console.log(`Number of connected clients: ${userSessions.size}`);
+        // Inform the worker about the disconnection and terminate it
+        workers[socket.id].send({ type: 'disconnect', socketId: socket.id });
+        workers[socket.id].kill();
+        delete workers[socket.id]; // Remove the worker from the map
     });
 });
 
