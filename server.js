@@ -1,10 +1,10 @@
-//server.js
 const express = require('express');
 const path = require('path');
 const fs = require('fs').promises;
 const http = require('http');
 const { Server } = require("socket.io");
-const { fork } = require('child_process');
+const { Worker } = require('worker_threads');
+const { LMStudioClient } = require('@lmstudio/sdk');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,10 +12,7 @@ const io = new Server(server);
 
 const PORT = 6969;
 
-// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Serve images from the "images" directory
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.get('/images', async (req, res) => {
@@ -31,38 +28,69 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-// Fork the worker process
-const worker = fork('./worker.js');
+// Use a Map to keep track of workers for each client
+let clientWorkers = new Map();
 
-let userSessions = new Set(); // Use a Set to track unique user sessions
-
-// Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
-    userSessions.add(socket.id); // Add the new session
-    console.log(`Number of connected clients: ${userSessions.size}`);
+    // Spawn a new worker for each client
+    const worker = new Worker('./worker.js');
+    clientWorkers.set(socket.id, worker);
+
+    console.log(`Number of connected clients: ${clientWorkers.size}`);
 
     socket.on('message', (message) => {
-        // Forward message to worker
-        worker.send({ type: 'message', data: message, socketId: socket.id });
+        const worker = clientWorkers.get(socket.id);
+        if (worker) {
+            worker.postMessage({ type: 'message', data: message, socketId: socket.id });
+        }
     });
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
-        userSessions.delete(socket.id); // Remove the session
-        console.log(`Number of connected clients: ${userSessions.size}`);
-        // Inform worker about the disconnection
-        worker.send({ type: 'disconnect', socketId: socket.id });
+        const worker = clientWorkers.get(socket.id);
+        if (worker) {
+            worker.postMessage({ type: 'disconnect', socketId: socket.id });
+            worker.terminate();
+        }
+        clientWorkers.delete(socket.id);
+        console.log(`Number of connected clients: ${clientWorkers.size}`);
     });
 });
 
-// Receive messages from worker and forward them to the appropriate client
-worker.on('message', (msg) => {
-    if (msg.type === 'log') {
-        console.log(msg.data); // Log worker messages
-    } else if (msg.type === 'response') {
-        io.to(msg.socketId).emit('message', msg.data);
-    }
+clientWorkers.forEach((worker, clientId) => {
+    worker.on('message', (msg) => {
+        if (msg.type === 'log') {
+            console.log(msg.data);
+        } else if (msg.type === 'response') {
+            io.to(msg.socketId).emit('message', msg.data);
+        }
+    });
+});
+
+// Load LLM in the main server and notify workers
+const client = new LMStudioClient({
+    baseUrl: 'ws://192.168.0.178:1234',
+});
+
+client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
+    signal: controller.signal,
+    config: {
+        gpuOffload: 0.9,
+        context_length: 8176,
+        embedding_length: 8176,
+    },
+}).then(model => {
+    // Notify all workers that the model is loaded
+    clientWorkers.forEach(worker => {
+        worker.postMessage({ type: 'modelReady' });
+    });
+}).catch(error => {
+    console.error('Error loading the model:', error);
+    // Notify all workers about the error
+    clientWorkers.forEach(worker => {
+        worker.postMessage({ type: 'modelError', data: 'Error loading the model' });
+    });
 });
 
 server.listen(PORT, () => {
