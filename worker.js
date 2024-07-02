@@ -21,10 +21,10 @@ async function scrapeURL(url) {
 
 async function handleInteraction(message) {
     try {
+        let result;
         if (message.startsWith('scrape: ')) {
             const url = message.replace('scrape: ', '').trim();
-            const scrapeResult = await scrapeURL(url);
-            parentPort.postMessage(scrapeResult);
+            result = await scrapeURL(url);
         } else {
             const response = await client.llm.generate({
                 prompt: message,
@@ -36,14 +36,16 @@ async function handleInteraction(message) {
             });
 
             if (response && response.data) {
-                // Ensure the response is serializable
-                parentPort.postMessage({ success: true, data: response.data });
+                result = { success: true, data: response.data };
             } else {
-                // Handle unexpected response format
-                parentPort.postMessage({ success: false, error: "Unexpected response format from LMStudioClient" });
+                result = { success: false, error: "Unexpected response format from LMStudioClient" };
             }
         }
+        // Ensure result is serializable
+        const serializableResult = JSON.parse(JSON.stringify(result));
+        parentPort.postMessage(serializableResult);
     } catch (error) {
+        console.error("Error in handleInteraction:", error);
         parentPort.postMessage({ success: false, error: `Error generating response: ${error.message}` });
     }
 }
