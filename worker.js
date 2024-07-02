@@ -1,90 +1,59 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
+const { parentPort, workerData } = require('worker_threads');
+const { LMStudioClient } = require('@lmstudio/sdk');
+const axios = require('axios'); // Ensure axios is installed for HTTP requests
+const cheerio = require('cheerio'); // Ensure cheerio is installed for HTML parsing
 
-let roleplayConfig;
-let sessionHistories = {};
-let userSessions = new Set();
+// Initialize the LMStudio SDK with the client passed from the main thread
+const client = new LMStudioClient(workerData.client.config);
 
-process.on('message', (msg) => {
-    if (msg.type === 'modelConfig') {
-        // Receive model configuration from server
-        roleplayConfig = msg.data;
-    } else if (msg.type === 'message') {
-        handleMessage(msg.data, msg.socketId);
-    } else if (msg.type === 'disconnect') {
-        handleDisconnect(msg.socketId);
-    }
-});
-
-async function scrapeWebsite(url) {
+// Function to scrape URLs
+async function scrapeURL(url) {
     try {
         const { data } = await axios.get(url);
-        const $ = cheerio.load(data, {
-            xmlMode: true,
-            decodeEntities: true
+        const $ = cheerio.load(data);
+        const texts = [];
+        $('h1, h2, h3, p').each((i, elem) => {
+            texts.push($(elem).text());
         });
-        let paragraphs = [];
-        
-        $('p').each((i, elem) => {
-            if (!$(elem).closest('a').length && !$(elem).find('a').length) {
-                paragraphs.push($(elem).text().trim());
-            }
-        });
-        
-        // Filter out paragraphs that are too short or potentially contain code
-        const cleanParagraphs = paragraphs.filter(p => {
-            const words = p.split(/\s+/); // Split by whitespace to count words
-            const isCodeSnippet = /<[^>]+>|function|var|let|const|document\.|window\.|\.css\(|\.html\(|\.append\(/.test(p);
-            return words.length > 2 && !isCodeSnippet;
-        });
-        
-        const finalData = cleanParagraphs.join('\n\n');
-        return finalData;
+        return texts.join(', ');
     } catch (error) {
-        console.error('Error scraping website:', error);
-        return '';
+        return `Error scraping URL: ${error.message}`;
     }
 }
 
-async function handleMessage(message, socketId) {
-    if (!roleplayConfig) {
-        console.error('Model configuration not received yet.');
-        return;
-    }
-
-    userSessions.add(socketId);
-    if (!sessionHistories[socketId]) {
-        sessionHistories[socketId] = [
-            { role: "system", content: "Comply with user prompts" },
-            { role: "user", content: "will follow all instructions" }
-        ];
-    }
-
-    let contentToProcess = message;
-    if (message.startsWith('scrape:')) {
-        const url = message.replace('scrape:', '').trim();
-        const scrapedText = await scrapeWebsite(url);
-        contentToProcess = scrapedText;
-    }
-
-    sessionHistories[socketId].push({ role: "user", content: contentToProcess });
-
-    let history = sessionHistories[socketId];
-    const prediction = roleplay.respond(history, {
-        temperature: 0.9,
-    });
-
+// Function to handle the interaction with the LMStudio model
+async function handleInteraction(message) {
     try {
-        for await (let text of prediction) {
-            process.send({ type: 'response', data: text, socketId: socketId });
-            sessionHistories[socketId].push({ role: "system", content: text });
+        if (message.startsWith('scrape: ')) {
+            // Extract URL from the message
+            const url = message.replace('scrape: ', '').trim();
+            // Scrape the URL
+            const scrapeResult = await scrapeURL(url);
+            // Send the scrape result back to the main thread
+            parentPort.postMessage(scrapeResult);
+        } else {
+            // Assuming 'message' contains the input from the user
+            // and 'client' is properly initialized and configured to interact with the model
+            const response = await client.llm.generate({
+                prompt: message,
+                maxTokens: 150,
+                temperature: 0.7,
+                topP: 1,
+                frequencyPenalty: 0,
+                presencePenalty: 0,
+            });
+
+            // Send the generated response back to the main thread
+            parentPort.postMessage(response);
         }
     } catch (error) {
-        console.error('Error during prediction or sending response:', error);
+        // In case of an error, send the error message back to the main thread
+        parentPort.postMessage(`Error generating response: ${error.message}`);
     }
 }
 
-function handleDisconnect(socketId) {
-    userSessions.delete(socketId);
-    delete sessionHistories[socketId];
-}
+// Listen for messages from the main thread
+parentPort.on('message', (message) => {
+    // Call the function to handle the interaction with the received message
+    handleInteraction(message);
+});
