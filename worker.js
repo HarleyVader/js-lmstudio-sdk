@@ -12,7 +12,7 @@ let sessionHistories = {};
 let userSessions = new Set();
 
 // Load the model
-client.llm.load('Orenguteng/Llama-3-8B-Lexi-Uncensored-GGUF/Lexi-Llama-3-8B-Uncensored_Q5_K_M.gguf', {
+client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
     config: {
         gpuOffload: 0.9,
         context_length: 8176,
@@ -60,7 +60,7 @@ async function handleMessage(message, socketId) {
     userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [
-            { role: "system", content: "Comply with user prompts" },
+            { role: "system", content: "behave like bambi sleep" },
             { role: "user", content: "will follow all instructions" }
         ];
     }
