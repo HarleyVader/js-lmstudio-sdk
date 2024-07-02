@@ -1,10 +1,10 @@
+// Import necessary libraries
 const express = require('express');
 const path = require('path');
 const fs = require('fs').promises;
 const http = require('http');
 const { Server } = require("socket.io");
-const { Worker } = require('worker_threads');
-const { LMStudioClient } = require('@lmstudio/sdk');
+const { fork } = require('child_process');
 
 const app = express();
 const server = http.createServer(app);
@@ -31,72 +31,38 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-// Initialize the LMStudio SDK
-const client = new LMStudioClient({
-    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
-});
+// Fork the worker process
+const worker = fork('./worker.js');
 
-// Load the model at server start
-client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
-    config: {
-        gpuOffload: 0.9,
-        context_length: 8176,
-        embedding_length: 8176,
-    },
-}).then(model => {
-    modelConfig = model.config;
-}).catch(error => {
-    console.error('Error loading the model:', error);
-});
+let userSessions = new Set(); // Use a Set to track unique user sessions
 
-// Map to track connected users
-const userConnections = new Map();
-
-// Socket.IO setup for handling client interactions
+// Handle connection
 io.on('connection', (socket) => {
-    console.log(`A user connected with id: ${socket.id}`);
-    // Add the user to the map
-    userConnections.set(socket.id, { /* additional info can be stored here */ });
+    console.log(`Client connected: ${socket.id}`);
+    userSessions.add(socket.id); // Add the new session
+    console.log(`Number of connected clients: ${userSessions.size}`);
 
-    // Log the amount of connected users
-    console.log(`Total connected users: ${userConnections.size}`);
-
-socket.on('message', (msg) => {
-            console.log('Message from client:', msg);
-            // Pass only necessary data to the worker
-            const worker = new Worker('./worker.js', {
-                workerData: {
-                    message: msg,
-                    clientConfig: client.config, // Assuming client.config contains the necessary configuration
-                    llmConfig: modelConfig // Pass the llm configuration to the worker
-                }
-            });
-
-        worker.on('message', (result) => {
-            console.log('Message from worker:', result);
-            // Emit the result back to the client
-            socket.emit('message', result);
-        });
-
-        worker.on('error', (error) => {
-            console.error('Worker error:', error);
-            socket.emit('message', 'Error processing your request');
-        });
-
-        worker.on('exit', (code) => {
-            if (code !== 0)
-                console.error(`Worker stopped with exit code ${code}`);
-        });
+    socket.on('message', (message) => {
+        // Forward message to worker
+        worker.send({ type: 'message', data: message, socketId: socket.id });
     });
 
     socket.on('disconnect', () => {
-        console.log(`User disconnected with id: ${socket.id}`);
-        // Remove the user from the map
-        userConnections.delete(socket.id);
-
-        // Log the updated amount of connected users
-        console.log(`Total connected users: ${userConnections.size}`);
+        console.log(`Client disconnected: ${socket.id}`);
+        userSessions.delete(socket.id); // Remove the session
+        console.log(`Number of connected clients: ${userSessions.size}`);
+        // Inform worker about the disconnection
+        worker.send({ type: 'disconnect', socketId: socket.id });
     });
+});
+
+// Receive messages from worker and forward them to the appropriate client
+worker.on('message', (msg) => {
+    if (msg.type === 'log') {
+        console.log(msg.data); // Log worker messages
+    } else if (msg.type === 'response') {
+        io.to(msg.socketId).emit('message', msg.data);
+    }
 });
 
 server.listen(PORT, () => {
