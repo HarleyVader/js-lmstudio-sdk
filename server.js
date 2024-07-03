@@ -79,7 +79,7 @@ client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-
     config: {
         gpuOffload: 0.9,
         context_length: 8176,
-        embedding_length: 8176,
+        embedding_length: 1024,
     },
 }).then(model => {
     // Instead of passing the model directly, pass an identifier or necessary config
