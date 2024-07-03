@@ -119,7 +119,7 @@
     <div id="chat-container">
         <div id="user-input">
             <h1>BambiSleep AI GF</h1>
-            <h5>Make her read a bambi sleep script from a site. She will remember the last 10 prompts</h5>
+            <h5>[SCRAPE URL] write "scrape: URL" in the prompt</h5>
             <h6>its a prototype bambi who needs at least 20 words or more</h6>
             <textarea id="textarea" oninput="autoExpand(this)"
                 placeholder="Tell bambi AI how to behave with many words!"></textarea>
@@ -165,7 +165,7 @@
             // Define the message payload, formatting the message as Discord expects
             const payload = JSON.stringify({
                 content: message,
-                username: 'BambiSleep AI GF', // Optional: Customize the webhook message username
+                username: 'BS', // Optional: Customize the webhook message username
             });
             // Send the request with the payload
             xhr.send(payload);
