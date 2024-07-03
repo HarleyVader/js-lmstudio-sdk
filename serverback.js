@@ -51,40 +51,30 @@ client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-
 });
 
 
-
-// Socket.IO setup for handling client interactions
 io.on('connection', (socket) => {
-    console.log('A user connected');
+    console.log('Client connected');
+    
 
-    socket.on('message', (msg) => {
-        console.log('Message from client:', msg);
-        // Spawn a worker to handle the LLMS interactions
-        const worker = new Worker('./worker.js', {
-            workerData: {
-                message: msg,
-                client: client
-            }
-        });
+    // Spawn a worker thread on client connect
+    const worker = new Worker('./worker.js');
 
-        worker.on('message', (result) => {
-            console.log('Message from worker:', result);
-            // Emit the result back to the client
-            socket.emit('message', result);
-        });
-
-        worker.on('error', (error) => {
-            console.error('Worker error:', error);
-            socket.emit('message', 'Error processing your request');
-        });
-
-        worker.on('exit', (code) => {
-            if (code !== 0)
-                console.error(`Worker stopped with exit code ${code}`);
-        });
+    // Handle client messages
+    socket.on('message', (message) => {
+        // Send the message to the worker thread
+        worker.postMessage(message);
     });
 
+    // Receive reply from the worker thread
+    worker.on('message', (reply) => {
+        // Send the reply to the client
+        socket.emit('reply', reply);
+    });
+
+    // Handle client disconnect
     socket.on('disconnect', () => {
-        console.log('User disconnected');
+        console.log('Client disconnected');
+        // Terminate the worker thread
+        worker.terminate();
     });
 });
 

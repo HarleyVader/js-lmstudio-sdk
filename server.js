@@ -1,10 +1,11 @@
-// Import necessary libraries
+// server.js
 const express = require('express');
 const path = require('path');
 const fs = require('fs').promises;
 const http = require('http');
 const { Server } = require("socket.io");
-const { fork } = require('child_process');
+const { Worker } = require('worker_threads');
+const { LMStudioClient } = require('@lmstudio/sdk');
 
 const app = express();
 const server = http.createServer(app);
@@ -31,8 +32,8 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-// Fork the worker process
-const worker = fork('./worker.js');
+// Initialize worker using worker_threads instead of child_process
+const worker = new Worker('./worker.js');
 
 let userSessions = new Set(); // Use a Set to track unique user sessions
 
@@ -44,7 +45,7 @@ io.on('connection', (socket) => {
 
     socket.on('message', (message) => {
         // Forward message to worker
-        worker.send({ type: 'message', data: message, socketId: socket.id });
+        worker.postMessage({ type: 'message', data: message, socketId: socket.id });
     });
 
     socket.on('disconnect', () => {
@@ -52,7 +53,7 @@ io.on('connection', (socket) => {
         userSessions.delete(socket.id); // Remove the session
         console.log(`Number of connected clients: ${userSessions.size}`);
         // Inform worker about the disconnection
-        worker.send({ type: 'disconnect', socketId: socket.id });
+        worker.postMessage({ type: 'disconnect', socketId: socket.id });
     });
 });
 
@@ -67,4 +68,32 @@ worker.on('message', (msg) => {
 
 server.listen(PORT, () => {
     console.log(`Server listening on *:${PORT}`);
+});
+
+const client = new LMStudioClient({
+    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
+});
+
+// After successfully loading the model in the main thread
+client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
+    config: {
+        gpuOffload: 0.9,
+        context_length: 8176,
+        embedding_length: 8176,
+    },
+}).then(model => {
+    // Instead of passing the model directly, pass an identifier or necessary config
+    worker.postMessage({
+        type: 'modelLoaded',
+        modelConfig: {
+            identifier: 'TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf',
+            config: {
+                gpuOffload: 0.9,
+                context_length: 8176,
+                embedding_length: 8176,
+            }
+        }
+    });
+}).catch(error => {
+    console.error('Error loading the model:', error);
 });

@@ -1,35 +1,32 @@
-const { LMStudioClient } = require('@lmstudio/sdk');
+// worker.js
+const { parentPort } = require('worker_threads');
 const axios = require('axios');
 const cheerio = require('cheerio');
-
-// Initialize the LMStudio SDK
-const client = new LMStudioClient({
-    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
-});
+const { LMStudioClient } = require('@lmstudio/sdk');
 
 let roleplay;
 let sessionHistories = {};
-let userSessions = new Set();
 
-// Load the model
-client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
-    config: {
-        gpuOffload: 0.9,
-        context_length: 8176,
-        embedding_length: 8176,
-    },
-}).then(model => {
-    roleplay = model;
-}).catch(error => {
-    console.error('Error loading the model:', error);
-    process.send({ type: 'log', data: 'Error loading the model' });
-});
-
-process.on('message', (msg) => {
+parentPort.on('message', async (msg) => {
     if (msg.type === 'message') {
         handleMessage(msg.data, msg.socketId);
     } else if (msg.type === 'disconnect') {
         handleDisconnect(msg.socketId);
+    } else if (msg.type === 'modelLoaded') {
+        // Load the model within the worker
+        const client = new LMStudioClient({
+            baseUrl: 'ws://192.168.0.178:1234', // Use the same LMStudio server address
+        });
+
+        try {
+            const model = await client.llm.get(msg.modelConfig.identifier, {
+                config: msg.modelConfig.config
+            });
+            roleplay = model;
+            console.log('Model loaded successfully in worker');
+        } catch (error) {
+            console.error('Error loading the model in worker:', error);
+        }
     }
 });
 
@@ -57,7 +54,6 @@ async function handleMessage(message, socketId) {
         return;
     }
 
-    userSessions.add(socketId);
     if (!sessionHistories[socketId]) {
         sessionHistories[socketId] = [
             { role: "system", content: "behave like bambi sleep" },
@@ -81,7 +77,7 @@ async function handleMessage(message, socketId) {
 
     try {
         for await (let text of prediction) {
-            process.send({ type: 'response', data: text, socketId: socketId });
+            parentPort.postMessage({ type: 'response', data: text, socketId: socketId });
             sessionHistories[socketId].push({ role: "system", content: text });
         }
     } catch (error) {
@@ -90,6 +86,5 @@ async function handleMessage(message, socketId) {
 }
 
 function handleDisconnect(socketId) {
-    userSessions.delete(socketId);
     delete sessionHistories[socketId];
 }
