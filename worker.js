@@ -8,7 +8,9 @@ let roleplay;
 let sessionHistories = {};
 
 parentPort.on('message', async (msg) => {
-    if (msg.type === 'message') {
+    if (msg.type === 'collar') {
+        handleCollar(msg.data.collar, msg.data.prompt, msg.socketId);
+    } else if (msg.type === 'message') {
         handleMessage(msg.data, msg.socketId);
     } else if (msg.type === 'disconnect') {
         handleDisconnect(msg.socketId);
@@ -35,11 +37,11 @@ async function scrapeWebsite(url) {
         const { data } = await axios.get(url);
         const $ = cheerio.load(data);
         let paragraphs = [];
-        
+
         $('p').each((i, elem) => {
             paragraphs.push($(elem).text().trim());
         });
-        
+
         const finalData = paragraphs.join('\n\n');
         return finalData; // Return the concatenated text content of all <p> elements
     } catch (error) {
@@ -48,27 +50,40 @@ async function scrapeWebsite(url) {
     }
 }
 
-async function handleMessage(message, socketId) {
+async function handleCollar(collarText, userPrompt, socketId) {
     if (!roleplay) {
         console.error('Model not loaded yet.');
         return;
     }
 
+    // Replace the system role with the provided collar text
+    sessionHistories[socketId] = [
+        { role: "system", content: collarText },
+        { role: "user", content: userPrompt }
+    ];
+
+    // Process the user prompt as usual
+    await handleMessage(userPrompt, socketId); // Added await here to ensure asynchronous execution
+}
+
+async function handleMessage(content, socketId) {
+    // Initialize sessionHistories[socketId] as an array if it doesn't exist
     if (!sessionHistories[socketId]) {
-        sessionHistories[socketId] = [
-            { role: "system", content: "behave like bambi sleep" },
-            { role: "user", content: "will follow all instructions" }
-        ];
+        sessionHistories[socketId] = [];
     }
 
-    let contentToProcess = message;
-    if (message.startsWith('scrape:')) {
-        const url = message.replace('scrape:', '').trim();
+    let contentToProcess = content;
+    if (content.startsWith('scrape:')) {
+        const url = content.replace('scrape:', '').trim();
         const scrapedText = await scrapeWebsite(url);
         contentToProcess = scrapedText;
     }
-
     sessionHistories[socketId].push({ role: "user", content: contentToProcess });
+
+    if (!roleplay) {
+        console.error('Model not loaded yet.');
+        return;
+    }
 
     let history = sessionHistories[socketId];
     const prediction = roleplay.respond(history, {

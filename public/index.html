@@ -119,10 +119,17 @@
     <div id="chat-container">
         <div id="user-input">
             <h1>BambiSleep AI GF</h1>
-            <h5>[SCRAPE URL] write "scrape: URL" in the prompt</h5>
-            <h6>its a prototype bambi who needs at least 20 words or more</h6>
-            <textarea id="textarea" oninput="autoExpand(this)"
-                placeholder="Tell bambi AI how to behave with many words!"></textarea>
+            <h5>[SCRAPE SITE] write "scrape:" then the full sites address</h5>
+            <h6>its a prototype. She is stable butt if it fails then reload & retry as i was updating her</h6>
+            <textarea id="collar" oninput="autoExpand(this)"
+                placeholder="Tell her exactly in detail how to behave!"></textarea>
+            <div>
+                <br>
+                <button id="colar-submit" type="colar-submit">Collar</button>
+                <br>
+                <div id="user-collar"></div>
+            </div>
+            <textarea id="textarea" oninput="autoExpand(this)" placeholder="Your replies to my AI GF"></textarea>
             <div>
                 <br>
                 <button id="submit" type="submit">Submit</button>
@@ -195,6 +202,15 @@
                 // Reset the current message
                 currentMessage = '';
             }
+        });
+
+        document.getElementById('colar-submit').addEventListener('click', () => {
+            const collarText = document.getElementById('collar').value;
+            document.getElementById('user-collar').textContent = collarText;
+            // Send the collar text along with the user prompt to the worker
+            socket.emit('collar', { collar: collarText, prompt: textarea.value });
+            // Clear the collar textarea
+            document.getElementById('collar').value = '';
         });
 
         // Add an event listener to the submit button
