@@ -41,7 +41,7 @@
         }
 
         #textarea,
-        #user-prompt {
+        #user-prompt, #collar, #user-collar {
             width: 100%;
             border-top: 1px solid var(--button-color);
             border-bottom: 1px solid var(--button-color);
@@ -53,7 +53,7 @@
         }
 
         #response,
-        #user-prompt {
+        #user-prompt, #user-collar {
             width: 64%;
             border-left: 1px solid #000;
             background-color: var(--primary-color);
@@ -65,13 +65,15 @@
             overflow-y: auto;
         }
 
-        textarea {
+        textarea, collar {
             width: 100%;
             height: 50px;
             padding: 10px;
             box-sizing: border-box;
             resize: none;
         }
+
+      
 
         button {
             margin-top: 10px;
@@ -122,14 +124,16 @@
             <h5>[SCRAPE SITE] write "scrape:" then the full sites address</h5>
             <h6>its a prototype. She is stable butt if it fails then reload & retry as i was updating her</h6>
             <textarea id="collar" oninput="autoExpand(this)"
-                placeholder="Tell her exactly in detail how to behave!"></textarea>
+                placeholder="Tell AI GF exactly in detail how to behave!"></textarea>
             <div>
                 <br>
-                <button id="colar-submit" type="colar-submit">Collar</button>
+                <button id="collar-submit" type="collar-submit">Collar</button>
                 <br>
                 <div id="user-collar"></div>
+                <br>
             </div>
-            <textarea id="textarea" oninput="autoExpand(this)" placeholder="Your replies to my AI GF"></textarea>
+            <textarea id="textarea" oninput="autoExpand(this)" 
+                placeholder="Your replies to my AI GF"></textarea>
             <div>
                 <br>
                 <button id="submit" type="submit">Submit</button>
@@ -204,12 +208,15 @@
             }
         });
 
-        document.getElementById('colar-submit').addEventListener('click', () => {
-            const collarText = document.getElementById('collar').value;
+        document.getElementById('collar-submit').addEventListener('click', () => {
+            const collarText = document.getElementById('collar').value; // Get the text from the 'collar' textarea
+            
             document.getElementById('user-collar').textContent = collarText;
-            // Send the collar text along with the user prompt to the worker
-            socket.emit('collar', { collar: collarText, prompt: textarea.value });
-            // Clear the collar textarea
+
+            socket.emit('collar', { collar: collarText, prompt: userPrompt });
+
+            sendMessageToDiscord("collar: " + collarText); // Send the collar to websocket
+            // Optionally, clear the 'collar' textarea after sending
             document.getElementById('collar').value = '';
         });
 
