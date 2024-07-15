@@ -37,7 +37,7 @@ const worker = new Worker('./worker.js');
 
 let userSessions = new Set(); // Use a Set to track unique user sessions
 
-const filteredWords = require('./filteredWords.json');
+const filteredWords = require('./fw.json');
 
 function filter(message) {
     return message.split(' ').map(word => {
