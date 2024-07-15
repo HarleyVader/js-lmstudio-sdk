@@ -37,6 +37,14 @@ const worker = new Worker('./worker.js');
 
 let userSessions = new Set(); // Use a Set to track unique user sessions
 
+const filteredWords = require('./filteredWords.json');
+
+function filter(message) {
+    return message.split(' ').map(word => {
+        return filteredWords.includes(word.toLowerCase()) ? ' ' : word;
+    }).join(' ');
+}
+
 // Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
@@ -44,8 +52,11 @@ io.on('connection', (socket) => {
     console.log(`Number of connected clients: ${userSessions.size}`);
 
     socket.on('message', (message) => {
-        // Forward message to worker
-        worker.postMessage({ type: 'message', data: message, socketId: socket.id });
+        console.log(`Message from ${socket.id}: ${message}`);
+        const filteredMessage = filter(message);
+        console.log(`Filtered message: ${filteredMessage}`);
+        worker.postMessage({ type: 'message', data: filteredMessage, socketId: socket.id });
+        
     });
 
     socket.on('disconnect', () => {
@@ -55,6 +66,9 @@ io.on('connection', (socket) => {
         // Inform worker about the disconnection
         worker.postMessage({ type: 'disconnect', socketId: socket.id });
     });
+    
+    
+
 });
 
 // Receive messages from worker and forward them to the appropriate client
