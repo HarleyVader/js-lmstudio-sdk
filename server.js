@@ -86,22 +86,22 @@ const client = new LMStudioClient({
 });
 
 // After successfully loading the model in the main thread
-client.llm.load('Ttimofeyka/MistralRP-Noromaid-NSFW-Mistral-7B-GGUF/MistralRP-Noromaid-NSFW-7B-Q5_K_M.gguf', {
+client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
     config: {
         gpuOffload: 0.5,
         context_length: 8192,
-        embedding_length: 192,
+        embedding_length: 512,
     },
 }).then(model => {
     // Instead of passing the model directly, pass an identifier or necessary config
     worker.postMessage({
         type: 'modelLoaded',
         modelConfig: {
-            identifier: 'Ttimofeyka/MistralRP-Noromaid-NSFW-Mistral-7B-GGUF/MistralRP-Noromaid-NSFW-7B-Q5_K_M.gguf',
+            identifier: 'TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf',
             config: {
                 gpuOffload: 0.5,
                 context_length: 8192,
-                embedding_length: 192,
+                embedding_length: 512,
             }
         }
     });
