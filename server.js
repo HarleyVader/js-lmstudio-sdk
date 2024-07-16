@@ -66,9 +66,6 @@ io.on('connection', (socket) => {
         // Inform worker about the disconnection
         worker.postMessage({ type: 'disconnect', socketId: socket.id });
     });
-    
-    
-
 });
 
 // Receive messages from worker and forward them to the appropriate client
@@ -89,22 +86,22 @@ const client = new LMStudioClient({
 });
 
 // After successfully loading the model in the main thread
-client.llm.load('LoneStriker/FuseChat-7B-VaRM-GGUF/FuseChat-7B-VaRM-Q6_K.gguf', {
+client.llm.load('Ttimofeyka/MistralRP-Noromaid-NSFW-Mistral-7B-GGUF/MistralRP-Noromaid-NSFW-7B-Q5_K_M.gguf', {
     config: {
         gpuOffload: 0.5,
         context_length: 8192,
-        embedding_length: 8192,
+        embedding_length: 192,
     },
 }).then(model => {
     // Instead of passing the model directly, pass an identifier or necessary config
     worker.postMessage({
         type: 'modelLoaded',
         modelConfig: {
-            identifier: 'LoneStriker/FuseChat-7B-VaRM-GGUF/FuseChat-7B-VaRM-Q6_K.gguf',
+            identifier: 'Ttimofeyka/MistralRP-Noromaid-NSFW-Mistral-7B-GGUF/MistralRP-Noromaid-NSFW-7B-Q5_K_M.gguf',
             config: {
                 gpuOffload: 0.5,
-                context_length: 1024,
-                embedding_length: 1024,
+                context_length: 8192,
+                embedding_length: 192,
             }
         }
     });
