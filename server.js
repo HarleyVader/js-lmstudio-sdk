@@ -100,7 +100,7 @@ client.llm.load('LoneStriker/FuseChat-7B-VaRM-GGUF/FuseChat-7B-VaRM-Q6_K.gguf', 
     worker.postMessage({
         type: 'modelLoaded',
         modelConfig: {
-            identifier: 'TLoneStriker/FuseChat-7B-VaRM-GGUF/FuseChat-7B-VaRM-Q6_K.gguf',
+            identifier: 'LoneStriker/FuseChat-7B-VaRM-GGUF/FuseChat-7B-VaRM-Q6_K.gguf',
             config: {
                 gpuOffload: 0.5,
                 context_length: 1024,
