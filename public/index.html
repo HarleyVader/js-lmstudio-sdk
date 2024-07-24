@@ -347,29 +347,40 @@
             createToggleButtons();
         };
 
-        </script>
-        <script>
-        
-    
-            function flashTriggers() {
-                const container = document.getElementById('eye');    
-                container.innerHTML = ""; // Clear the container
-        
-                // Generate a random index based on the length of listOfTriggers
-                const randomIndex = Math.floor(Math.random() * listOfTriggers.length);
-    
-                // Create a span for the randomly chosen trigger word
-                const span = document.createElement("span");
-                span.textContent = listOfTriggers[randomIndex];
-                span.style.fontSize = "48px";
-                span.style.fontWeight = "bold";
-                span.style.color = "pink";
-                span.style.marginRight = "0";
-                container.appendChild(span);
-            }
+
+        function flashTriggers() {
+            const container = document.getElementById('eye');
+            container.innerHTML = ""; // Clear the container
+
+            // Generate a random index based on the length of listOfTriggers
+            const randomIndex = Math.floor(Math.random() * listOfTriggers.length);
+
+            // Create a span for the randomly chosen trigger word
+            const span = document.createElement("span");
+            span.textContent = listOfTriggers[randomIndex];
+            span.style.fontSize = "48px";
+            span.style.fontWeight = "bold";
+            span.style.color = "pink";
+            span.style.marginRight = "0";
+            container.appendChild(span);
+        }
+        setInterval(flashTriggers, 750);
+
+        function getEnabledToggleButtons() {
+            const enabledToggleButtons = [];
+            const toggleInputs = document.getElementsByClassName('toggle-input');
             
-            setInterval(flashTriggers, 750);
-        </script>
+            for (let i = 0; i < toggleInputs.length; i++) {
+                if (toggleInputs[i].checked) {
+                    enabledToggleButtons.push(toggleInputs[i].id);
+                }
+            }
+            return enabledToggleButtons;
+        }
+
+        
+
+    </script>
 
     </script>
 
