@@ -88,12 +88,13 @@ async function handleMessage(content, socketId) {
     let history = sessionHistories[socketId];
     const prediction = roleplay.respond(history, {
         temperature: 0.9,
+        max_tokens: 256,
     });
 
     try {
         for await (let text of prediction) {
             parentPort.postMessage({ type: 'response', data: text, socketId: socketId });
-            sessionHistories[socketId].push({ role: "system", content: text });
+            sessionHistories[socketId].push({ role: "user", content: text });
         }
     } catch (error) {
         console.error('Error during prediction or sending response:', error);

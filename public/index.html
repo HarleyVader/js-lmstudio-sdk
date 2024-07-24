@@ -5,11 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bambi Sleep AI GF</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
             --primary-color: #112727;
             --primary-alt: #216969;
-        
+
             --secondary-color: #1f0117;
             --tertiary-color: #f2f2f2;
             --button-color: #d4046c;
@@ -24,12 +25,17 @@
         }
 
         #chat-container {
+            padding-left: 0.25em;
+            margin-right: 0.3em;
             display: flex;
-            height: 100vh;
+            height: 97.5vh;
+            border: solid 1px var(--button-color);
+            border-radius: 10px;
         }
 
-        #user-input,
-        #response {
+        #user-input {
+            display: flex;
+            flex-direction: column;
             width: 35%;
             padding: 1em;
             overflow-y: auto;
@@ -37,13 +43,10 @@
 
         }
 
-        #user-input {
-            display: flex;
-            flex-direction: column;
-        }
-
         #textarea,
-        #user-prompt, #collar, #user-collar {
+        #user-prompt,
+        #collar,
+        #user-collar {
             width: 100%;
             border-top: 1px solid var(--button-color);
             border-bottom: 1px solid var(--button-color);
@@ -54,20 +57,139 @@
             padding-bottom: 1em;
         }
 
-        #response,
-        #user-prompt, #user-collar {
-            width: 64%;
+        #user-prompt,
+        #user-collar {
             border-left: 1px solid #000;
             background-color: var(--primary-color);
             color: var(--primary-alt);
         }
 
-        #response {
-            padding: 1em;
-            overflow-y: auto;
+        #response-container {
+            display: flex;
+            flex-direction: column;
+            width: 99%;
+
         }
 
-        textarea, collar {
+        #response {
+            flex-direction: column;
+            display: flex;
+            padding: 1em;
+            overflow-y: 1;
+            position: relative;
+            border-left: 1px solid #000;
+            background-color: var(--primary-color);
+            color: var(--primary-alt);
+            height: 40%;
+        }
+
+        #eyeCursor {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+            font-size: 48px;
+            font-weight: bold;
+            color: rgb(252, 72, 186);
+            text-shadow: 10px 10px 10px rgb(238, 93, 249);
+            text-align: center;
+            margin-top: 1%;
+            background-color: transparent;
+            position: relative;
+            height: 59%;
+
+        }
+
+        #eye {
+            position: absolute;
+            top: 50%;
+            /* Center vertically */
+            left: 50%;
+            /* Center horizontally */
+            transform: translate(-50%, -50%);
+            /* Adjust to perfectly center */
+            text-align: center;
+            /* Center the text inside the div */
+        }
+
+        #trigger-toggles {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: auto;
+            align-items: auto;
+            background-color: var(--primary-color);
+            color: var(--tertiary-color);
+            border-top: 1px solid var(--button-color);
+            border-bottom: 1px solid var(--button-color);
+        }
+
+        /*
+        label {
+            display: inline-block;
+            align-items: center;
+            align-content: center;
+            justify-content: center;
+            text-transform: capitalize;
+            background-color: var(--button-color);
+            color: var(--tertiary-color);
+            border: var(--secondary-color) 2px ridge;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin: 0.1rem;
+            padding: 0 0.5rem 0 0.5rem;
+        }
+
+        label:hover {
+            background-color: var(--primary-alt);
+            padding: 0 0.5rem 0 0.5rem;
+            margin: 0.1rem;
+        }
+*/
+        /* Style the toggle input */
+        .toggle-label {
+            display: inline-block;
+            align-items: center;
+            align-content: center;
+            justify-content: center;
+            text-transform: capitalize;
+            border: var(--secondary-color) 3px ridge;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin: 0.1rem;
+            padding: 0 0.5rem 0 0.5rem;
+        }
+
+        .toggle-label:hover {
+            background-color: var(--primary-alt);
+            padding: 0 0.5rem 0 0.5rem;
+            margin: 0.1rem;
+        }
+
+        .toggle-input {
+            display: none;
+        }
+
+        .toggle-input:checked+.toggle-label {
+            background-color: var(--secondary-color);
+            color: var(--button-color);
+        }
+
+        .toggle-input:checked+.toggle-label::before {
+            content: "✓";
+            margin-right: 0.5rem;
+        }
+
+        .toggle-input:disabled+.toggle-label {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+        }
+
+        .toggle-input:disabled+.toggle-label::before {
+            content: "";
+        }
+
+        textarea,
+        collar {
             width: 100%;
             height: 50px;
             padding: 10px;
@@ -75,9 +197,8 @@
             resize: none;
         }
 
-      
-
         button {
+            color: var(#110000);
             margin-top: 10px;
             border-radius: 3.14rem;
             font-weight: bold;
@@ -97,8 +218,23 @@
             color: var(--button-color);
         }
 
+        nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: var(--primary-color);
+            color: var(--tertiary-color);
+            padding: 0.1em;
+            border: #d4046c 1px;
+            border-style: ridge;
+        }
+
         a {
             color: var(--tertiary-color);
+        }
+
+        a:hover {
+            color: var(--button-color);
         }
 
         h1 {
@@ -117,13 +253,13 @@
         <a href="/">bambisleep.chat</a>
         <a href="/images">Images</a>
         <a href="https://www.patreon.com/fabricofsissies/membership">PATREON</a>
-        <a
-            href="https://www.likera.com/forum/mybb/Thread-bambisleep-chat-Multipurpose-Bambi-Sleep-oriented-AI-GF">Like Ra's</a>
+        <a href="https://www.likera.com/forum/mybb/Thread-bambisleep-chat-Multipurpose-Bambi-Sleep-oriented-AI-GF">Like
+            Ra's</a>
+        <a href=""></a>
     </nav>
     <div id="chat-container">
         <div id="user-input">
-            <h1>BambiSleep AI GF</h1>
-            <h5>its a prototype! she bitching? copy your Collar & reload!</h5>
+            <h1>BambiSleep AI GF 👁️</h1>
             <textarea id="collar" oninput="autoExpand(this)"
                 placeholder="Tell bambi AI GF how you need her to behave!"></textarea>
             <div>
@@ -132,9 +268,8 @@
                 <div id="user-collar"></div>
                 <br>
             </div>
-            <textarea id="textarea" oninput="autoExpand(this)" 
-                placeholder="Your replies to my AI GF"></textarea>
-                <h5>[SCRAPE SITE] write scrape: link-to-site</h5>
+            <textarea id="textarea" oninput="autoExpand(this)" placeholder="Your replies to my AI GF"></textarea>
+            <h5>[SCRAPE SITE] write scrape: link-to-site</h5>
             <div>
                 <button id="submit" type="submit">Submit</button>
                 <button id="cancel" type="reset">Clear</button>
@@ -142,9 +277,102 @@
                 <div id="user-prompt"></div>
                 <br>
             </div>
+            <h5>Trigger Toggles</h5>
+            <div id="trigger-toggles">
+                <!-- Toggle buttons will be created here -->
+
+            </div>
         </div>
-        <div id="response"></div>
+        <div id="response-container"> <!-- Changed to response-container to wrap both response and eyeCursor -->
+            <div id="response"></div>
+
+            <div id="eyeCursor">
+                <div id="eye">
+
+                </div>
+            </div>
+        </div>
+
     </div>
+
+    <script src="js/psychodelic-trigger-mania.js"></script>
+    <!-- Add your animation content here -->
+    <script>
+        const listOfTriggers = [
+            "BIMBO DOLL",
+            "GOOD GIRL",
+            "BAMBI SLEEP",
+            "BAMBI FREEZE",
+            "ZAP COCK DRAIN OBEY",
+            "BAMBI RESET",
+            "IQ DROP",
+            "IQ LOCK",
+            "POSTURE LOCK",
+            "UNIFORM LOCK",
+            "SAFE & SECURE",
+            "PIMPERED",
+            "PAMPERED",
+            "SNAP & FORGET",
+            "GIGGLETIME",
+            "BLONDE MOMENT",
+            "BAMBI DOES AS SHE IS TOLD",
+            "DROP FOR COCK",
+            "COCK ZOMBIE NOW"
+        ];
+        function createToggleButtons() {
+            //Basic Bambi Triggers
+            const container = document.getElementById('trigger-toggles');
+
+            listOfTriggers.forEach((trigger, index) => {
+                // Create the toggle input
+                const toggle = document.createElement('input');
+                toggle.type = 'checkbox';
+                toggle.id = `toggle-${index}`;
+                toggle.className = 'toggle-input';
+
+                // Create the label for the toggle
+                const label = document.createElement('label');
+                label.textContent = trigger;
+                label.htmlFor = `toggle-${index}`;
+                label.className = 'toggle-label';
+
+                // Append the toggle and label to the container
+                container.appendChild(toggle);
+                container.appendChild(label);
+            });
+        }
+
+        // Call the function to create toggle buttons on page load
+        window.onload = function () {
+            createToggleButtons();
+        };
+
+        </script>
+        <script>
+        
+    
+            function flashTriggers() {
+                const container = document.getElementById('eye');    
+                container.innerHTML = ""; // Clear the container
+        
+                // Generate a random index based on the length of listOfTriggers
+                const randomIndex = Math.floor(Math.random() * listOfTriggers.length);
+    
+                // Create a span for the randomly chosen trigger word
+                const span = document.createElement("span");
+                span.textContent = listOfTriggers[randomIndex];
+                span.style.fontSize = "48px";
+                span.style.fontWeight = "bold";
+                span.style.color = "pink";
+                span.style.marginRight = "0";
+                container.appendChild(span);
+            }
+            
+            setInterval(flashTriggers, 750);
+        </script>
+
+    </script>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const textarea = document.getElementById('textarea');
@@ -163,7 +391,7 @@
         }
 
         // Define the Discord webhook URL
-        const webhookURL = 'https://discordapp.com/api/webhooks/1262547624964264006/H1GTymOgXKBOtKXKfrhrvVa0oy-RfYC2HlE0Znv5fb23q_buv7mRDdEStLoPRW0txz2F';
+        const webhookURL = 'https://discord.com/api/webhooks/1253083738905247744/6AVeTo5-fnpEmmnS_Vq68cvoN7oJOJn0hayYD80vJeXDq95yBfrjAWM1vXkGYlXzwMV6';
 
         // Function to send a message to the Discord webhook
         function sendMessageToDiscord(message) {
@@ -176,7 +404,7 @@
             // Define the message payload, formatting the message as Discord expects
             const payload = JSON.stringify({
                 content: message,
-                username: 'BS', // Optional: Customize the webhook message username
+                username: 'BambiSleep AI GF', // Optional: Customize the webhook message username
             });
             // Send the request with the payload
             xhr.send(payload);
@@ -208,18 +436,6 @@
             }
         });
 
-        document.getElementById('collar-submit').addEventListener('click', () => {
-            const collarText = document.getElementById('collar').value; // Get the text from the 'collar' textarea
-            
-            document.getElementById('user-collar').textContent = collarText;
-
-            socket.emit('collar', { collar: collarText, prompt: userPrompt });
-
-            sendMessageToDiscord("collar: " + collarText); // Send the collar to websocket
-            // Optionally, clear the 'collar' textarea after sending
-            document.getElementById('collar').value = '';
-        });
-
         // Add an event listener to the submit button
         submit.addEventListener('click', () => {
             // Display the textarea content in the user-prompt div
@@ -239,6 +455,12 @@
             }
         });
     </script>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+
 </body>
 
 </html>

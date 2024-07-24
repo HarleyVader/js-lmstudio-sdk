@@ -88,7 +88,7 @@ const client = new LMStudioClient({
 // After successfully loading the model in the main thread
 client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
     config: {
-        gpuOffload: 0.5,
+        gpuOffload: 0.0,
         context_length: 8192,
         embedding_length: 512,
     },
@@ -99,9 +99,9 @@ client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-
         modelConfig: {
             identifier: 'TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf',
             config: {
-                gpuOffload: 0.5,
+                gpuOffload: 0.0,
                 context_length: 8192,
-                embedding_length: 512,
+                embedding_length: 256,
             }
         }
     });
