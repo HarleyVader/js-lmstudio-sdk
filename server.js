@@ -31,6 +31,9 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
+app.use('/help', express.static(path.join(__dirname, 'public')));
+
+
 let userSessions = new Set(); // Use a Set to track unique user sessions
 let workers = new Map(); // Map to store workers based on socket.id
 
