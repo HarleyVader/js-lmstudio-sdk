@@ -82,6 +82,7 @@ async function handleMessage(content, socketId) {
 
     if (!roleplay) {
         console.error('Model not loaded yet.');
+        console.log('Current roleplay value:', roleplay); // Log the current value of roleplay
         return;
     }
 
@@ -94,7 +95,7 @@ async function handleMessage(content, socketId) {
     try {
         for await (let text of prediction) {
             parentPort.postMessage({ type: 'response', data: text, socketId: socketId });
-            sessionHistories[socketId].push({ role: "user", content: text });
+            sessionHistories[socketId].push({ role: "system", content: text });
         }
     } catch (error) {
         console.error('Error during prediction or sending response:', error);

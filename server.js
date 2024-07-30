@@ -1,4 +1,5 @@
 // server.js
+// server.js
 const express = require('express');
 const path = require('path');
 const fs = require('fs').promises;
@@ -32,10 +33,8 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-// Initialize worker using worker_threads instead of child_process
-const worker = new Worker('./worker.js');
-
 let userSessions = new Set(); // Use a Set to track unique user sessions
+let workers = new Map(); // Map to store workers based on socket.id
 
 const filteredWords = require('./fw.json');
 
@@ -51,12 +50,48 @@ io.on('connection', (socket) => {
     userSessions.add(socket.id); // Add the new session
     console.log(`Number of connected clients: ${userSessions.size}`);
 
+
+
+    // Create a new worker for this client
+    const worker = new Worker('./worker.js');
+    const client = new LMStudioClient({
+        baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
+    });
+    
+    // After successfully loading the model in the main thread
+    client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
+        config: {
+            gpuOffload: 0.1,
+            context_length: 8192,
+            embedding_length: 512,
+        },
+    }).then(model => {
+        // Instead of passing the model directly, pass an identifier or necessary config
+        workers.forEach((worker, socketId) => {
+            worker.postMessage({
+                type: 'modelLoaded',
+                modelConfig: {
+                    identifier: 'TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf',
+                    config: {
+                        gpuOffload: 0.1,
+                        context_length: 8192,
+                        embedding_length: 256,
+                    }
+                }
+            });
+        });
+    }).catch(error => {
+        console.error('Error loading the model:', error);
+    });
+
+
+    workers.set(socket.id, worker);
+
     socket.on('message', (message) => {
         console.log(`Message from ${socket.id}: ${message}`);
         const filteredMessage = filter(message);
         console.log(`Filtered message: ${filteredMessage}`);
         worker.postMessage({ type: 'message', data: filteredMessage, socketId: socket.id });
-        
     });
 
     socket.on('disconnect', () => {
@@ -65,49 +100,26 @@ io.on('connection', (socket) => {
         console.log(`Number of connected clients: ${userSessions.size}`);
         // Inform worker about the disconnection
         worker.postMessage({ type: 'disconnect', socketId: socket.id });
+        // Terminate the worker and remove it from the map
+        worker.terminate();
+        workers.delete(socket.id);
     });
-});
 
-// Receive messages from worker and forward them to the appropriate client
-worker.on('message', (msg) => {
-    if (msg.type === 'log') {
-        console.log(msg.data); // Log worker messages
-    } else if (msg.type === 'response') {
-        io.to(msg.socketId).emit('message', msg.data);
-    }
+    // Receive messages from worker and forward them to the appropriate client
+    worker.on('message', (msg) => {
+        if (msg.type === 'log') {
+            console.log(msg.data); // Log worker messages
+        } else if (msg.type === 'response') {
+            io.to(msg.socketId).emit('message', msg.data);
+        }
+    });
 });
 
 server.listen(PORT, () => {
     console.log(`Server listening on *:${PORT}`);
 });
 
-const client = new LMStudioClient({
-    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
-});
 
-// After successfully loading the model in the main thread
-client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
-    config: {
-        gpuOffload: 0.0,
-        context_length: 8192,
-        embedding_length: 512,
-    },
-}).then(model => {
-    // Instead of passing the model directly, pass an identifier or necessary config
-    worker.postMessage({
-        type: 'modelLoaded',
-        modelConfig: {
-            identifier: 'TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf',
-            config: {
-                gpuOffload: 0.0,
-                context_length: 8192,
-                embedding_length: 256,
-            }
-        }
-    });
-}).catch(error => {
-    console.error('Error loading the model:', error);
-});
 
 /*
 const { MongoClient } = require('mongodb');
