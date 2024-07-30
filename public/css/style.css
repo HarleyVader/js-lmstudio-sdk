@@ -180,6 +180,7 @@
         }
 
         p {
+            margin-left: 1%;
             color: var(--button-color);
         }
 
