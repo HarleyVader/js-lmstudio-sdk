@@ -31,7 +31,10 @@ app.get('/images', async (req, res) => {
     res.send(html);
 });
 
-app.use('/help', express.static(path.join(__dirname, 'public')));
+// Serve help.html from the 'public' directory
+app.get('/help', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'help.html'));
+});
 
 
 let userSessions = new Set(); // Use a Set to track unique user sessions
