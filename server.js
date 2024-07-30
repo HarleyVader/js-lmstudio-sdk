@@ -1,5 +1,3 @@
-// server.js
-// server.js
 const express = require('express');
 const path = require('path');
 const fs = require('fs').promises;
@@ -50,14 +48,12 @@ io.on('connection', (socket) => {
     userSessions.add(socket.id); // Add the new session
     console.log(`Number of connected clients: ${userSessions.size}`);
 
-
-
     // Create a new worker for this client
     const worker = new Worker('./worker.js');
     const client = new LMStudioClient({
         baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
     });
-    
+
     // After successfully loading the model in the main thread
     client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
         config: {
@@ -83,7 +79,6 @@ io.on('connection', (socket) => {
     }).catch(error => {
         console.error('Error loading the model:', error);
     });
-
 
     workers.set(socket.id, worker);
 
@@ -118,8 +113,6 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
     console.log(`Server listening on *:${PORT}`);
 });
-
-
 
 /*
 const { MongoClient } = require('mongodb');
