@@ -42,6 +42,33 @@ function filter(message) {
     }).join(' ');
 }
 
+const client = new LMStudioClient({
+    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
+});
+
+let modelConfig = null;
+
+// Load the model once
+client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
+    config: {
+        gpuOffload: 0.1,
+        context_length: 8192,
+        embedding_length: 512,
+    },
+}).then(model => {
+    modelConfig = {
+        identifier: 'TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf',
+        config: {
+            gpuOffload: 0.1,
+            context_length: 8192,
+            embedding_length: 256,
+        }
+    };
+    console.log('Model loaded successfully');
+}).catch(error => {
+    console.error('Error loading the model:', error);
+});
+
 // Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
@@ -50,37 +77,17 @@ io.on('connection', (socket) => {
 
     // Create a new worker for this client
     const worker = new Worker('./worker.js');
-    const client = new LMStudioClient({
-        baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
-    });
-
-    // After successfully loading the model in the main thread
-    client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
-        config: {
-            gpuOffload: 0.1,
-            context_length: 8192,
-            embedding_length: 512,
-        },
-    }).then(model => {
-        // Instead of passing the model directly, pass an identifier or necessary config
-        workers.forEach((worker, socketId) => {
-            worker.postMessage({
-                type: 'modelLoaded',
-                modelConfig: {
-                    identifier: 'TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf',
-                    config: {
-                        gpuOffload: 0.1,
-                        context_length: 8192,
-                        embedding_length: 256,
-                    }
-                }
-            });
-        });
-    }).catch(error => {
-        console.error('Error loading the model:', error);
-    });
-
     workers.set(socket.id, worker);
+
+    // Pass the model configuration to the worker
+    if (modelConfig) {
+        worker.postMessage({
+            type: 'modelLoaded',
+            modelConfig: modelConfig
+        });
+    } else {
+        console.error('Model configuration is not available');
+    }
 
     socket.on('message', (message) => {
         console.log(`Message from ${socket.id}: ${message}`);
