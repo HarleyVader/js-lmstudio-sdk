@@ -75,7 +75,7 @@
             flex-direction: column;
             display: flex;
             padding: 1em;
-            overflow-y: 1;
+            overflow-y: auto;
             position: relative;
             border-left: 1px solid #000;
             background-color: var(--primary-color);
@@ -174,10 +174,6 @@
             color: var(--button-color);
         }
 
-        .toggle-input:checked+.toggle-label::before {
-            content: "✓";
-            margin-right: 0.5rem;
-        }
 
         .toggle-input:disabled+.toggle-label {
             background-color: var(--secondary-color);
@@ -275,7 +271,6 @@
                 <button id="cancel" type="reset">Clear</button>
                 <br>
                 <div id="user-prompt"></div>
-                <br>
             </div>
             <h5>Trigger Toggles</h5>
             <div id="trigger-toggles">
@@ -347,79 +342,44 @@
             createToggleButtons();
         };
 
+        function getEnabledToggleButtons() {
+            const enabledToggleButtons = [];
+            const toggleInputs = document.getElementsByClassName('toggle-input');
 
-        function flashTriggers() {
+            for (let i = 0; i < toggleInputs.length; i++) {
+                if (toggleInputs[i].checked) {
+                    enabledToggleButtons.push(toggleInputs[i].id);
+                }
+            }
+            console.log(enabledToggleButtons);
+            return enabledToggleButtons;
+
+        }
+
+        function flashTriggers(trigger) {
             const container = document.getElementById('eye');
             container.innerHTML = ""; // Clear the container
 
-            // Generate a random index based on the length of listOfTriggers
-            const randomIndex = Math.floor(Math.random() * listOfTriggers.length);
-
-            // Create a span for the randomly chosen trigger word
+            // Create a span for the trigger word
             const span = document.createElement("span");
-            span.textContent = listOfTriggers[randomIndex];
+            span.textContent = trigger;
             span.style.fontSize = "48px";
             span.style.fontWeight = "bold";
             span.style.color = "pink";
             span.style.marginRight = "0";
             container.appendChild(span);
         }
-        setInterval(flashTriggers, 750);
-
-        function getEnabledToggleButtons() {
-            const enabledToggleButtons = [];
-            const toggleInputs = document.getElementsByClassName('toggle-input');
-            
-            for (let i = 0; i < toggleInputs.length; i++) {
-                if (toggleInputs[i].checked) {
-                    enabledToggleButtons.push(toggleInputs[i].id);
-                }
-            }
-            return enabledToggleButtons;
-        }
-
-        
-
-    </script>
-
+        /*
+        setInterval(() => {
+            // Flash the trigger
+            flashTriggers(trigger);
+        }, 750);
+        */
     </script>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const textarea = document.getElementById('textarea');
-        const submit = document.getElementById('submit');
-        const response = document.getElementById('response');
-        const userPrompt = document.getElementById('user-prompt');
-
-        function autoExpand(element) {
-            element.style.height = 'inherit';
-            const computed = window.getComputedStyle(element);
-            const height = parseInt(computed.getPropertyValue('border-top-width'), 10)
-                + parseInt(computed.getPropertyValue('border-bottom-width'), 10)
-                + element.scrollHeight;
-
-            element.style.height = height + 'px';
-        }
-
-        // Define the Discord webhook URL
-        const webhookURL = 'https://discord.com/api/webhooks/1253083738905247744/6AVeTo5-fnpEmmnS_Vq68cvoN7oJOJn0hayYD80vJeXDq95yBfrjAWM1vXkGYlXzwMV6';
-
-        // Function to send a message to the Discord webhook
-        function sendMessageToDiscord(message) {
-            // Create a new XMLHttpRequest
-            const xhr = new XMLHttpRequest();
-            // Open a new POST request to the webhook URL
-            xhr.open('POST', webhookURL, true);
-            // Set the request header to indicate the content type is JSON
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            // Define the message payload, formatting the message as Discord expects
-            const payload = JSON.stringify({
-                content: message,
-                username: 'BambiSleep AI GF', // Optional: Customize the webhook message username
-            });
-            // Send the request with the payload
-            xhr.send(payload);
-        }
+        
         // Initialize a Socket.IO connection
         const socket = io();
 
@@ -441,11 +401,68 @@
                 } else {
                     response.appendChild(messageElement);
                 }
-                sendMessageToDiscord("bambi: " + currentMessage);
+                sendMessageToDiscord(socket.id + " bambi: " + currentMessage);
                 // Reset the current message
                 currentMessage = '';
             }
         });
+        </script>
+    <script>
+        function scanTriggers() {
+            const enabledToggleButtons = getEnabledToggleButtons();
+            const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
+
+            triggers.forEach(trigger => {
+                if (currentMessage.includes(trigger)) {
+                    setInterval(() => {
+                        flashTriggers(trigger);
+                    }, 400);
+                }
+            });
+        }
+
+        setInterval(() => {
+            scanTriggers();
+        }, 450);
+    </script>
+    <script>
+        // Define the Discord webhook URL
+        const webhookURL = 'https://discord.com/api/webhooks/1253083738905247744/6AVeTo5-fnpEmmnS_Vq68cvoN7oJOJn0hayYD80vJeXDq95yBfrjAWM1vXkGYlXzwMV6';
+
+        // Function to send a message to the Discord webhook
+        function sendMessageToDiscord(message) {
+            // Create a new XMLHttpRequest
+            const xhr = new XMLHttpRequest();
+            // Open a new POST request to the webhook URL
+            xhr.open('POST', webhookURL, true);
+            // Set the request header to indicate the content type is JSON
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            // Define the message payload, formatting the message as Discord expects
+            const payload = JSON.stringify({
+                content: message,
+                username: 'BS', // Optional: Customize the webhook message username
+            });
+            // Send the request with the payload
+            xhr.send(payload);
+        }
+
+        const textarea = document.getElementById('textarea');
+        const submit = document.getElementById('submit');
+        const response = document.getElementById('response');
+        const userPrompt = document.getElementById('user-prompt');
+
+        document.getElementById('collar-submit').addEventListener('click', () => {
+            const collarText = document.getElementById('collar').value; // Get the text from the 'collar' textarea
+
+            document.getElementById('user-collar').textContent = collarText;
+
+            socket.emit('collar', { collar: collarText, prompt: userPrompt  });
+
+            sendMessageToDiscord(socket.id + " collar: " + collarText); // Send the collar to websocket
+            // Optionally, clear the 'collar' textarea after sending
+            document.getElementById('collar').value = '';
+        });
+
 
         // Add an event listener to the submit button
         submit.addEventListener('click', () => {
@@ -454,10 +471,20 @@
             // Send the textarea content to the server
             socket.emit('message', textarea.value);
             // Send the current message to the Discord webhook
-            sendMessageToDiscord("user: " + textarea.value);
+            sendMessageToDiscord(socket.id + " user: " + textarea.value);
             // Clear the textarea
             textarea.value = '';
         });
+
+        function autoExpand(element) {
+            element.style.height = 'inherit';
+            const computed = window.getComputedStyle(element);
+            const height = parseInt(computed.getPropertyValue('border-top-width'), 5)
+                + parseInt(computed.getPropertyValue('border-bottom-width'), 5)
+                + element.scrollHeight;
+
+            element.style.height = height + 'px';
+        }
 
         textarea.addEventListener('keypress', function (event) {
             if (event.key === 'Enter' && !event.shiftKey) {
