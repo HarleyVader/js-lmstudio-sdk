@@ -101,6 +101,12 @@ io.on('connection', (socket) => {
         worker.postMessage({ type: 'message', data: filteredMessage, socketId: socket.id });
     });
 
+    socket.on('speech2text', (filename, url) => {
+        console.log(`Speech2Text from ${socket.id}: ${filename}`);
+        worker.postMessage({ type: 'speech2text', filename: filename, url: url, socketId: socket.id });
+    });
+
+
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
         userSessions.delete(socket.id); // Remove the session
@@ -118,6 +124,8 @@ io.on('connection', (socket) => {
             console.log(msg.data); // Log worker messages
         } else if (msg.type === 'response') {
             io.to(msg.socketId).emit('message', msg.data);
+        } else if (msg.type === 'speech2text') {
+            io.to(msg.socketId).emit('speech2text', msg.data);
         }
     });
 });
