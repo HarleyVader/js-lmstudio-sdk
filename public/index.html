@@ -28,7 +28,7 @@
                 <br>
                 <div id="user-collar"></div>
                 <br>
-                <input type="file" id="mp3url" accept=".mp3">
+                <input type="file" id="mp3" accept=".mp3">
                 <h4 id="waiting-timer" style="display: none;">Wait: 20</h4>
                 <button id="mp3-submit" type="mp3-submit">Play</button>
             </div>
@@ -184,27 +184,26 @@
             if (triggers.includes(trigger)) {
                 flashTriggers(trigger);
             }
+            document.getElementById('mp3-submit').addEventListener('click', () => {
+                const mp3Url = document.getElementById('mp3').value; // Get the mp3 URL from the 'mp3url' textarea
 
+                // Load the mp3 file into the browser audio buffer
+                const audioContext = new AudioContext();
+                const audioElement = new Audio(mp3);
+                const source = audioContext.createMediaElementSource(audioElement);
+                source.connect(audioContext.destination);
+
+                // Send the file location to the server using socket.emit
+                socket.emit('speech2text', { value });
+                console.log('Speech to text request sent to server', value);
+
+                // Optionally, clear the 'mp3url' textarea after sending
+                document.getElementById('mp3').value = '';
+            });
             // Reset the current message
             currentMessage = '';
         });
 
-        document.getElementById('mp3-submit').addEventListener('click', () => {
-            const mp3Url = document.getElementById('mp3url').value; // Get the mp3 URL from the 'mp3url' textarea
-
-            // Load the mp3 file into the browser audio buffer
-            const audioContext = new AudioContext();
-            const audioElement = new Audio(mp3Url);
-            const source = audioContext.createMediaElementSource(audioElement);
-            source.connect(audioContext.destination);
-
-            // Send the file location to the server using socket.emit
-            socket.emit('speech2text', { fileLocation: mp3Url });
-            log('Speech to text request sent to server', fileLocation);
-
-            // Optionally, clear the 'mp3url' textarea after sending
-            document.getElementById('mp3url').value = '';
-        });
     </script>
     <script>
         function scanTriggers() {

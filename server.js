@@ -82,14 +82,14 @@ io.on('connection', (socket) => {
     console.log(`Number of connected clients: ${userSessions.size}`);
 
     // Create a new worker for this client
-    const text2text = new Worker('./worker.js');
+    const text2text = new Worker('./workers/text2text.js');
     const speech2text = new Worker('./workers/speech2text.js');
     workers.set(socket.id, text2text);
     workers.set(socket.id, speech2text);
 
     // Pass the model configuration to the worker
     if (modelConfig) {
-        worker.postMessage({
+        text2text.postMessage({
             type: 'modelLoaded',
             modelConfig: modelConfig
         });
@@ -104,7 +104,7 @@ io.on('connection', (socket) => {
         worker.postMessage({ type: 'message', data: filteredMessage, socketId: socket.id });
     });
 
-    socket.on('speech2text', (filename, url) => {
+    socket.on('speech2text', (filename) => {
         log(`Speech2Text from ${socket.id}: ${filename}`);
         console.log(`Speech2Text from ${socket.id}: ${filename}`);
         worker.postMessage({ type: 'speech2text', filename: filename, socketId: socket.id });
