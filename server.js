@@ -40,6 +40,7 @@ let userSessions = new Set(); // Use a Set to track unique user sessions
 let workers = new Map(); // Map to store workers based on socket.id
 
 const filteredWords = require('./fw.json');
+const { log } = require('console');
 
 function filter(message) {
     return message.split(' ').map(word => {
@@ -81,8 +82,10 @@ io.on('connection', (socket) => {
     console.log(`Number of connected clients: ${userSessions.size}`);
 
     // Create a new worker for this client
-    const worker = new Worker('./worker.js');
-    workers.set(socket.id, worker);
+    const text2text = new Worker('./worker.js');
+    const speech2text = new Worker('./workers/speech2text.js');
+    workers.set(socket.id, text2text);
+    workers.set(socket.id, speech2text);
 
     // Pass the model configuration to the worker
     if (modelConfig) {
@@ -102,8 +105,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('speech2text', (filename, url) => {
+        log(`Speech2Text from ${socket.id}: ${filename}`);
         console.log(`Speech2Text from ${socket.id}: ${filename}`);
-        worker.postMessage({ type: 'speech2text', filename: filename, url: url, socketId: socket.id });
+        worker.postMessage({ type: 'speech2text', filename: filename, socketId: socket.id });
     });
 
 
