@@ -7,7 +7,7 @@ const { LMStudioClient } = require('@lmstudio/sdk');
 let roleplay;
 let sessionHistories = {};
 
-parentPort.on('message', async (msg) => {
+parentPort.on('instruct', async (msg) => {
     if (msg.type === 'collar') {
         handleCollar(msg.data.collar, msg.data.prompt, msg.socketId);
     } else if (msg.type === 'message') {

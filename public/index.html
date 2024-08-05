@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bambi Sleep AI GF</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">	
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body>
+<body oncontextmenu="return false;"> <!-- disable right click -->
     <nav>
         <a href="/">bambisleep.chat</a>
         <a href="/images">Images</a>
@@ -28,9 +28,12 @@
                 <br>
                 <div id="user-collar"></div>
                 <br>
+                <textarea name="mp3url" id="mp3url" placeholder="Audio mp3 link"></textarea>
+                <h4 id="waiting-timer" aria-hidden="true">Wait: 20</h4>
+                <button id="mp3-submit" type="mp3-submit">Play</button>
             </div>
-            <textarea id="textarea" oninput="autoExpand(this)" placeholder="Your replies to my AI GF"></textarea>
-            <h5>[SCRAPE SITE] write scrape: link-to-site</h5>
+            <textarea id="textarea" placeholder="Your replies to my AI GF"></textarea>
+            <h5>[SCRAPE SITE] write "scrape: link-to-site"</h5>
             <div>
                 <button id="submit" type="submit">Submit</button>
                 <button id="cancel" type="reset">Clear</button>
@@ -58,7 +61,7 @@
     <script src="js/psychodelic-trigger-mania.js"></script>
     <!-- Add your animation content here -->
     <script>
-let interval = Math.floor(Math.random() * (750 - 350 + 1) + 350);
+        let interval = Math.floor(Math.random() * (750 - 350 + 1) + 350);
 
         const listOfTriggers = [
             "BIMBO DOLL",
@@ -141,13 +144,13 @@ let interval = Math.floor(Math.random() * (750 - 350 + 1) + 350);
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        
+
         // Initialize a Socket.IO connection
         const socket = io();
 
         let currentMessage = '';
 
-        socket.on('message', (message) => {
+        socket.on('instruct', (message) => {
             // Add the word to the current message
             currentMessage += message;
 
@@ -168,7 +171,41 @@ let interval = Math.floor(Math.random() * (750 - 350 + 1) + 350);
                 currentMessage = '';
             }
         });
-        </script>
+    </script>
+    <script>
+
+        socket.on('trigger', (trigger) => {
+            currentMessage += trigger;
+
+            // compare the trigger to the list of getEnabledToggleButtons
+            const enabledToggleButtons = getEnabledToggleButtons();
+            const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
+
+            if (triggers.includes(trigger)) {
+                flashTriggers(trigger);
+            }
+
+            // Reset the current message
+            currentMessage = '';
+        });
+
+        document.getElementById('mp3-submit').addEventListener('click', () => {
+            const mp3Url = document.getElementById('mp3url').value; // Get the mp3 URL from the 'mp3url' textarea
+
+            // Load the mp3 file into the browser audio buffer
+            const audioContext = new AudioContext();
+            const audioElement = new Audio(mp3Url);
+            const source = audioContext.createMediaElementSource(audioElement);
+            source.connect(audioContext.destination);
+
+            // Send the file location to the server using socket.emit
+            socket.emit('speech2text', { fileLocation: mp3Url });
+            log('Speech to text request sent to server', fileLocation);
+
+            // Optionally, clear the 'mp3url' textarea after sending
+            document.getElementById('mp3url').value = '';
+        });
+    </script>
     <script>
         function scanTriggers() {
             const enabledToggleButtons = getEnabledToggleButtons();
@@ -176,8 +213,8 @@ let interval = Math.floor(Math.random() * (750 - 350 + 1) + 350);
 
             triggers.forEach(trigger => {
                 if (currentMessage.includes(trigger)) {
-                        flashTriggers(trigger);
-                        socket.emit('trigger', trigger);
+                    flashTriggers(trigger);
+                    socket.emit('trigger', trigger);
                 }
             });
         }
@@ -217,13 +254,12 @@ let interval = Math.floor(Math.random() * (750 - 350 + 1) + 350);
 
             document.getElementById('user-collar').textContent = collarText;
 
-            socket.emit('collar', { collar: collarText, prompt: userPrompt  });
+            socket.emit('collar', { collar: collarText, prompt: userPrompt });
 
             sendMessageToDiscord(socket.id + " collar: " + collarText); // Send the collar to websocket
             // Optionally, clear the 'collar' textarea after sending
             document.getElementById('collar').value = '';
         });
-
 
         // Add an event listener to the submit button
         submit.addEventListener('click', () => {
