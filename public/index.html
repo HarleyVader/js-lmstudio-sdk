@@ -155,7 +155,7 @@
             currentMessage += message;
 
             // If the message is the end of a sentence, create a new p element
-            if (message.endsWith('.') || message.endsWith('?') || message.endsWith('!')) {
+            if (message.match(/[.?!]$/)) {
                 // Create a new p element
                 const messageElement = document.createElement('p');
                 // Set the current message as the content of the p element
