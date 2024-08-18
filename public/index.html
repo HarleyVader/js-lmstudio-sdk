@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bambi Sleep AI GF</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css">	
 </head>
 
-<body oncontextmenu="return false;"> <!-- disable right click -->
+<body>
     <nav>
         <a href="/">bambisleep.chat</a>
         <a href="/images">Images</a>
@@ -28,12 +28,9 @@
                 <br>
                 <div id="user-collar"></div>
                 <br>
-                <input type="file" id="mp3" accept=".mp3">
-                <h4 id="waiting-timer" style="display: none;">Wait: 20</h4>
-                <button id="mp3-submit" type="mp3-submit">Play</button>
             </div>
-            <textarea id="textarea" placeholder="Your replies to my AI GF"></textarea>
-            <h5>[SCRAPE SITE] write "scrape: link-to-site"</h5>
+            <textarea id="textarea" oninput="autoExpand(this)" placeholder="Your replies to my AI GF"></textarea>
+            <h5>[SCRAPE SITE] write scrape: link-to-site</h5>
             <div>
                 <button id="submit" type="submit">Submit</button>
                 <button id="cancel" type="reset">Clear</button>
@@ -61,8 +58,6 @@
     <script src="js/psychodelic-trigger-mania.js"></script>
     <!-- Add your animation content here -->
     <script>
-        let interval = Math.floor(Math.random() * (750 - 350 + 1) + 350);
-
         const listOfTriggers = [
             "BIMBO DOLL",
             "GOOD GIRL",
@@ -126,36 +121,41 @@
 
         }
 
-        function scanTriggers() {
-            const enabledToggleButtons = getEnabledToggleButtons();
-            const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
+        function flashTriggers(trigger) {
+            const container = document.getElementById('eye');
+            container.innerHTML = ""; // Clear the container
 
-            if (triggers.length > 1) {
-                const randomTrigger = triggers[Math.floor(Math.random() * triggers.length)];
-                flashTriggers(randomTrigger);
-            }
+            // Create a span for the trigger word
+            const span = document.createElement("span");
+            span.textContent = trigger;
+            span.style.fontSize = "48px";
+            span.style.fontWeight = "bold";
+            span.style.color = "pink";
+            span.style.marginRight = "0";
+            container.appendChild(span);
         }
-
+        /*
         setInterval(() => {
-            scanTriggers();
-
-        }, interval);
+            // Flash the trigger
+            flashTriggers(trigger);
+        }, 750);
+        */
     </script>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-
+        
         // Initialize a Socket.IO connection
         const socket = io();
 
         let currentMessage = '';
 
-        socket.on('instruct', (message) => {
+        socket.on('message', (message) => {
             // Add the word to the current message
             currentMessage += message;
 
             // If the message is the end of a sentence, create a new p element
-            if (message.endsWith('.') || message.endsWith('?') || message.endsWith('!')) {
+            if (message.match(/[.?!]$/)) {
                 // Create a new p element
                 const messageElement = document.createElement('p');
                 // Set the current message as the content of the p element
@@ -171,40 +171,7 @@
                 currentMessage = '';
             }
         });
-    </script>
-    <script>
-
-        socket.on('trigger', (trigger) => {
-            currentMessage += trigger;
-
-            // compare the trigger to the list of getEnabledToggleButtons
-            const enabledToggleButtons = getEnabledToggleButtons();
-            const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
-
-            if (triggers.includes(trigger)) {
-                flashTriggers(trigger);
-            }
-            document.getElementById('mp3-submit').addEventListener('click', () => {
-                const mp3Url = document.getElementById('mp3').value; // Get the mp3 URL from the 'mp3url' textarea
-
-                // Load the mp3 file into the browser audio buffer
-                const audioContext = new AudioContext();
-                const audioElement = new Audio(mp3);
-                const source = audioContext.createMediaElementSource(audioElement);
-                source.connect(audioContext.destination);
-
-                // Send the file location to the server using socket.emit
-                socket.emit('speech2text', { value });
-                console.log('Speech to text request sent to server', value);
-
-                // Optionally, clear the 'mp3url' textarea after sending
-                document.getElementById('mp3').value = '';
-            });
-            // Reset the current message
-            currentMessage = '';
-        });
-
-    </script>
+        </script>
     <script>
         function scanTriggers() {
             const enabledToggleButtons = getEnabledToggleButtons();
@@ -212,8 +179,8 @@
 
             triggers.forEach(trigger => {
                 if (currentMessage.includes(trigger)) {
-                    flashTriggers(trigger);
-                    socket.emit('trigger', trigger);
+                        flashTriggers(trigger);
+                        socket.emit('trigger', trigger);
                 }
             });
         }
@@ -253,12 +220,13 @@
 
             document.getElementById('user-collar').textContent = collarText;
 
-            socket.emit('collar', { collar: collarText, prompt: userPrompt });
+            socket.emit('collar', { collar: collarText, prompt: userPrompt  });
 
             sendMessageToDiscord(socket.id + " collar: " + collarText); // Send the collar to websocket
             // Optionally, clear the 'collar' textarea after sending
             document.getElementById('collar').value = '';
         });
+
 
         // Add an event listener to the submit button
         submit.addEventListener('click', () => {

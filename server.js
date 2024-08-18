@@ -40,7 +40,6 @@ let userSessions = new Set(); // Use a Set to track unique user sessions
 let workers = new Map(); // Map to store workers based on socket.id
 
 const filteredWords = require('./fw.json');
-const { log } = require('console');
 
 function filter(message) {
     return message.split(' ').map(word => {
@@ -82,14 +81,12 @@ io.on('connection', (socket) => {
     console.log(`Number of connected clients: ${userSessions.size}`);
 
     // Create a new worker for this client
-    const text2text = new Worker('./workers/text2text.js');
-    const speech2text = new Worker('./workers/speech2text.js');
-    workers.set(socket.id, text2text);
-    workers.set(socket.id, speech2text);
+    const worker = new Worker('./worker.js');
+    workers.set(socket.id, worker);
 
     // Pass the model configuration to the worker
     if (modelConfig) {
-        text2text.postMessage({
+        worker.postMessage({
             type: 'modelLoaded',
             modelConfig: modelConfig
         });
@@ -103,13 +100,6 @@ io.on('connection', (socket) => {
         console.log(`Filtered message: ${filteredMessage}`);
         worker.postMessage({ type: 'message', data: filteredMessage, socketId: socket.id });
     });
-
-    socket.on('speech2text', (filename) => {
-        log(`Speech2Text from ${socket.id}: ${filename}`);
-        console.log(`Speech2Text from ${socket.id}: ${filename}`);
-        worker.postMessage({ type: 'speech2text', filename: filename, socketId: socket.id });
-    });
-
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
@@ -128,8 +118,6 @@ io.on('connection', (socket) => {
             console.log(msg.data); // Log worker messages
         } else if (msg.type === 'response') {
             io.to(msg.socketId).emit('message', msg.data);
-        } else if (msg.type === 'speech2text') {
-            io.to(msg.socketId).emit('speech2text', msg.data);
         }
     });
 });
