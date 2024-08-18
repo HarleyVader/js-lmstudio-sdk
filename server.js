@@ -36,6 +36,10 @@ app.get('/help', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'help.html'));
 });
 
+app.get('/psychodelic-trigger-mania', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'psychodelic-trigger-mania.html'));
+});
+
 let userSessions = new Set(); // Use a Set to track unique user sessions
 let workers = new Map(); // Map to store workers based on socket.id
 

@@ -6,17 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bambi Sleep AI GF</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">	
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
     <nav>
         <a href="/">bambisleep.chat</a>
         <a href="/images">Images</a>
-        <a href="https://www.patreon.com/fabricofsissies/membership">PATREON</a>
+        <a href="/help">Help</a>
+        <a href="/psychodelic-trigger-mania">Psychodelic Trigger Mania</a>
         <a href="https://www.likera.com/forum/mybb/Thread-bambisleep-chat-Multipurpose-Bambi-Sleep-oriented-AI-GF">Like
             Ra's</a>
-        <a href="/help">Help</a>
     </nav>
     <div id="chat-container">
         <div id="user-input">
@@ -144,7 +144,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        
+
         // Initialize a Socket.IO connection
         const socket = io();
 
@@ -171,7 +171,7 @@
                 currentMessage = '';
             }
         });
-        </script>
+    </script>
     <script>
         function scanTriggers() {
             const enabledToggleButtons = getEnabledToggleButtons();
@@ -179,8 +179,8 @@
 
             triggers.forEach(trigger => {
                 if (currentMessage.includes(trigger)) {
-                        flashTriggers(trigger);
-                        socket.emit('trigger', trigger);
+                    flashTriggers(trigger);
+                    socket.emit('trigger', trigger);
                 }
             });
         }
@@ -220,7 +220,7 @@
 
             document.getElementById('user-collar').textContent = collarText;
 
-            socket.emit('collar', { collar: collarText, prompt: userPrompt  });
+            socket.emit('collar', { collar: collarText, prompt: userPrompt });
 
             sendMessageToDiscord(socket.id + " collar: " + collarText); // Send the collar to websocket
             // Optionally, clear the 'collar' textarea after sending
