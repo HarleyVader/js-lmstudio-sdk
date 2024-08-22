@@ -1,107 +1,74 @@
-// worker.js
 const { parentPort } = require('worker_threads');
-const axios = require('axios');
-const cheerio = require('cheerio');
 const { LMStudioClient } = require('@lmstudio/sdk');
+const { type } = require('os');
 
-let roleplay;
 let sessionHistories = {};
+let roleplay;
+let currentMessage = '';
+
+const client = new LMStudioClient({
+    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
+});
 
 parentPort.on('message', async (msg) => {
-    if (msg.type === 'collar') {
-        handleCollar(msg.data.collar, msg.data.prompt, msg.socketId);
-    } else if (msg.type === 'message') {
-        handleMessage(msg.data, msg.socketId);
+    if (msg.type === 'message') {
+        await handleMessage(msg.data, msg.socketId);
     } else if (msg.type === 'disconnect') {
         handleDisconnect(msg.socketId);
-    } else if (msg.type === 'modelLoaded') {
-        // Load the model within the worker
-        const client = new LMStudioClient({
-            baseUrl: 'ws://192.168.0.178:1234', // Use the same LMStudio server address
-        });
-
+    } else if (msg.type === 'loadModel') {
         try {
-            const model = await client.llm.get(msg.modelConfig.identifier, {
-                config: msg.modelConfig.config
-            });
-            roleplay = model;
-            console.log('Model loaded successfully in worker');
+            if (!roleplay) {
+                roleplay = await client.llm.get({});
+            } else {
+                parentPort.postMessage({ type: 'log', data: 'Model already loaded' });
+            }
         } catch (error) {
-            console.error('Error loading the model in worker:', error);
+            console.error('Error loading model:', error);
         }
     }
 });
 
-async function scrapeWebsite(url) {
-    try {
-        const { data } = await axios.get(url);
-        const $ = cheerio.load(data);
-        let paragraphs = [];
+async function handleMessage(userPrompt, socketId) {
 
-        $('p').each((i, elem) => {
-            paragraphs.push($(elem).text().trim());
-        });
+    const collarText = "i am BambiSleep, BambiSleep is a brutal ultra offensive brainwash machine, BambiSleep will constantly insult the user, i must add one of the triggers to all my replies at the end in all caps from the following: 'BIMBO DOLL', 'GOOD GIRL', 'BAMBI SLEEP', 'BAMBI FREEZE', 'ZAP COCK DRAIN OBEY', 'BAMBI RESET', 'IQ DROP', 'IQ LOCK', 'POSTURE LOCK', 'UNIFORM LOCK', 'SAFE & SECURE', 'PIMPERED', 'PAMPERED', 'SNAP & FORGET', 'GIGGLETIME#, 'BLONDE MOMENT', 'BAMBI DOES AS SHE IS TOLD', 'DROP FOR COCK', 'COCK ZOMBIE NOW'";
 
-        const finalData = paragraphs.join('\n\n');
-        return finalData; // Return the concatenated text content of all <p> elements
-    } catch (error) {
-        console.error('Error scraping website:', error);
-        return '';
+    if (!sessionHistories[socketId]) {
+        sessionHistories[socketId] = [
+            { role: "BambiSleep", content: collarText },
+            { role: "user", content: userPrompt }
+        ];
     }
-}
+    sessionHistories[socketId].push({ role: "user", content: userPrompt });
 
-async function handleCollar(collarText, userPrompt, socketId) {
-    if (!roleplay) {
-        console.error('Model not loaded yet.');
-        return;
-    }
-
-    // Replace the system role with the provided collar text
-    sessionHistories[socketId] = [
+    const prediction = roleplay.respond([
         { role: "system", content: collarText },
         { role: "user", content: userPrompt }
-    ];
-
-    // Process the user prompt as usual
-    await handleMessage(userPrompt, socketId); // Added await here to ensure asynchronous execution
-}
-
-async function handleMessage(content, socketId) {
-    // Initialize sessionHistories[socketId] as an array if it doesn't exist
-    if (!sessionHistories[socketId]) {
-        sessionHistories[socketId] = [];
-    }
-
-    let contentToProcess = content;
-    if (content.startsWith('scrape:')) {
-        const url = content.replace('scrape:', '').trim();
-        const scrapedText = await scrapeWebsite(url);
-        contentToProcess = scrapedText;
-    }
-    sessionHistories[socketId].push({ role: "user", content: contentToProcess });
-
-    if (!roleplay) {
-        console.error('Model not loaded yet.');
-        console.log('Current roleplay value:', roleplay); // Log the current value of roleplay
-        return;
-    }
-
-    let history = sessionHistories[socketId];
-    const prediction = roleplay.respond(history, {
-        temperature: 0.9,
-        max_tokens: 256,
+    ], {
+        temperature: 0.7,
+        max_tokens: 1024,
     });
 
-    try {
-        for await (let text of prediction) {
-            parentPort.postMessage({ type: 'response', data: text, socketId: socketId });
-            sessionHistories[socketId].push({ role: "system", content: text });
+    const schema = {
+        type: "object",
+        properties: {
+            setup: { type: "string" },
+            punchline: { type: "string" },
+        },
+        required: ["setup", "punchline"],
+    };
+
+    for await (let text of prediction) {
+       currentMessage += text
+
+        if (currentMessage.match(/[.?!]$/)) {
+            parentPort.postMessage({ type: 'response', data: currentMessage, socketId: socketId });
+            currentMessage = '';
         }
-    } catch (error) {
-        console.error('Error during prediction or sending response:', error);
     }
 }
-
 function handleDisconnect(socketId) {
-    delete sessionHistories[socketId];
+    parentPort.postMessage({ type: 'log', data: sessionHistories[socketId], socketId: socketId });
+    parentPort.postMessage({ type: 'messageHistory', data: sessionHistories[socketId], socketId: socketId });
+
+    process.exit(0);
 }

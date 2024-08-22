@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 const { Worker } = require('worker_threads');
 const { LMStudioClient } = require('@lmstudio/sdk');
 
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -51,33 +52,32 @@ function filter(message) {
     }).join(' ');
 }
 
+let roleplay;
+
+// Load the model once
 const client = new LMStudioClient({
     baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
 });
 
-let modelConfig = null;
-
-// Load the model once
-client.llm.load('TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf', {
+const modelConfig = {
+    identifier: 'TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf',
     config: {
-        gpuOffload: 0.0,
+        gpuOffload: 0.5,
         context_length: 8192,
         embedding_length: 512,
-    },
-}).then(model => {
-    modelConfig = {
-        identifier: 'TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf',
-        config: {
-            gpuOffload: 0.0,
-            context_length: 8192,
-            embedding_length: 256,
-        }
-    };
-    console.log('Model loaded successfully');
-}).catch(error => {
-    console.error('Error loading the model:', error);
-});
+    }
+}
+async function loadModel() {
+    if (!roleplay) {
+        await client.llm.get({});
+    } else {
+        await client.llm.load(modelConfig.identifier, {
+            config: modelConfig.config
+        });
+    }
+}
 
+loadModel();
 // Handle connection
 io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
@@ -88,15 +88,8 @@ io.on('connection', (socket) => {
     const worker = new Worker('./worker.js');
     workers.set(socket.id, worker);
 
-    // Pass the model configuration to the worker
-    if (modelConfig) {
-        worker.postMessage({
-            type: 'modelLoaded',
-            modelConfig: modelConfig
-        });
-    } else {
-        console.error('Model configuration is not available');
-    }
+    // Load the model in the worker
+    worker.postMessage({ type: 'loadModel' });
 
     socket.on('message', (message) => {
         console.log(`Message from ${socket.id}: ${message}`);
@@ -112,18 +105,42 @@ io.on('connection', (socket) => {
         // Inform worker about the disconnection
         worker.postMessage({ type: 'disconnect', socketId: socket.id });
         // Terminate the worker and remove it from the map
-        worker.terminate();
-        workers.delete(socket.id);
+        //worker.terminate();
+        //workers.delete(socket.id);
     });
 
     // Receive messages from worker and forward them to the appropriate client
     worker.on('message', (msg) => {
         if (msg.type === 'log') {
-            console.log(msg.data); // Log worker messages
+            console.log(msg.data, msg.socketId); // Log worker messages
         } else if (msg.type === 'response') {
             io.to(msg.socketId).emit('message', msg.data);
+        } else if (msg.type === 'messageHistory') {
+            sessionHistories(msg.data, msg.socketId);
         }
     });
+
+   async function sessionHistories(data, socketId) {
+     sessionHistories[socketId] = data;
+
+        if (!sessionHistories[socketId]) {
+            console.error(`No valid session history found for socket ID: ${socketId}`);
+            return;
+        }
+
+        const Histories = Array.from(sessionHistories[socketId]);
+        const jsonHistory = JSON.stringify(Histories);
+        const fileName = `${socketId}.json`;
+        const filePath = path.join(__dirname, 'history', fileName);
+
+       await fs.writeFile(filePath, jsonHistory)
+            .then(() => {
+                console.log(`Message history saved for socket ID: ${socketId}`);
+            })
+            .catch((error) => {
+                console.error(`Error saving message history for socket ID: ${socketId}`, error);
+            });
+    }
 });
 
 server.listen(PORT, () => {
