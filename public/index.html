@@ -6,38 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bambi Sleep AI GF</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">	
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
     <nav>
         <a href="/">bambisleep.chat</a>
         <a href="/images">Images</a>
-        <a href="https://www.patreon.com/fabricofsissies/membership">PATREON</a>
+        <a href="/help">Help</a>
+        <a href="/psychodelic-trigger-mania">Psychodelic Trigger Mania</a>
         <a href="https://www.likera.com/forum/mybb/Thread-bambisleep-chat-Multipurpose-Bambi-Sleep-oriented-AI-GF">Like
             Ra's</a>
-        <a href="/help">Help</a>
     </nav>
     <div id="chat-container">
         <div id="user-input">
             <h1>BambiSleep AI GF 👁️</h1>
-            <textarea id="collar" oninput="autoExpand(this)"
-                placeholder="Tell bambi AI GF how you need her to behave!"></textarea>
-            <div>
-                <button id="collar-submit" type="collar-submit">Collar</button>
-                <br>
-                <div id="user-collar"></div>
-                <br>
-            </div>
             <textarea id="textarea" oninput="autoExpand(this)" placeholder="Your replies to my AI GF"></textarea>
-            <h5>[SCRAPE SITE] write scrape: link-to-site</h5>
             <div>
                 <button id="submit" type="submit">Submit</button>
                 <button id="cancel" type="reset">Clear</button>
                 <br>
                 <div id="user-prompt"></div>
             </div>
-            <h5>Trigger Toggles</h5>
+            <div>
+                <h5>Trigger Toggles</h5>
+                <button id="activate-all">All On</button>
+            </div>
             <div id="trigger-toggles">
                 <!-- Toggle buttons will be created here -->
 
@@ -45,14 +39,12 @@
         </div>
         <div id="response-container"> <!-- Changed to response-container to wrap both response and eyeCursor -->
             <div id="response"></div>
-
             <div id="eyeCursor">
                 <div id="eye">
 
                 </div>
             </div>
         </div>
-
     </div>
 
     <script src="js/psychodelic-trigger-mania.js"></script>
@@ -102,9 +94,17 @@
             });
         }
 
+        function toggleAllToggles() {
+            const toggleInputs = document.getElementsByClassName('toggle-input');
+            for (let i = 0; i < toggleInputs.length; i++) {
+            toggleInputs[i].checked = !toggleInputs[i].checked;
+            }
+        }
+
         // Call the function to create toggle buttons on page load
         window.onload = function () {
             createToggleButtons();
+            document.getElementById('activate-all').addEventListener('click', toggleAllToggles);
         };
 
         function getEnabledToggleButtons() {
@@ -133,18 +133,34 @@
             span.style.color = "pink";
             span.style.marginRight = "0";
             container.appendChild(span);
+
+            setTimeout(() => {
+                container.innerHTML = "";
+            }, 300);
         }
-        /*
+
+    </script>
+    <script>
+        function scanTriggers() {
+            const enabledToggleButtons = getEnabledToggleButtons();
+            const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
+
+            triggers.forEach(trigger => {
+                if (currentMessage.includes(trigger)) {
+                    flashTriggers(trigger);
+                    socket.emit('trigger', trigger);
+                }
+            });
+        }
+
         setInterval(() => {
-            // Flash the trigger
-            flashTriggers(trigger);
-        }, 750);
-        */
+            scanTriggers();
+        }, 450);
     </script>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        
+
         // Initialize a Socket.IO connection
         const socket = io();
 
@@ -171,25 +187,11 @@
                 currentMessage = '';
             }
         });
-        </script>
-    <script>
-        function scanTriggers() {
-            const enabledToggleButtons = getEnabledToggleButtons();
-            const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
-
-            triggers.forEach(trigger => {
-                if (currentMessage.includes(trigger)) {
-                        flashTriggers(trigger);
-                        socket.emit('trigger', trigger);
-                }
-            });
-        }
-
-        setInterval(() => {
-            scanTriggers();
-        }, 450);
     </script>
     <script>
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+        });
         // Define the Discord webhook URL
         const webhookURL = 'https://discord.com/api/webhooks/1262547624964264006/H1GTymOgXKBOtKXKfrhrvVa0oy-RfYC2HlE0Znv5fb23q_buv7mRDdEStLoPRW0txz2F';
 
@@ -215,19 +217,6 @@
         const response = document.getElementById('response');
         const userPrompt = document.getElementById('user-prompt');
 
-        document.getElementById('collar-submit').addEventListener('click', () => {
-            const collarText = document.getElementById('collar').value; // Get the text from the 'collar' textarea
-
-            document.getElementById('user-collar').textContent = collarText;
-
-            socket.emit('collar', { collar: collarText, prompt: userPrompt  });
-
-            sendMessageToDiscord(socket.id + " collar: " + collarText); // Send the collar to websocket
-            // Optionally, clear the 'collar' textarea after sending
-            document.getElementById('collar').value = '';
-        });
-
-
         // Add an event listener to the submit button
         submit.addEventListener('click', () => {
             // Display the textarea content in the user-prompt div
@@ -238,6 +227,8 @@
             sendMessageToDiscord(socket.id + " user: " + textarea.value);
             // Clear the textarea
             textarea.value = '';
+            // Reset the textarea height to its initial size
+            textarea.style.height = 'inherit';
         });
 
         function autoExpand(element) {
@@ -249,6 +240,7 @@
 
             element.style.height = height + 'px';
         }
+
 
         textarea.addEventListener('keypress', function (event) {
             if (event.key === 'Enter' && !event.shiftKey) {
