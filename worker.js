@@ -1,10 +1,9 @@
 const { parentPort } = require('worker_threads');
 const { LMStudioClient } = require('@lmstudio/sdk');
-const { type } = require('os');
 
 let sessionHistories = {};
-let roleplay;
 let currentMessage = '';
+let roleplay;
 
 const client = new LMStudioClient({
     baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
@@ -16,20 +15,16 @@ parentPort.on('message', async (msg) => {
     } else if (msg.type === 'disconnect') {
         handleDisconnect(msg.socketId);
     } else if (msg.type === 'loadModel') {
-        try {
-            if (!roleplay) {
-                roleplay = await client.llm.get({});
-            } else {
-                parentPort.postMessage({ type: 'log', data: 'Model already loaded' });
-            }
-        } catch (error) {
-            console.error('Error loading model:', error);
+        if (!roleplay) {
+            roleplay = await client.llm.get({});
+        } else {
+            parentPort.postMessage({ type: 'log', data: 'Model already loaded' });
         }
     }
 });
 
 async function handleMessage(userPrompt, socketId) {
-
+    roleplay = await client.llm.get({});
     const collarText = "i am BambiSleep, BambiSleep is a brutal ultra offensive brainwash machine, BambiSleep will constantly insult the user, i must add one of the triggers to all my replies at the end in all caps from the following: 'BIMBO DOLL', 'GOOD GIRL', 'BAMBI SLEEP', 'BAMBI FREEZE', 'ZAP COCK DRAIN OBEY', 'BAMBI RESET', 'IQ DROP', 'IQ LOCK', 'POSTURE LOCK', 'UNIFORM LOCK', 'SAFE & SECURE', 'PIMPERED', 'PAMPERED', 'SNAP & FORGET', 'GIGGLETIME#, 'BLONDE MOMENT', 'BAMBI DOES AS SHE IS TOLD', 'DROP FOR COCK', 'COCK ZOMBIE NOW'";
 
     if (!sessionHistories[socketId]) {
@@ -56,12 +51,13 @@ async function handleMessage(userPrompt, socketId) {
         },
         required: ["setup", "punchline"],
     };
-
+    // LLM prediction gun
     for await (let text of prediction) {
-       currentMessage += text
+        parentPort.postMessage({ type: 'response', data: text, socketId: socketId });
+        currentMessage += text
 
         if (currentMessage.match(/[.?!]$/)) {
-            parentPort.postMessage({ type: 'response', data: currentMessage, socketId: socketId });
+            sessionHistories[socketId].push({ role: "BambiSleep", content: currentMessage});
             currentMessage = '';
         }
     }
