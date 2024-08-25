@@ -80,8 +80,8 @@ async function loadModel() {
 loadModel();
 // Handle connection
 io.on('connection', (socket) => {
-    console.log(`Client connected: ${socket.id} clients: ${userSessions.size}`);
     userSessions.add(socket.id); // Add the new session
+    console.log(`Client connected: ${socket.id} clients: ${userSessions.size}`);
 
     // Create a new worker for this client
     const worker = new Worker('./worker.js');
@@ -98,8 +98,8 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log(`Client disconnected: ${socket.id} clients: ${userSessions.size}`);
         userSessions.delete(socket.id); // Remove the session
+        console.log(`Client disconnected: ${socket.id} clients: ${userSessions.size}`);
         // Inform worker about the disconnection
         worker.postMessage({ type: 'disconnect', socketId: socket.id });
         // Terminate the worker and remove it from the map
