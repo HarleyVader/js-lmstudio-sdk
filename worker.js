@@ -55,7 +55,7 @@ async function handleMessage(userPrompt, socketId) {
     }
 }
 function handleDisconnect(socketId) {
-    parentPort.postMessage({ type: 'log', data: sessionHistories[socketId], socketId: socketId });
+    //parentPort.postMessage({ type: 'log', data: sessionHistories[socketId], socketId: socketId });
     parentPort.postMessage({ type: 'messageHistory', data: sessionHistories[socketId], socketId: socketId });
 
     process.exit(0);
