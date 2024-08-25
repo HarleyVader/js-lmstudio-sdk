@@ -43,21 +43,13 @@ async function handleMessage(userPrompt, socketId) {
         max_tokens: 1024,
     });
 
-    const schema = {
-        type: "object",
-        properties: {
-            setup: { type: "string" },
-            punchline: { type: "string" },
-        },
-        required: ["setup", "punchline"],
-    };
     // LLM prediction gun
     for await (let text of prediction) {
         parentPort.postMessage({ type: 'response', data: text, socketId: socketId });
         currentMessage += text
 
         if (currentMessage.match(/[.?!]$/)) {
-            sessionHistories[socketId].push({ role: "BambiSleep", content: currentMessage});
+            sessionHistories[socketId].push({ role: "BambiSleep", content: currentMessage });
             currentMessage = '';
         }
     }
