@@ -52,6 +52,28 @@ function filter(message) {
     }).join(' ');
 }
 
+async function sessionHistories(data, socketId) {
+    sessionHistories[socketId] = data;
+
+    if (!sessionHistories[socketId]) {
+        console.error(`No valid session history found for socket ID: ${socketId}`);
+        return;
+    }
+
+    const Histories = Array.from(sessionHistories[socketId]);
+    const jsonHistory = JSON.stringify(Histories);
+    const fileName = `${socketId}.json`;
+    const filePath = path.join(__dirname, 'history', fileName);
+
+    await fs.writeFile(filePath, jsonHistory)
+        .then(() => {
+            console.log(`Message history saved for socket ID: ${socketId}`);
+        })
+        .catch((error) => {
+            console.error(`Error saving message history for socket ID: ${socketId}`, error);
+        });
+}
+
 let roleplay;
 
 // Load the model once
@@ -117,28 +139,6 @@ io.on('connection', (socket) => {
             sessionHistories(msg.data, msg.socketId);
         }
     });
-
-   async function sessionHistories(data, socketId) {
-     sessionHistories[socketId] = data;
-
-        if (!sessionHistories[socketId]) {
-            console.error(`No valid session history found for socket ID: ${socketId}`);
-            return;
-        }
-
-        const Histories = Array.from(sessionHistories[socketId]);
-        const jsonHistory = JSON.stringify(Histories);
-        const fileName = `${socketId}.json`;
-        const filePath = path.join(__dirname, 'history', fileName);
-
-       await fs.writeFile(filePath, jsonHistory)
-            .then(() => {
-                console.log(`Message history saved for socket ID: ${socketId}`);
-            })
-            .catch((error) => {
-                console.error(`Error saving message history for socket ID: ${socketId}`, error);
-            });
-    }
 });
 
 server.listen(PORT, () => {
