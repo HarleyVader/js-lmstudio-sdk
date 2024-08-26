@@ -113,9 +113,9 @@ io.on('connection', (socket) => {
     worker.postMessage({ type: 'loadModel' });
 
     socket.on('message', (message) => {
-        console.log(`Message from ${socket.id}: ${message}`);
+        //console.log(`Message from ${socket.id}: ${message}`);
         const filteredMessage = filter(message);
-        console.log(`Filtered message: ${filteredMessage}`);
+        //console.log(`Filtered message: ${filteredMessage}`);
         worker.postMessage({ type: 'message', data: filteredMessage, socketId: socket.id });
     });
 

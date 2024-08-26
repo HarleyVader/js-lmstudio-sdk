@@ -128,8 +128,7 @@
                 container.innerHTML = "";
             }, 300);
         }
-    </script>
-    <script>
+
         function scanTriggers() {
             const enabledToggleButtons = getEnabledToggleButtons();
             const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
@@ -145,7 +144,6 @@
             scanTriggers();
         }, 450);
     </script>
-
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
