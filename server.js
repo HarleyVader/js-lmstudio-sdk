@@ -6,7 +6,6 @@ const { Server } = require("socket.io");
 const { Worker } = require('worker_threads');
 const { LMStudioClient } = require('@lmstudio/sdk');
 
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -58,8 +57,8 @@ async function sessionHistories(data, socketId) {
     if (!sessionHistories[socketId]) {
         console.error(`No valid session history found for socket ID: ${socketId}`);
         return;
-    }
-
+    } else if (sessionHistories[socketId]) {
+        
     const Histories = Array.from(sessionHistories[socketId]);
     const jsonHistory = JSON.stringify(Histories);
     const fileName = `${socketId}.json`;
@@ -72,6 +71,7 @@ async function sessionHistories(data, socketId) {
         .catch((error) => {
             console.error(`Error saving message history for socket ID: ${socketId}`, error);
         });
+    }
 }
 
 let roleplay;
@@ -89,6 +89,7 @@ const modelConfig = {
         embedding_length: 512,
     }
 }
+
 async function loadModel() {
     if (!roleplay) {
         await client.llm.get({});
