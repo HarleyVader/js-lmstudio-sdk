@@ -1,10 +1,11 @@
-const express = require('express');
-const path = require('path');
-const fs = require('fs').promises;
-const http = require('http');
+const express = require("express");
+const path = require("path");
+const fs = require("fs").promises;
+const http = require("http");
 const { Server } = require("socket.io");
-const { Worker } = require('worker_threads');
-const { LMStudioClient } = require('@lmstudio/sdk');
+const { Worker } = require("worker_threads");
+const { LMStudioClient } = require("@lmstudio/sdk");
+const readline = require("readline");
 
 const app = express();
 const server = http.createServer(app);
@@ -12,138 +13,179 @@ const io = new Server(server);
 
 const PORT = 6969;
 
-// Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Serve images from the "images" directory
-app.use('/images', express.static(path.join(__dirname, 'images')));
-
-app.get('/images', async (req, res) => {
-    const directoryPath = path.join(__dirname, 'images');
-    const files = await fs.readdir(directoryPath);
-    let html = '<html><body>';
-    files.forEach(file => {
-        if (file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg')) {
-            html += `<img src="/images/${file}" width="64" height="64" />`;
-        }
-    });
-    html += '</body></html>';
-    res.send(html);
+// Create a readline interface to read from the terminal
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
 });
 
-// Serve help.html from the 'public' directory
-app.get('/help', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'help.html'));
-});
-
-app.get('/psychodelic-trigger-mania', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'psychodelic-trigger-mania.html'));
-});
-
-let userSessions = new Set(); // Use a Set to track unique user sessions
-let workers = new Map(); // Map to store workers based on socket.id
-
-const filteredWords = require('./fw.json');
-
+const filteredWords = require("./fw.json");
 function filter(message) {
-    return message.split(' ').map(word => {
-        return filteredWords.includes(word.toLowerCase()) ? ' ' : word;
-    }).join(' ');
+  return message
+    .split(" ")
+    .map((word) => {
+      return filteredWords.includes(word.toLowerCase()) ? " " : word;
+    })
+    .join(" ");
 }
 
 async function sessionHistories(data, socketId) {
-    sessionHistories[socketId] = data;
+  sessionHistories[socketId] = data;
 
-    if (!sessionHistories[socketId]) {
-        console.error(`No valid session history found for socket ID: ${socketId}`);
-        return;
-    } else if (sessionHistories[socketId]) {
-        
+  if (!sessionHistories[socketId]) {
+    console.error(`No valid session history found for socket ID: ${socketId}`);
+    return;
+  } else if (sessionHistories[socketId]) {
     const Histories = Array.from(sessionHistories[socketId]);
     const jsonHistory = JSON.stringify(Histories);
     const fileName = `${socketId}.json`;
-    const filePath = path.join(__dirname, 'history', fileName);
+    const filePath = path.join(__dirname, "history", fileName);
 
-    await fs.writeFile(filePath, jsonHistory)
-        .then(() => {
-            console.log(`Message history saved for socket ID: ${socketId}`);
-        })
-        .catch((error) => {
-            console.error(`Error saving message history for socket ID: ${socketId}`, error);
-        });
-    }
+    await fs
+      .writeFile(filePath, jsonHistory)
+      .then(() => {
+        console.log(`Message history saved for socket ID: ${socketId}`);
+      })
+      .catch((error) => {
+        console.error(
+          `Error saving message history for socket ID: ${socketId}`,
+          error
+        );
+      });
+  }
 }
 
 let roleplay;
 
 // Load the model once
 const client = new LMStudioClient({
-    baseUrl: 'ws://192.168.0.178:1234', // Replace with your LMStudio server address
+  baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
 });
 
 const modelConfig = {
-    identifier: 'TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf',
-    config: {
-        gpuOffload: 0.5,
-        context_length: 8192,
-        embedding_length: 512,
-    }
-}
+  identifier:
+    "TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf",
+  config: {
+    gpuOffload: 0.5,
+    context_length: 8192,
+    embedding_length: 512,
+  },
+};
 
 async function loadModel() {
-    if (!roleplay) {
-        await client.llm.get({});
-    } else {
-        await client.llm.load(modelConfig.identifier, {
-            config: modelConfig.config
-        });
-    }
+  if (!roleplay) {
+    await client.llm.get({});
+  } else {
+    await client.llm.load(modelConfig.identifier, {
+      config: modelConfig.config,
+    });
+  }
 }
+
+let userSessions = new Set();
+let workers = new Map();
 
 loadModel();
 // Handle connection
-io.on('connection', (socket) => {
-    userSessions.add(socket.id); // Add the new session
-    console.log(`Client connected: ${socket.id} clients: ${userSessions.size}`);
+io.on("connection", (socket) => {
+  userSessions.add(socket.id); // Add the new session
+  console.log(`Client connected: ${socket.id} clients: ${userSessions.size}`);
 
-    // Create a new worker for this client
-    const worker = new Worker('./worker.js');
-    workers.set(socket.id, worker);
+  // Create a new worker for this client
+  const worker = new Worker("./worker.js");
+  workers.set(socket.id, worker);
 
-    // Load the model in the worker
-    worker.postMessage({ type: 'loadModel' });
+  // Load the model in the worker
+  worker.postMessage({ type: "loadModel" });
 
-    socket.on('message', (message) => {
-        //console.log(`Message from ${socket.id}: ${message}`);
-        const filteredMessage = filter(message);
-        //console.log(`Filtered message: ${filteredMessage}`);
-        worker.postMessage({ type: 'message', data: filteredMessage, socketId: socket.id });
+  socket.on("message", (message) => {
+    //console.log(`Message from ${socket.id}: ${message}`);
+    const filteredMessage = filter(message);
+    //console.log(`Filtered message: ${filteredMessage}`);
+    worker.postMessage({
+      type: "message",
+      data: filteredMessage,
+      socketId: socket.id,
     });
+  });
 
-    socket.on('disconnect', () => {
-        userSessions.delete(socket.id); // Remove the session
-        console.log(`Client disconnected: ${socket.id} clients: ${userSessions.size}`);
-        // Inform worker about the disconnection
-        worker.postMessage({ type: 'disconnect', socketId: socket.id });
-        // Terminate the worker and remove it from the map
-        //worker.terminate();
-        //workers.delete(socket.id);
-    });
+  socket.on("disconnect", () => {
+    userSessions.delete(socket.id); // Remove the session
+    console.log(
+      `Client disconnected: ${socket.id} clients: ${userSessions.size}`
+    );
+    // Inform worker about the disconnection
+    worker.postMessage({ type: "disconnect", socketId: socket.id });
+    // Terminate the worker and remove it from the map
+    //worker.terminate();
+    //workers.delete(socket.id);
+  });
 
-    // Receive messages from worker and forward them to the appropriate client
-    worker.on('message', (msg) => {
-        if (msg.type === 'log') {
-            console.log(msg.data, msg.socketId); // Log worker messages
-        } else if (msg.type === 'response') {
-            io.to(msg.socketId).emit('message', msg.data);
-        } else if (msg.type === 'messageHistory') {
-            sessionHistories(msg.data, msg.socketId);
-        }
-    });
+  // Receive messages from worker and forward them to the appropriate client
+  worker.on("message", (msg) => {
+    if (msg.type === "log") {
+      console.log(msg.data, msg.socketId); // Log worker messages
+    } else if (msg.type === "response") {
+      io.to(msg.socketId).emit("message", msg.data);
+    } else if (msg.type === "messageHistory") {
+      sessionHistories(msg.data, msg.socketId);
+    } else if (msg.type === "update") {
+    }
+  });
+
+  rl.on("line", async (line) => {
+    if (line === "update") {
+      console.log("Update mode");
+      io.emit("update");
+    } else if (line === "normal") {
+      io.emit("update");
+      console.log("Normal mode");
+    } else {
+      console.log("Invalid command! update or normal");
+    }
+  });
+});
+
+//Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Serve images from the "images" directory
+app.use("/images", express.static(path.join(__dirname, "images")));
+
+app.get("/images", async (req, res) => {
+  const directoryPath = path.join(__dirname, "images");
+  const files = await fs.readdir(directoryPath);
+  let html = "<html><body>";
+  files.forEach((file) => {
+    if (
+      file.endsWith(".png") ||
+      file.endsWith(".jpg") ||
+      file.endsWith(".jpeg")
+    ) {
+      html += `<img src="/images/${file}" width="64" height="64" />`;
+    }
+  });
+  html += "</body></html>";
+  res.send(html);
+});
+
+// Serve help.html from the 'public' directory
+app.get("/help", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "help.html"));
+});
+
+app.get("/psychodelic-trigger-mania", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "public", "psychodelic-trigger-mania.html")
+  );
 });
 
 server.listen(PORT, () => {
-    console.log(`Server listening on *:${PORT}`);
+  console.log(`Server listening on *:${PORT}`);
 });
 
 /*
