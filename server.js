@@ -125,7 +125,7 @@ io.on("connection", (socket) => {
     console.log(
       `Client disconnected: ${socket.id} clients: ${userSessions.size}`
     );
-    await worker.terminate();
+    worker.terminate();
     workers.delete(socket.id);
   });
 

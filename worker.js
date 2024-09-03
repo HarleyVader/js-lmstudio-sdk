@@ -72,7 +72,7 @@ async function handleMessage(userPrompt, socketId) {
 
     if (currentMessage.match(/[.?!]$/)) {
       sessionHistories[socketId].push({
-        role: "BambiSleep",
+        role: "system",
         content: currentMessage
       });
       currentMessage = "";

@@ -7,9 +7,6 @@
     <title>BambiSleep AI GF</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <script>
-        'use strict';
-    </script>
 </head>
 
 <body>
@@ -54,8 +51,10 @@
             </div>
         </div>
     </div>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="js/psychodelic-trigger-mania.js"></script>
     <script>
+        const socket = io();
         const listOfTriggers = [
             "BIMBO DOLL",
             "GOOD GIRL",
@@ -136,8 +135,7 @@
         }
 
 
-    </script>
-    <script>
+   
         const textarea = document.getElementById('textarea');
         const submit = document.getElementById('submit');
         const response = document.getElementById('response');
@@ -167,11 +165,7 @@
                 updateElement.setAttribute('hidden', 'true');
             }
         }
-    </script>
-    <!-- SOCKETS -->
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
+    
 
         submit.addEventListener('click', () => {
             const message = textarea.value;
