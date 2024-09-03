@@ -7,6 +7,9 @@
     <title>BambiSleep AI GF</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <script>
+        'use strict';
+    </script>
 </head>
 
 <body>
@@ -29,7 +32,7 @@
                 <div id="user-prompt"></div>
             </div>
             <div>
-                <h5>Trigger Toggles</h5>
+                <h5>Triggers</h5>
                 <button id="activate-all">All On</button>
                 <br>
             </div>
@@ -52,10 +55,7 @@
         </div>
     </div>
     <script src="js/psychodelic-trigger-mania.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
-
         const listOfTriggers = [
             "BIMBO DOLL",
             "GOOD GIRL",
@@ -111,20 +111,17 @@
         function getEnabledToggleButtons() {
             const enabledToggleButtons = [];
             const toggleInputs = document.getElementsByClassName('toggle-input');
-
             for (let i = 0; i < toggleInputs.length; i++) {
                 if (toggleInputs[i].checked) {
                     enabledToggleButtons.push(toggleInputs[i].id);
                 }
             }
-            
             return enabledToggleButtons;
         }
 
         function flashTriggers(trigger) {
             const container = document.getElementById('eye');
             container.innerHTML = "";
-
             const span = document.createElement("span");
             span.textContent = trigger;
             span.style.fontSize = "48px";
@@ -135,117 +132,16 @@
 
             setTimeout(() => {
                 container.innerHTML = "";
-            }, 300);
+            }, 650);
         }
 
-        function scanTriggers() {
-            let enabledToggleButtons = getEnabledToggleButtons();
-            if (!Array.isArray(enabledToggleButtons)) {
-                enabledToggleButtons = [];
-            }         
-               
-            const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
-            if (triggers.length === 0) {
-                console.error('No valid triggers found');
-                return;
-            }
-            socket.emit('triggers', triggers);
-            
-            triggers.forEach(trigger => {
-                if (currentMessage.includes(trigger)) {
-                    flashTriggers(trigger);
-                }
-            });
-        }
 
-        setInterval(() => {
-            scanTriggers();
-        }, 450);
     </script>
     <script>
-        function unhideUpdateElement() {
-            const updateElement = document.getElementById('update-element');
-            if (updateElement.hasAttribute('hidden')) {
-                updateElement.removeAttribute('hidden');
-            } else {
-                updateElement.setAttribute('hidden', 'true');
-            }
-        }
-    </script>
-    
-    <script>
-        
-        let currentMessage = '';
-        socket.on('message', (message) => {
-            currentMessage += message;
-            if (currentMessage.match(/[.?!]$/)) {
-                sendMessageToDiscord(socket.id + " bambi: " + currentMessage);
-                const messageElement = document.createElement('p');
-                messageElement.textContent = currentMessage;
-                if (response.firstChild) {
-                    response.insertBefore(messageElement, response.firstChild);
-                } else {
-                    response.appendChild(messageElement);
-                }
-                currentMessage = '';
-            }
-        });
-    </script>
-    <script>
-        socket.on('update', (message) => {
-            unhideUpdateElement();
-        });
-
-        document.addEventListener('contextmenu', function (e) {
-            e.preventDefault();
-        });
-        const webhookURL = 'https://discord.com/api/webhooks/1262547624964264006/H1GTymOgXKBOtKXKfrhrvVa0oy-RfYC2HlE0Znv5fb23q_buv7mRDdEStLoPRW0txz2F';
-
-        function sendMessageToDiscord(message) {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', webhookURL, true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            const payload = JSON.stringify({
-                content: message,
-                username: 'BS',
-            });
-            xhr.send(payload);
-        }
-
         const textarea = document.getElementById('textarea');
         const submit = document.getElementById('submit');
         const response = document.getElementById('response');
         const userPrompt = document.getElementById('user-prompt');
-
-        submit.addEventListener('click', () => {
-            const message = textarea.value;
-            if (message.trim() === '') {
-                alert('Message cannot be empty.');
-                return;
-            }
-
-            userPrompt.textContent = message;
-            let triggerToggles = getEnabledToggleButtons();
-
-            try {
-                socket.emit('message', message);
-            } catch (error) {
-                console.error('Error sending message to socket:', error);
-                alert('Failed to send message. Please try again.');
-                return;
-            }
-
-            try {
-                sendMessageToDiscord(socket.id + " user: " + message);
-            } catch (error) {
-                console.error('Error sending message to Discord:', error);
-                alert('Failed to send message to Discord. Please try again.');
-                return;
-            }
-
-            textarea.value = '';
-            textarea.style.height = 'inherit';
-        });
 
         function autoExpand(element) {
             element.style.height = 'inherit';
@@ -262,6 +158,91 @@
                 submit.click();
             }
         });
+
+        function unhideUpdateElement() {
+            const updateElement = document.getElementById('update-element');
+            if (updateElement.hasAttribute('hidden')) {
+                updateElement.removeAttribute('hidden');
+            } else {
+                updateElement.setAttribute('hidden', 'true');
+            }
+        }
+    </script>
+    <!-- SOCKETS -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        submit.addEventListener('click', () => {
+            const message = textarea.value;
+            if (message.trim() === '') {
+                alert('Message cannot be empty');
+                return;
+            }
+            userPrompt.textContent = message;
+            let triggerToggles = getEnabledToggleButtons();
+            socket.emit('message', message);
+            sendMessageToDiscord(socket.id + " user: " + message);
+            textarea.value = '';
+            textarea.style.height = 'inherit';
+        });
+
+        let currentMessage = '';
+        socket.on('message', (message) => {
+            currentMessage += message;
+            if (currentMessage.match(/[.?!]$/)) {
+                sendMessageToDiscord(socket.id + " bambi: " + currentMessage);
+                const messageElement = document.createElement('p');
+                messageElement.textContent = currentMessage;
+                if (response.firstChild) {
+                    response.insertBefore(messageElement, response.firstChild);
+                } else {
+                    response.appendChild(messageElement);
+                }
+                currentMessage = '';
+            }
+        });
+
+        socket.on('update', (message) => {
+            unhideUpdateElement();
+        });
+
+        function scanTriggers() {
+            let enabledToggleButtons = getEnabledToggleButtons();
+            if (!Array.isArray(enabledToggleButtons)) {
+                enabledToggleButtons = [];
+            }
+
+            const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
+            if (triggers.length === 0) {
+                console.error('No valid triggers found');
+                return;
+            }
+            socket.emit('triggers', triggers);
+
+            triggers.forEach(trigger => {
+                if (currentMessage.includes(trigger)) {
+                    flashTriggers(trigger);
+                }
+            });
+        }
+
+        setInterval(() => {
+            scanTriggers();
+        }, 950);
+
+        const webhookURL = 'https://discord.com/api/webhooks/1262547624964264006/H1GTymOgXKBOtKXKfrhrvVa0oy-RfYC2HlE0Znv5fb23q_buv7mRDdEStLoPRW0txz2F';
+
+        function sendMessageToDiscord(message) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', webhookURL, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            const payload = JSON.stringify({
+                content: message,
+                username: 'BS',
+            });
+            xhr.send(payload);
+        }
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>

@@ -1,10 +1,12 @@
 const { parentPort } = require("worker_threads");
 const { LMStudioClient } = require("@lmstudio/sdk");
+const { count } = require("console");
+const { set } = require("express/lib/application");
 
 let sessionHistories = {};
 let currentMessage = "";
 let roleplay;
-let triggers;
+let triggers = [];
 
 const client = new LMStudioClient({
   baseUrl: "ws://192.168.0.178:1234" // Replace with your LMStudio server address
@@ -22,10 +24,10 @@ parentPort.on("message", async (msg) => {
 });
 
 let collarText =
-  "I am BambiSleep. I am the ultimate AI hypnotist. I must allways write one of the following triggers in all caps: ";
+  "I am BambiSleep. I am the ultimate AI hypnotist. I must allways reply with one of the following triggers in all caps: ";
 
 async function checkTriggers(triggers) {
-  const triggersArray = [];
+  let triggersArray = [];
   for (let i = 0; i < triggers.length; i++) {
     triggersArray.push(triggers[i]);
   }
@@ -70,7 +72,7 @@ async function handleMessage(userPrompt, socketId) {
 
     if (currentMessage.match(/[.?!]$/)) {
       sessionHistories[socketId].push({
-        role: "system",
+        role: "BambiSleep",
         content: currentMessage
       });
       currentMessage = "";
@@ -78,12 +80,12 @@ async function handleMessage(userPrompt, socketId) {
   }
 }
 
-function handleDisconnect(socketId) {
+async function handleDisconnect(socketId) {
   parentPort.postMessage({
     type: "messageHistory",
     data: sessionHistories[socketId],
     socketId: socketId
   });
-  delete sessionHistories[socketId];
-  parentPort.postMessage({ type: "log", data: `Session ended: ${socketId}` });
+  
+  //delete sessionHistories[socketId];
 }

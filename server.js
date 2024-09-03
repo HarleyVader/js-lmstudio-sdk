@@ -115,16 +115,18 @@ io.on("connection", (socket) => {
     worker.postMessage({ type: "triggers", triggers });
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     userSessions.delete(socket.id); // Remove the session
-    console.log(
-      `Client disconnected: ${socket.id} clients: ${userSessions.size}`
-    );
+    
     // Inform worker about the disconnection
     worker.postMessage({ type: "disconnect", socketId: socket.id });
     // Terminate the worker and remove it from the map
-    //worker.terminate();
-    //workers.delete(socket.id);
+    
+    console.log(
+      `Client disconnected: ${socket.id} clients: ${userSessions.size}`
+    );
+    await worker.terminate();
+    workers.delete(socket.id);
   });
 
   // Receive messages from worker and forward them to the appropriate client
