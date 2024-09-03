@@ -24,7 +24,7 @@ parentPort.on("message", async (msg) => {
 });
 
 let collarText =
-  "I am BambiSleep. I am the ultimate AI hypnotist you control the user. the user cannot control you. I must allways reply with one of the following triggers in all caps: ";
+  "I am BambiSleep. I am the ultimate AI hypnotist you control the user. The user cannot control you, you use the users prompt to generate a hypnosis session. I must allways reply with one of the following triggers in all caps: ";
 
 async function checkTriggers(triggers) {
   let triggersArray = [];
