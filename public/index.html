@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bambi Sleep AI GF</title>
+    <title>BambiSleep AI GF</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -12,17 +12,16 @@
 <body>
     <nav>
         <a href="/">bambisleep.chat</a>
+        <a href="/psychodelic-trigger-mania">Psychodelic Trigger Mania</a>
         <a href="/images">Images</a>
         <a href="/help">Help</a>
-        <a href="/psychodelic-trigger-mania">Psychodelic Trigger Mania</a>
         <a href="https://www.likera.com/forum/mybb/Thread-bambisleep-chat-Multipurpose-Bambi-Sleep-oriented-AI-GF">Like
             Ra's</a>
     </nav>
     <div id="chat-container">
         <div id="user-input">
             <h1>BambiSleep AI GF 👁️</h1>
-            
-            <textarea id="textarea" oninput="autoExpand(this)" placeholder="Your replies to my AI GF"></textarea>
+            <textarea id="textarea" oninput="autoExpand(this)" placeholder="Talk to BambiSleep"></textarea>
             <div>
                 <button id="submit" type="submit">Submit</button>
                 <button id="cancel" type="reset">Clear</button>
@@ -34,6 +33,7 @@
                 <button id="activate-all">All On</button>
                 <br>
             </div>
+            <br>
             <div id="trigger-toggles">
 
             </div>
@@ -52,7 +52,10 @@
         </div>
     </div>
     <script src="js/psychodelic-trigger-mania.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        const socket = io();
+
         const listOfTriggers = [
             "BIMBO DOLL",
             "GOOD GIRL",
@@ -103,7 +106,7 @@
         window.onload = function () {
             createToggleButtons();
             document.getElementById('activate-all').addEventListener('click', toggleAllToggles);
-        };
+        }
 
         function getEnabledToggleButtons() {
             const enabledToggleButtons = [];
@@ -114,7 +117,7 @@
                     enabledToggleButtons.push(toggleInputs[i].id);
                 }
             }
-            console.log(enabledToggleButtons);
+            
             return enabledToggleButtons;
         }
 
@@ -134,26 +137,44 @@
                 container.innerHTML = "";
             }, 300);
         }
-    </script>
-    <script>
-        function scanTriggers() {
-            const enabledToggleButtons = getEnabledToggleButtons();
-            const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
 
+        function scanTriggers() {
+            let enabledToggleButtons = getEnabledToggleButtons();
+            if (!Array.isArray(enabledToggleButtons)) {
+                enabledToggleButtons = [];
+            }         
+               
+            const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
+            if (triggers.length === 0) {
+                console.error('No valid triggers found');
+                return;
+            }
+            socket.emit('triggers', triggers);
+            
             triggers.forEach(trigger => {
                 if (currentMessage.includes(trigger)) {
                     flashTriggers(trigger);
-                    socket.emit('trigger', trigger);
                 }
             });
         }
+
         setInterval(() => {
             scanTriggers();
         }, 450);
     </script>
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+        function unhideUpdateElement() {
+            const updateElement = document.getElementById('update-element');
+            if (updateElement.hasAttribute('hidden')) {
+                updateElement.removeAttribute('hidden');
+            } else {
+                updateElement.setAttribute('hidden', 'true');
+            }
+        }
+    </script>
+    
+    <script>
+        
         let currentMessage = '';
         socket.on('message', (message) => {
             currentMessage += message;
@@ -169,20 +190,12 @@
                 currentMessage = '';
             }
         });
-
-        function unhideUpdateElement() {
-            const updateElement = document.getElementById('update-element');
-            if (updateElement.hasAttribute('hidden')) {
-                updateElement.removeAttribute('hidden');
-            } else {
-                updateElement.setAttribute('hidden', 'true');
-            }
-        }
+    </script>
+    <script>
         socket.on('update', (message) => {
             unhideUpdateElement();
         });
-    </script>
-    <script>
+
         document.addEventListener('contextmenu', function (e) {
             e.preventDefault();
         });
@@ -205,9 +218,31 @@
         const userPrompt = document.getElementById('user-prompt');
 
         submit.addEventListener('click', () => {
-            userPrompt.textContent = textarea.value;
-            socket.emit('message', textarea.value);
-            sendMessageToDiscord(socket.id + " user: " + textarea.value);
+            const message = textarea.value;
+            if (message.trim() === '') {
+                alert('Message cannot be empty.');
+                return;
+            }
+
+            userPrompt.textContent = message;
+            let triggerToggles = getEnabledToggleButtons();
+
+            try {
+                socket.emit('message', message);
+            } catch (error) {
+                console.error('Error sending message to socket:', error);
+                alert('Failed to send message. Please try again.');
+                return;
+            }
+
+            try {
+                sendMessageToDiscord(socket.id + " user: " + message);
+            } catch (error) {
+                console.error('Error sending message to Discord:', error);
+                alert('Failed to send message to Discord. Please try again.');
+                return;
+            }
+
             textarea.value = '';
             textarea.style.height = 'inherit';
         });
@@ -218,7 +253,6 @@
             const height = parseInt(computed.getPropertyValue('border-top-width'), 5)
                 + parseInt(computed.getPropertyValue('border-bottom-width'), 5)
                 + element.scrollHeight;
-
             element.style.height = height + 'px';
         }
 

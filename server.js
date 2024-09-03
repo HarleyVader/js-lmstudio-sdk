@@ -15,12 +15,15 @@ const PORT = 6969;
 
 // Create a readline interface to read from the terminal
 const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
+  input: process.stdin, //standard terminal device input
+  output: process.stdout, //standard terminal device output
 });
 
 const filteredWords = require("./fw.json");
 function filter(message) {
+  if (typeof message !== 'string') {
+    message = String(message);
+  }
   return message
     .split(" ")
     .map((word) => {
@@ -56,7 +59,6 @@ async function sessionHistories(data, socketId) {
 }
 
 let roleplay;
-
 // Load the model once
 const client = new LMStudioClient({
   baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
@@ -66,7 +68,7 @@ const modelConfig = {
   identifier:
     "TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf",
   config: {
-    gpuOffload: 0.5,
+    gpuOffload: 'max',
     context_length: 8192,
     embedding_length: 512,
   },
@@ -95,9 +97,6 @@ io.on("connection", (socket) => {
   const worker = new Worker("./worker.js");
   workers.set(socket.id, worker);
 
-  // Load the model in the worker
-  worker.postMessage({ type: "loadModel" });
-
   socket.on("message", (message) => {
     //console.log(`Message from ${socket.id}: ${message}`);
     const filteredMessage = filter(message);
@@ -105,8 +104,15 @@ io.on("connection", (socket) => {
     worker.postMessage({
       type: "message",
       data: filteredMessage,
+      triggers: "",
       socketId: socket.id,
     });
+    console.log({message});
+    
+  });
+
+  socket.on("triggers", (triggers) => {
+    worker.postMessage({ type: "triggers", triggers });
   });
 
   socket.on("disconnect", () => {
@@ -129,7 +135,8 @@ io.on("connection", (socket) => {
       io.to(msg.socketId).emit("message", msg.data);
     } else if (msg.type === "messageHistory") {
       sessionHistories(msg.data, msg.socketId);
-    } else if (msg.type === "update") {
+    } else {
+      console.error("Unknown message type:", msg.type);
     }
   });
 
@@ -178,6 +185,7 @@ app.get("/help", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "help.html"));
 });
 
+// Serve psychodelic-trigger-mania.html from the 'public' directory
 app.get("/psychodelic-trigger-mania", (req, res) => {
   res.sendFile(
     path.join(__dirname, "public", "psychodelic-trigger-mania.html")
