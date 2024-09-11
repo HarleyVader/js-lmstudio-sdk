@@ -6,6 +6,8 @@ const { Server } = require("socket.io");
 const { Worker } = require("worker_threads");
 const { LMStudioClient } = require("@lmstudio/sdk");
 const readline = require("readline");
+const cors = require('cors');
+
 
 const app = express();
 const server = http.createServer(app);
@@ -21,7 +23,7 @@ const rl = readline.createInterface({
 
 const filteredWords = require("./fw.json");
 function filter(message) {
-  if (typeof message !== 'string') {
+  if (typeof message !== "string") {
     message = String(message);
   }
   return message
@@ -68,7 +70,7 @@ const modelConfig = {
   identifier:
     "TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf",
   config: {
-    gpuOffload: 0.4,
+    gpuOffload: 0.9,
     context_length: 8192,
     embedding_length: 512,
   },
@@ -98,33 +100,35 @@ io.on("connection", (socket) => {
   workers.set(socket.id, worker);
 
   socket.on("message", (message) => {
-    //console.log(`Message from ${socket.id}: ${message}`);
+    console.log(`Message from ${socket.id}: ${message}`);
     const filteredMessage = filter(message);
-    //console.log(`Filtered message: ${filteredMessage}`);
+    console.log(`Filtered message: ${filteredMessage}`);
     worker.postMessage({
       type: "message",
       data: filteredMessage,
       triggers: "",
       socketId: socket.id,
     });
-    console.log({message});
-    
+    console.log({ message });
   });
 
   socket.on("triggers", (triggers) => {
-    worker.postMessage({ type: "triggers", triggers });
+    worker.postMessage({ type: "triggers", triggers});
+    worker.postMessage({ type: "log", data: `Triggers: ${triggers}` });
+    
   });
 
   socket.on("disconnect", async () => {
     userSessions.delete(socket.id); // Remove the session
-    
+
     // Inform worker about the disconnection
     worker.postMessage({ type: "disconnect", socketId: socket.id });
     // Terminate the worker and remove it from the map
-    
+
     console.log(
       `Client disconnected: ${socket.id} clients: ${userSessions.size}`
     );
+    // Kill the worker for the socket
     worker.terminate();
     workers.delete(socket.id);
   });
@@ -134,10 +138,13 @@ io.on("connection", (socket) => {
     if (msg.type === "log") {
       console.log(msg.data, msg.socketId); // Log worker messages
     } else if (msg.type === "response") {
-      io.to(msg.socketId).emit("message", msg.data);
+      io.to(msg.socketId).emit("response", msg.data);
     } else if (msg.type === "messageHistory") {
       sessionHistories(msg.data, msg.socketId);
-    } else {
+    } else if (msg.type === "triggers") {
+      io.to(msg.socketId).emit("triggers", msg.data);
+      
+   } else {
       console.error("Unknown message type:", msg.type);
     }
   });
@@ -156,6 +163,7 @@ io.on("connection", (socket) => {
 });
 
 //Serve static files from the 'public' directory
+app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
@@ -194,12 +202,16 @@ app.get("/psychodelic-trigger-mania", (req, res) => {
   );
 });
 
+
+
+// Start the server
 server.listen(PORT, () => {
   console.log(`Server listening on *:${PORT}`);
 });
 
 /*
 const { MongoClient } = require('mongodb');
+const axios = require("axios");
 const uri = "mongodb://localhost:27017"; // Replace with your MongoDB connection string
 const clientDB = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 

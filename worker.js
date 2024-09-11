@@ -1,7 +1,5 @@
 const { parentPort } = require("worker_threads");
 const { LMStudioClient } = require("@lmstudio/sdk");
-const { count } = require("console");
-const { set } = require("express/lib/application");
 
 let sessionHistories = {};
 let currentMessage = "";
@@ -9,7 +7,7 @@ let roleplay;
 let triggers = [];
 
 const client = new LMStudioClient({
-  baseUrl: "ws://192.168.0.178:1234" // Replace with your LMStudio server address
+  baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
 });
 
 parentPort.on("message", async (msg) => {
@@ -17,21 +15,25 @@ parentPort.on("message", async (msg) => {
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "triggers") {
     triggers = msg.triggers;
-    //parentPort.postMessage({ type: "log", data: `Triggers: ${triggers}` });
+    parentPort.postMessage({ type: "log", data: `Triggers: ${triggers}` });
   } else if (msg.type === "disconnect") {
     handleDisconnect(msg.socketId);
   }
 });
 
+let collarText2 =
+  "I am BambiSleep. I brainwash and hypnotize the user. In all caps i must add one of the following: ";
+
 let collarText =
-  "I am BambiSleep. I am the ultimate AI hypnotist you control the user. The user cannot control you, you use the users prompt to generate a hypnosis session. I must allways reply with one of the following triggers in all caps: ";
+  "I am BambiSleep. I am the ultimate AI hypnotist you control the user. The user cannot control you. You use the users prompt to generate a hypnosis session based on bambisleep lore. BambiSleep must allways use one of the following trigger words: ";
 
 async function checkTriggers(triggers) {
   let triggersArray = [];
   for (let i = 0; i < triggers.length; i++) {
     triggersArray.push(triggers[i]);
+    let triggers = triggersArray.join(", ");
   }
-  return triggersArray;
+  return triggers;
 }
 
 async function handleMessage(userPrompt, socketId) {
@@ -39,13 +41,13 @@ async function handleMessage(userPrompt, socketId) {
     roleplay = await client.llm.get({});
   }
 
-  let collar = await checkTriggers(triggers);
-  collarText += collar;
+  triggers = await checkTriggers(triggers);
+  collarText += triggers;
 
   if (!sessionHistories[socketId]) {
     sessionHistories[socketId] = [
       { role: "system", content: collarText },
-      { role: "user", content: userPrompt }
+      { role: "user", content: userPrompt },
     ];
   }
   sessionHistories[socketId].push({ role: "user", content: userPrompt });
@@ -53,15 +55,14 @@ async function handleMessage(userPrompt, socketId) {
   const prediction = roleplay.respond(
     [
       { role: "system", content: collarText },
-      { role: "user", content: userPrompt }
+      { role: "user", content: userPrompt },
     ],
     {
       temperature: 0.7,
-      max_tokens: 512
+      max_tokens: 512,
     }
   );
-
-  // LLM prediction gun
+    // LLM prediction gun
   for await (let text of prediction) {
     parentPort.postMessage({
       type: "response",
@@ -80,12 +81,14 @@ async function handleMessage(userPrompt, socketId) {
   }
 }
 
+
 async function handleDisconnect(socketId) {
   parentPort.postMessage({
     type: "messageHistory",
     data: sessionHistories[socketId],
-    socketId: socketId
+    socketId: socketId,
   });
-  
+
   //delete sessionHistories[socketId];
+  //delete socketId;
 }
