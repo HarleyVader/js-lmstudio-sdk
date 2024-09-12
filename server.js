@@ -211,16 +211,14 @@ app.use("/api/tts", (req, res) => {
   axios
     .get(`http://192.168.0.178:5002/api/tts?text=${text}`)
     .then((response) => {
-      
-      // Send the audio file as the response// Set the appropriate headers for the audio file
-      //res.setHeader("Content-Type", "audio/wav");
+      // Set the appropriate headers for the audio file
+      res.setHeader("Content-Type", "audio/wav");
       //res.setHeader("Content-Disposition", "attachment; filename=tts.mp3");
       res.setHeader("Location", `http://192.168.0.178:5002/api/tts?text=${text}`);
       console.log("Location",);
-      
-      console.log("response.data ", response.data);
-      
-      res.send(response.data);
+      res.setHeader("Content-Length", response.data.length);
+
+      res.sendFile(response.data);
     })
     .catch((error) => {
       console.error("Error fetching TTS audio:", error);
