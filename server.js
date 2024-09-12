@@ -203,7 +203,7 @@ app.get("/psychodelic-trigger-mania", (req, res) => {
   );
 });
 
-app.use("/api/tts", (req, res) => {
+app.use("/api/tts?", (req, res) => {
   const { text } = req.query;
   // Make a request to the TTS server and get the audio file
   // You can use axios or any other HTTP library to make the request
