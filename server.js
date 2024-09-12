@@ -7,6 +7,7 @@ const { Worker } = require("worker_threads");
 const { LMStudioClient } = require("@lmstudio/sdk");
 const readline = require("readline");
 const cors = require('cors');
+const axios = require("axios");
 
 
 const app = express();
@@ -202,7 +203,25 @@ app.get("/psychodelic-trigger-mania", (req, res) => {
   );
 });
 
-
+app.use("/api/tts", (req, res) => {
+  const { text } = req.query;
+  // Make a request to the TTS server and get the audio file
+  // You can use axios or any other HTTP library to make the request
+  // Replace "localhost:5002" with the actual TTS server address
+  axios
+    .get(`http://192.168.0.178:5002/api/tts?text=${text}`)
+    .then((response) => {
+      // Set the appropriate headers for the audio file
+      res.setHeader("Content-Type", "audio/mpeg");
+      res.setHeader("Content-Disposition", "attachment; filename=tts.mp3");
+      // Send the audio file as the response
+      res.send(response.data);
+    })
+    .catch((error) => {
+      console.error("Error fetching TTS audio:", error);
+      res.status(500).send("Error fetching TTS audio");
+    });
+});
 
 // Start the server
 server.listen(PORT, () => {
