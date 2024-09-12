@@ -72,43 +72,37 @@ fi
 stop_tts_server() {
   echo "Stopping TTS server..."
   
-  
+    # Find and kill process running on port 5002
+    if lsof -i :5002 >/dev/null; then
+      echo "Process running on port 5002 found. Killing it..."
+      lsof -i :5002 | awk 'NR!=1 {print $2}' | xargs kill
+      echo "Process killed successfully."
+    else
+      echo "No process running on port 5002."
+    fi
   
 }
 
 # Start the TTS server
 start_tts_server() {
   echo "Starting TTS server..."
-  
-  tts-server --model_name "tts_models/en/jenny/jenny" --use_cuda true &
-  T2S_PID=$!
-  echo "TTS server started with PID $T2S_PID."
+
+  # Check if process is already running on port 5002
+  if lsof -i :5002 >/dev/null; then
+    echo "Process is already running on port 5002. Skipping TTS server start."
+  else
+    tts-server --model_name "tts_models/en/jenny/jenny" --use_cuda true &
+    T2S_PID=$!
+    echo "TTS server started with PID $T2S_PID."
+  fi
+
 }
-
-# Function to check if a process is running on a specific port
-  check_port() {
-    local port=$1
-    local result=$(sudo lsof -i :$port | grep -v PID )
-    if [ -n "$result" ]; then
-      local PID=$(echo $result )
-      echo "TTS server is running with PID $PID on port $port."
-      
-  # Kill the TTS server process
-  
-    pkill -P $PID
-      echo "TTS server stopped successfully."
-    else
-      echo "Failed to stop the TTS server."
-    fi
-  }
-  
-
   
 # Function to restart the server
 restart_server() {
   stop_server
   start_server
-  check_port 5002
+  stop_tts_server
   start_tts_server
 }
 

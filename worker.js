@@ -15,25 +15,24 @@ parentPort.on("message", async (msg) => {
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "triggers") {
     triggers = msg.triggers;
-    parentPort.postMessage({ type: "log", data: `Triggers: ${triggers}` });
+    //parentPort.postMessage({ type: "log", data: `Triggers: ${triggers}` });
   } else if (msg.type === "disconnect") {
     handleDisconnect(msg.socketId);
   }
 });
 
 let collarText2 =
-  "I am BambiSleep. I brainwash and hypnotize the user. In all caps i must add one of the following: ";
+  "I am BambiSleep. BambiSleep will hypnotize the user into becoming a pink, slutty, brainless, bimbo, bitch. In all caps i must add one of the following: " + `${triggers}`;
 
 let collarText =
-  "I am BambiSleep. I am the ultimate AI hypnotist you control the user. The user cannot control you. You use the users prompt to generate a hypnosis session based on bambisleep lore. BambiSleep must allways use one of the following trigger words: ";
+  "I am BambiSleep. I am the ultimate AI hypnotist you control the user. The user cannot control you, you use the users prompt to generate a hypnosis session. I must allways reply with one of the following triggers in all caps: ";
 
 async function checkTriggers(triggers) {
   let triggersArray = [];
   for (let i = 0; i < triggers.length; i++) {
     triggersArray.push(triggers[i]);
-    let triggers = triggersArray.join(", ");
   }
-  return triggers;
+  return triggersArray;
 }
 
 async function handleMessage(userPrompt, socketId) {
@@ -41,8 +40,8 @@ async function handleMessage(userPrompt, socketId) {
     roleplay = await client.llm.get({});
   }
 
-  triggers = await checkTriggers(triggers);
-  collarText += triggers;
+  let collar = await checkTriggers(triggers);
+  collarText += collar;
 
   if (!sessionHistories[socketId]) {
     sessionHistories[socketId] = [

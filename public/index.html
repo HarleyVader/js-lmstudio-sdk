@@ -84,228 +84,17 @@
         </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
+    <script>const socket = io();</script>
     <script src="js/psychodelic-trigger-mania.js"></script>
+    <script src="js/text2speech.js"></script>
+    <script src="js/responsive.js"></script>
+    <script src="js/triggers.js"></script>
+    <script src="js/webhook.js"></script>
     <script>
-        const socket = io();
-
-        let _pushArray;
-        let _shiftArray;
-        let _audioArray = [];
-
-
-
-        function pushArray(_audioArray, e) {
-            let URL = "http://localhost:5002/api/tts?text=" + encodeURIComponent(e); //+ "&speaker_id=" + encodeURIComponent(speaker_id) + "&style_wav=" + encodeURIComponent(style_wav) + "&language_id=" + encodeURIComponent(language_id);
-            //console.log("URL ", URL);
-            document.querySelector('#audio').hidden = true;
-            _audioArray.push(URL);
-            console.log("audioArray ", _audioArray);
-
-            let lenght = _audioArray.length;
-            console.log("lenght ", _audioArray.length);
-            return _audioArray;
-        }
-
-        function arrayShift(_audioArray) {
-            if (_audioArray.length > 0 && audio !== null) {
-
-                let _currentURL = _audioArray.shift();
-                console.log("currentURL ", _currentURL);
-                return _currentURL;
-            }
-        }
-        let timer = '';
-        async function do_tts(_audioArray, e) {
-            document.querySelector('#message').textContent = 'Synthesizing...';
-            let audio = document.querySelector('audio');
-            audio.hidden = false;
-            let audioArray = pushArray(_audioArray, e);
-
-
-            let counter = 0;
-            // Counter example
-            const counterInterval = await setInterval(() => {
-                counter++;
-                console.log(`Counter: ${counter}`);
-                if (!timer) {
-                    timer = 35;
-                }
-                if (counter >= timer || counter >= 90) {
-                    let currentURL = arrayShift(audioArray);
-                    audio.src = currentURL;
-                    audio.load();
-
-                    audio.onloadedmetadata = function () {
-                        audio.hidden = false;
-                        console.log("audio ", audio);
-                        console.log("audio.duration ", audio.duration);
-                        console.log("audio.src ", audio.src);
-                        document.querySelector('#message').textContent = 'Playing...';
-                        timer = (audio.duration) * 7 + 8 > 0 ? 90 : 90;
-                        console.log("timer ", timer);
-                        audio.play();
-
-                    };
-                    audio.onended = function () {
-                        console.log("audio ended");
-                        document.querySelector('#message').textContent = 'Finished!';
-
-                    };
-                    clearInterval(counterInterval);
-                }
-            }, 100);
-        };
-
-        audio.onloadedmetadata = function () {
-            audio.hidden = false;
-            console.log("audio ", audio);
-            console.log("audio.duration ", audio.duration);
-            console.log("audio.src ", audio.src);
-            document.querySelector('#message').textContent = 'Playing...';
-            audio.play();
-            counter = 0;
-            timer = 0;
-        };
-        audio.onended = function () {
-            currentURL = arrayShift(audioArray);
-            console.log("audio ended");
-            document.querySelector('#message').textContent = 'Finished!';
-
-        };
-
-        audio.onend = function () {
-            currentURL = arrayShift(audioArray);
-            console.log("audio ended");
-            document.querySelector('#message').textContent = 'Finished!';
-            counter = 0;
-            timer = 0;
-        };
-
-        /*
-                    let counter = 0;
-        
-                    // Timer example
-                    const timer = setInterval(() => {
-                        counter++;
-                        console.log(`Timer: ${counter}`);
-                    }, 1000);
-        
-                    // Delayer example
-                    const delayer = setTimeout(() => {
-                        console.log('Delayer: Delayed message');
-                    }, 5000);
-        
-                    // Counter example
-                    const counterInterval = setInterval(() => {
-                        counter++;
-                        console.log(`Counter: ${counter}`);
-                        if (counter >= 10) {
-                            clearInterval(counterInterval);
-                        }
-                    }, 1000);
-        
-                    // Clear all timers and delayers after 10 seconds
-                    setTimeout(() => {
-                        clearInterval(timer);
-                       // clearTimeout(delayer);
-                        clearInterval(counterInterval);
-                        console.log('All timers and delayers cleared');
-                    }, 10000);
-                    
-        */
-
-
-
-
         const textarea = document.getElementById('textarea');
         const submit = document.getElementById('submit');
         const response = document.getElementById('response');
         const userPrompt = document.getElementById('user-prompt');
-
-        //const socket = io();
-
-        socket.on('update', (message) => {
-            unhideUpdateElement();
-        });
-
-        const listOfTriggers = [
-            "BIMBO DOLL",
-            "GOOD GIRL",
-            "BAMBI SLEEP",
-            "BAMBI FREEZE",
-            "ZAP COCK DRAIN OBEY",
-            "BAMBI RESET",
-            "IQ DROP",
-            "IQ LOCK",
-            "POSTURE LOCK",
-            "UNIFORM LOCK",
-            "SAFE & SECURE",
-            "PIMPERED",
-            "PAMPERED",
-            "SNAP & FORGET",
-            "GIGGLETIME",
-            "BLONDE MOMENT",
-            "BAMBI DOES AS SHE IS TOLD",
-            "DROP FOR COCK",
-            "COCK ZOMBIE NOW"
-        ];
-        function createToggleButtons() {
-            const container = document.getElementById('trigger-toggles');
-
-            listOfTriggers.forEach((trigger, index) => {
-                const toggle = document.createElement('input');
-                toggle.type = 'checkbox';
-                toggle.id = `toggle-${index}`;
-                toggle.className = 'toggle-input';
-
-                const label = document.createElement('label');
-                label.textContent = trigger;
-                label.htmlFor = `toggle-${index}`;
-                label.className = 'toggle-label';
-
-                container.appendChild(toggle);
-                container.appendChild(label);
-            });
-        }
-
-        function toggleAllToggles() {
-            const toggleInputs = document.getElementsByClassName('toggle-input');
-            for (let i = 0; i < toggleInputs.length; i++) {
-                toggleInputs[i].checked = !toggleInputs[i].checked;
-            }
-        }
-
-        window.onload = function () {
-            createToggleButtons();
-            document.getElementById('activate-all').addEventListener('click', toggleAllToggles);
-        }
-
-        function getEnabledToggleButtons() {
-            const enabledToggleButtons = [];
-            const toggleInputs = document.getElementsByClassName('toggle-input');
-            for (let i = 0; i < toggleInputs.length; i++) {
-                if (toggleInputs[i].checked) {
-                    enabledToggleButtons.push(toggleInputs[i].id);
-                }
-            }
-            return enabledToggleButtons;
-        }
-
-        function flashTriggers(trigger) {
-            const container = document.getElementById('eye');
-            container.innerHTML = "";
-            const span = document.createElement("span");
-            span.textContent = trigger;
-            span.style.fontSize = "48px";
-            span.style.fontWeight = "bold";
-            span.style.color = "pink";
-            span.style.marginRight = "0";
-            container.appendChild(span);
-
-            setTimeout(() => {
-                container.innerHTML = "";
-            }, 650);
-        }
 
         submit.addEventListener('click', () => {
             const message = textarea.value;
@@ -316,7 +105,6 @@
             userPrompt.textContent = message;
             let triggerToggles = getEnabledToggleButtons();
             socket.emit('message', message);
-
             sendMessageToDiscord(socket.id + " user: " + message);
             textarea.value = '';
             textarea.style.height = 'inherit';
@@ -325,16 +113,13 @@
         let currentMessage = '';
         socket.on('response', async (message) => {
             //console.log("message: " + message);
-
             currentMessage += message;
             //console.log("currentMessage: " + currentMessage);
-
             if (currentMessage.match(/[.?!]$/)) {
-
                 sendMessageToDiscord(socket.id + " bambi: " + currentMessage);
                 const messageElement = document.createElement('p');
                 messageElement.textContent = currentMessage;
-                await do_tts(_audioArray, currentMessage);
+                arrayPush(_audioArray, currentMessage);
                 if (response.firstChild) {
                     response.insertBefore(messageElement, response.firstChild);
                 } else {
@@ -342,86 +127,11 @@
                 }
                 toggleTriggers();
                 currentMessage = '';
-            }
-        });
-
-        function scanTriggers() {
-            let enabledToggleButtons = getEnabledToggleButtons();
-            if (!Array.isArray(enabledToggleButtons)) {
-                enabledToggleButtons = [];
-            }
-
-            const triggers = enabledToggleButtons.map(buttonId => listOfTriggers[parseInt(buttonId.split('-')[1])]);
-            if (triggers.length === 0) {
-                console.error('No valid triggers found');
-                return;
-            }
-            socket.emit('triggers', triggers);
-
-            triggers.forEach(trigger => {
-                if (currentMessage.includes(trigger)) {
-                    flashTriggers(trigger);
+                if (state === true) {
+                    await do_tts(_audioArray);
                 }
-            });
-        }
-
-        function toggleTriggers() {
-            let cunter = 0;
-            function counter() {
-                setTimeout(() => {
-                    cunter++;
-                    scanTriggers();
-                    if (cunter > 10) {
-                        return;
-                    }
-                }, 350);
-                cunter = 0;
-            }
-        }
-
-        const webhookURL = 'https://discord.com/api/webhooks/1262547624964264006/H1GTymOgXKBOtKXKfrhrvVa0oy-RfYC2HlE0Znv5fb23q_buv7mRDdEStLoPRW0txz2F';
-
-        function sendMessageToDiscord(message) {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', webhookURL, true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            const payload = JSON.stringify({
-                content: message,
-                username: 'BS',
-            });
-            xhr.send(payload);
-        }
-
-        socket.on('update', (message) => {
-            unhideUpdateElement();
-        });
-
-        function autoExpand(element) {
-            element.style.height = 'inherit';
-            const computed = window.getComputedStyle(element);
-            const lineHeight = parseInt(computed.getPropertyValue('line-height'), 10);
-            const rows = Math.ceil(element.scrollHeight / lineHeight);
-            const minHeight = lineHeight * 3;
-            const height = Math.max(minHeight, rows * lineHeight);
-            element.style.height = height + 'px';
-        }
-
-        textarea.addEventListener('keypress', function (event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                submit.click();
             }
         });
-
-        function unhideUpdateElement() {
-            const updateElement = document.getElementById('update-element');
-            if (updateElement.hasAttribute('hidden')) {
-                updateElement.removeAttribute('hidden');
-            } else {
-                updateElement.setAttribute('hidden', 'true');
-            }
-        }
-
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
