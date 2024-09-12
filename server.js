@@ -205,20 +205,12 @@ app.get("/psychodelic-trigger-mania", (req, res) => {
 
 app.use("/api/tts", (req, res) => {
   const { text } = req.query;
-  // Make a request to the TTS server and get the audio file
-  // You can use axios or any other HTTP library to make the request
-  // Replace "localhost:5002" with the actual TTS server address
   axios
-    .get(`http://192.168.0.178:5002/api/tts?text=${text}`)
+    .get(`http://192.168.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
     .then((response) => {
-      // Set the appropriate headers for the audio file
       res.setHeader("Content-Type", "audio/wav");
-      //res.setHeader("Content-Disposition", "attachment; filename=tts.mp3");
-      res.setHeader("Location", `http://192.168.0.178:5002/api/tts?text=${text}`);
-      console.log("Location",);
       res.setHeader("Content-Length", response.data.length);
-
-      res.sendFile(response.data);
+      res.send(response.data);
     })
     .catch((error) => {
       console.error("Error fetching TTS audio:", error);
