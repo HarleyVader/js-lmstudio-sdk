@@ -80,7 +80,7 @@
                 return;
             }
             userPrompt.textContent = message;
-            let triggerToggles = getEnabledToggleButtons();
+            sendTriggers();
             socket.emit('message', message);
             sendMessageToDiscord(socket.id + " user: " + message);
             textarea.value = '';
@@ -102,7 +102,7 @@
                 } else {
                     response.appendChild(messageElement);
                 }
-                toggleTriggers();
+                //toggleTriggers();
                 currentMessage = '';
                 if (state === true) {
                     await do_tts(_audioArray);

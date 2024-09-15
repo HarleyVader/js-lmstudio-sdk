@@ -9,7 +9,6 @@ const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
 
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -21,6 +20,9 @@ const rl = readline.createInterface({
   input: process.stdin, //standard terminal device input
   output: process.stdout, //standard terminal device output
 });
+
+// Increase the max listeners for the readline interface
+rl.setMaxListeners(20);
 
 const filteredWords = require("./fw.json");
 function filter(message) {
@@ -114,9 +116,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("triggers", (triggers) => {
-    worker.postMessage({ type: "triggers", triggers});
-    worker.postMessage({ type: "log", data: `Triggers: ${triggers}` });
-    
+    worker.postMessage({ type: "triggers", triggers, socketId: socket.id });
   });
 
   socket.on("disconnect", async () => {
@@ -144,8 +144,7 @@ io.on("connection", (socket) => {
       sessionHistories(msg.data, msg.socketId);
     } else if (msg.type === "triggers") {
       io.to(msg.socketId).emit("triggers", msg.data);
-      
-   } else {
+    } else {
       console.error("Unknown message type:", msg.type);
     }
   });

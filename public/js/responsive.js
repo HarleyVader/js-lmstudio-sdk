@@ -34,15 +34,6 @@ function unhideUpdateElement() {
   }
 }
 
-function unhideUpdateElement() {
-  const updateElement = document.getElementById("update-element");
-  if (updateElement.hasAttribute("hidden")) {
-    updateElement.removeAttribute("hidden");
-  } else {
-    updateElement.setAttribute("hidden", "true");
-  }
-}
-
 socket.on("update", (message) => {
   unhideUpdateElement();
 });

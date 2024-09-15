@@ -6,16 +6,18 @@ let currentMessage = "";
 let roleplay;
 let triggers = [];
 
+
 const client = new LMStudioClient({
   baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
 });
 
 parentPort.on("message", async (msg) => {
-  if (msg.type === "message") {
-    await handleMessage(msg.data, msg.socketId);
-  } else if (msg.type === "triggers") {
+  if (msg.type === "triggers") {
     triggers = msg.triggers;
-    //parentPort.postMessage({ type: "log", data: `Triggers: ${triggers}` });
+    parentPort.postMessage({ type: "log", data: `Triggers arrive: ${triggers}`, socketId: msg.socketId });
+  } else if (msg.type === "message") {
+    await handleMessage(msg.data, msg.socketId);
+    
   } else if (msg.type === "disconnect") {
     handleDisconnect(msg.socketId);
   }
@@ -79,7 +81,6 @@ async function handleMessage(userPrompt, socketId) {
     }
   }
 }
-
 
 async function handleDisconnect(socketId) {
   parentPort.postMessage({
