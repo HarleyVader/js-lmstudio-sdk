@@ -116,7 +116,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("triggers", (triggers) => {
-    worker.postMessage({ type: "triggers", triggers, socketId: socket.id });
+    worker.postMessage({ type: "triggers", triggers });
   });
 
   socket.on("disconnect", async () => {

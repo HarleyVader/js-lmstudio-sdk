@@ -14,10 +14,9 @@ const client = new LMStudioClient({
 parentPort.on("message", async (msg) => {
   if (msg.type === "triggers") {
     triggers = msg.triggers;
-    parentPort.postMessage({ type: "log", data: `Triggers arrive: ${triggers}`, socketId: msg.socketId });
+    //parentPort.postMessage({ type: "log", data: `Triggers arrive: ${triggers}`, socketId: msg.socketId });
   } else if (msg.type === "message") {
     await handleMessage(msg.data, msg.socketId);
-    
   } else if (msg.type === "disconnect") {
     handleDisconnect(msg.socketId);
   }
