@@ -78,7 +78,6 @@ body {
 }
 
 #eyeCursor {
-    display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Arial', sans-serif;
@@ -89,7 +88,7 @@ body {
     text-align: center;
     margin-top: 1%;
     background-color: transparent;
-    position: relative;
+    position: center;
     height: 59%;
 }
 
@@ -99,6 +98,8 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
+    width: 50%;
+    height: 50%;
 }
 
 #trigger-toggles {
@@ -221,7 +222,7 @@ h6 {
 }
 
 /* Media Queries for Responsive Design */
-@media (min-width: 768px) {
+@media (min-width: 1080px) {
     #chat-container {
         flex-direction: row;
     }
@@ -235,7 +236,7 @@ h6 {
     }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1080px) {
     #chat-container {
         flex-direction: column;
     }

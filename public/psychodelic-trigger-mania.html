@@ -9,13 +9,32 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <style>
-    #eyeCursor {
-        height: 100%;
-    }
+    body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 99vh;
+            background-color: #000;
+        }
 
-    #chat-container {
-        height: 100vh;
-    }
+        #eyeCursor {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+            font-size: 48px;
+            font-weight: bold;
+            color: rgb(252, 72, 186);
+            text-shadow: 10px 10px 10px rgb(238, 93, 249);
+            text-align: center;
+            background-color: transparent;
+            padding: 0;
+            margin: 0;
+            border-radius: 10px;
+            position: absolute;
+        }
 </style>
 
 <body>
@@ -58,20 +77,20 @@
         fetch('listOfTriggers.json')
             .then(response => response.json())
             .then(data => {
-            if (Array.isArray(data)) {
-                listOfTriggers = data;
-            } else if (data.listOfTriggers && Array.isArray(data.listOfTriggers)) {
-                listOfTriggers = data.listOfTriggers;
-            } 
+                if (Array.isArray(data)) {
+                    listOfTriggers = data;
+                } else if (data.listOfTriggers && Array.isArray(data.listOfTriggers)) {
+                    listOfTriggers = data.listOfTriggers;
+                }
             }).catch(error => {
-            console.error('Error fetching triggers:', error);
+                console.error('Error fetching triggers:', error);
             });
 
         setInterval(() => {
             if (listOfTriggers.length > 0) {
                 flashTriggers(listOfTriggers[Math.floor(Math.random() * listOfTriggers.length)]);
             }
-        }, 1500);
+        }, 2500);
     </script>
     <!-- jQuery(necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -79,4 +98,5 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="js/bootstrap.min.js"></script>
 </body>
+
 </html>

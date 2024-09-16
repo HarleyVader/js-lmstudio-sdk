@@ -71,7 +71,7 @@ const client = new LMStudioClient({
 
 const modelConfig = {
   identifier:
-    "TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_S.gguf",
+    "TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q8_0.gguf",
   config: {
     gpuOffload: 0.3,
     context_length: 8192,
@@ -93,9 +93,14 @@ let userSessions = new Set();
 let workers = new Map();
 
 loadModel();
+
+//Serve static files from the 'public' directory
+app.use(cors());
+app.use(express.static(path.join(__dirname, "public")));
+
 // Handle connection
 io.on("connection", (socket) => {
-  userSessions.add(socket.id); // Add the new session
+  userSessions.add(socket.id);
   console.log(`Client connected: ${socket.id} clients: ${userSessions.size}`);
 
   // Create a new worker for this client
@@ -103,9 +108,9 @@ io.on("connection", (socket) => {
   workers.set(socket.id, worker);
 
   socket.on("message", (message) => {
-    console.log(`Message from ${socket.id}: ${message}`);
+    //console.log(`Message from ${socket.id}: ${message}`);
     const filteredMessage = filter(message);
-    console.log(`Filtered message: ${filteredMessage}`);
+    //console.log(`Filtered message: ${filteredMessage}`);
     worker.postMessage({
       type: "message",
       data: filteredMessage,
@@ -120,19 +125,17 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", async () => {
-    userSessions.delete(socket.id); // Remove the session
-
-    // Inform worker about the disconnection
     worker.postMessage({ type: "disconnect", socketId: socket.id });
-    // Terminate the worker and remove it from the map
+  });
 
+  function terminator(socketId) {
+    userSessions.delete(socketId);
+    worker.terminate(socketId);
+    workers.delete(socketId);
     console.log(
       `Client disconnected: ${socket.id} clients: ${userSessions.size}`
     );
-    // Kill the worker for the socket
-    worker.terminate();
-    workers.delete(socket.id);
-  });
+  }
 
   // Receive messages from worker and forward them to the appropriate client
   worker.on("message", (msg) => {
@@ -142,11 +145,46 @@ io.on("connection", (socket) => {
       io.to(msg.socketId).emit("response", msg.data);
     } else if (msg.type === "messageHistory") {
       sessionHistories(msg.data, msg.socketId);
+      terminator(msg.socketId);
     } else if (msg.type === "triggers") {
       io.to(msg.socketId).emit("triggers", msg.data);
     } else {
       console.error("Unknown message type:", msg.type);
     }
+  });
+
+  // Handle HTTP requests within the socket connection
+  socket.request.app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+  });
+
+  socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
+
+  socket.request.app.get("/images", async (req, res) => {
+    const directoryPath = path.join(__dirname, "images");
+    const files = await fs.readdir(directoryPath);
+    let html = "<html><body>";
+    files.forEach((file) => {
+      if (
+        file.endsWith(".png") ||
+        file.endsWith(".jpg") ||
+        file.endsWith(".jpeg")
+      ) {
+        html += `<img src="/images/${file}" width="64" height="64" />`;
+      }
+    });
+    html += "</body></html>";
+    res.send(html);
+  });
+
+  socket.request.app.get("/help", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "help.html"));
+  });
+
+  socket.request.app.get("/psychodelic-trigger-mania", (req, res) => {
+    res.sendFile(
+      path.join(__dirname, "public", "psychodelic-trigger-mania.html")
+    );
   });
 
   rl.on("line", async (line) => {
@@ -160,46 +198,6 @@ io.on("connection", (socket) => {
       console.log("Invalid command! update or normal");
     }
   });
-});
-
-//Serve static files from the 'public' directory
-app.use(cors());
-app.use(express.static(path.join(__dirname, "public")));
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// Serve images from the "images" directory
-app.use("/images", express.static(path.join(__dirname, "images")));
-
-app.get("/images", async (req, res) => {
-  const directoryPath = path.join(__dirname, "images");
-  const files = await fs.readdir(directoryPath);
-  let html = "<html><body>";
-  files.forEach((file) => {
-    if (
-      file.endsWith(".png") ||
-      file.endsWith(".jpg") ||
-      file.endsWith(".jpeg")
-    ) {
-      html += `<img src="/images/${file}" width="64" height="64" />`;
-    }
-  });
-  html += "</body></html>";
-  res.send(html);
-});
-
-// Serve help.html from the 'public' directory
-app.get("/help", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "help.html"));
-});
-
-// Serve psychodelic-trigger-mania.html from the 'public' directory
-app.get("/psychodelic-trigger-mania", (req, res) => {
-  res.sendFile(
-    path.join(__dirname, "public", "psychodelic-trigger-mania.html")
-  );
 });
 
 app.use("/api/tts", (req, res) => {
@@ -216,7 +214,6 @@ app.use("/api/tts", (req, res) => {
       res.status(500).send("Error fetching TTS audio");
     });
 });
-
 
 // Start the server
 server.listen(PORT, () => {

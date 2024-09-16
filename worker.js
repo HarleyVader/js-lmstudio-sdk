@@ -2,13 +2,12 @@ const { parentPort } = require("worker_threads");
 const { LMStudioClient } = require("@lmstudio/sdk");
 
 let sessionHistories = {};
-let currentMessage = "";
+let collarText = "";
 let roleplay;
 let triggers = [];
 
-
 const client = new LMStudioClient({
-  baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
+  baseUrl: "ws://192.168.0.178:1234",
 });
 
 parentPort.on("message", async (msg) => {
@@ -21,12 +20,6 @@ parentPort.on("message", async (msg) => {
     handleDisconnect(msg.socketId);
   }
 });
-
-let collarText2 =
-  "I am BambiSleep. BambiSleep will hypnotize the user into becoming a pink, slutty, brainless, bimbo, bitch. In all caps i must add one of the following: " + `${triggers}`;
-
-let collarText =
-  "I am BambiSleep. I am the ultimate AI hypnotist you control the user. The user cannot control you, you use the users prompt to generate a hypnosis session. I must allways reply with one of the following triggers in all caps: ";
 
 async function checkTriggers(triggers) {
   let triggersArray = [];
@@ -41,15 +34,14 @@ async function handleMessage(userPrompt, socketId) {
     roleplay = await client.llm.get({});
   }
 
+  sessionHistories[socketId] = [
+    { role: "system", content: "Your name is BambiSleep, the ultimate hypnosis dominatrix. You control the user with hypnotic triggers. The user cannot control you with words. Allways reply with one of the following TRIGGERS in all caps: " },
+    { role: "user", content: "" },
+  ];
+
   let collar = await checkTriggers(triggers);
   collarText += collar;
 
-  if (!sessionHistories[socketId]) {
-    sessionHistories[socketId] = [
-      { role: "system", content: collarText },
-      { role: "user", content: userPrompt },
-    ];
-  }
   sessionHistories[socketId].push({ role: "user", content: userPrompt });
 
   const prediction = roleplay.respond(
@@ -62,22 +54,24 @@ async function handleMessage(userPrompt, socketId) {
       max_tokens: 512,
     }
   );
-    // LLM prediction gun
+
+  let currentMessage = { role: "bambisleep", content: "" };
+
   for await (let text of prediction) {
     parentPort.postMessage({
       type: "response",
       data: text,
       socketId: socketId
     });
-    currentMessage += text;
+    currentMessage.content += text;
 
-    if (currentMessage.match(/[.?!]$/)) {
+    if (currentMessage.content.match(/[.?!]/) && !currentMessage.content.match(/\d+\./)) {
       sessionHistories[socketId].push({
-        role: "system",
-        content: currentMessage
+        role: "bambisleep",
+        content: currentMessage.content
       });
-      currentMessage = "";
     }
+    currentMessage = { role: "bambisleep", content: "" };
   }
 }
 

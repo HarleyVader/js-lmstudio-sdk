@@ -92,7 +92,7 @@
             //console.log("message: " + message);
             currentMessage += message;
             //console.log("currentMessage: " + currentMessage);
-            if (currentMessage.match(/[.?!]$/)) {
+            if (currentMessage.content.match(/[.?!]/) && !currentMessage.content.match(/\d+\./)) {
                 sendMessageToDiscord(socket.id + " bambi: " + currentMessage);
                 const messageElement = document.createElement('p');
                 messageElement.textContent = currentMessage;
