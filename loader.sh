@@ -117,7 +117,18 @@ while true; do
     restart_server
   elif [ "$cmd" == "exit" ]; then
     stop_server
-    break
+  elif [ "$cmd" == "stop" ]; then
+    stop_server
+  elif [ "$cmd" == "start" ]; then
+    start_server
+  elif [ "$cmd" == "stop-tts" ]; then
+    stop_tts_server
+  elif [ "$cmd" == "start-tts" ]; then
+    start_tts_server
+  elif [ "$cmd" == "update" ]; then
+    echo update
+  elif [ "$cmd" == "normal" ]; then
+    echo normal
   else
     echo "Unknown command: $cmd"
   fi
