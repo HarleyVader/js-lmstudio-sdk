@@ -70,9 +70,17 @@ async function sessionHistories(data, socketId) {
 let roleplay;
 // Load the model once
 const client = new LMStudioClient({
-  baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
+  baseUrl: "ws://172.19.144.1:1234", // Replace with your LMStudio server address
 });
 
+// Add error handling for WebSocket connection
+client.on('error', (error) => {
+  if (error.code === 'ETIMEDOUT') {
+    console.error(`WebSocket connection timed out: ${error.address}:${error.port}`);
+  } else {
+    console.error(`WebSocket error: ${error.message}`);
+  }
+});
 
 //TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_M.gguf
 //TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q8_0.gguf
