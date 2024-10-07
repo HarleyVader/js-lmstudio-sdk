@@ -81,7 +81,7 @@ const modelConfig = {
   config: {
     gpuOffload: 0.4,
     context_length: 8192,
-    embedding_length: 512,
+    embedding_length: 8192,
   },
 };
 
