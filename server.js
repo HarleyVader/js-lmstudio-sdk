@@ -70,7 +70,7 @@ async function sessionHistories(data, socketId) {
 let roleplay;
 // Load the model once
 const client = new LMStudioClient({
-  baseUrl: "ws://84.115.142.2:1234", // Replace with your LMStudio server address
+  baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
 });
 
 
