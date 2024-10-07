@@ -70,7 +70,7 @@ async function sessionHistories(data, socketId) {
 let roleplay;
 // Load the model once
 const client = new LMStudioClient({
-  baseUrl: "ws://172.19.144.1:1234", // Replace with your LMStudio server address
+  baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
 });
 
 //TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_M.gguf
