@@ -21,26 +21,33 @@ function arrayShift(_audioArray) {
     return _currentURL;
   }
 }
+let audio = document.querySelector("audio");
 
-async function do_tts(_audioArray) {
-  state = false;
+function audioLoad(_audioArray) {
   document.querySelector("#message").textContent = "Synthesizing...";
-  let audio = document.querySelector("audio");
   let currentURL = arrayShift(_audioArray);
   audio.src = currentURL;
-  console.log("audio.src ", audio.src);
   audio.load();
   audio.onloadedmetadata = function () {
     console.log("audio ", audio);
-    console.log("audio.duration ", audio.duration);
+    console.log("Audio loaded with duration: ", audio.duration);
     duration = audio.duration * 1000;
-    document.querySelector("#message").textContent = "Playing...";
+    delayer();
+  };
+  audio.onerror = function () {
+    console.error("Error loading audio");
+  };
+}
+
+async function do_tts(_audioArray) {
+  state = false;
+  document.querySelector("#message").textContent = "Playing...";
     delayer();
     audio.play();
-  };
   audio.onended = function () {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
+    audioLoad(_audioArray);
   };
 }
 

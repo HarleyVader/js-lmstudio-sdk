@@ -96,9 +96,6 @@
             currentMessage += message;
             console.log('Current message after:', currentMessage); // Log currentMessage after update
 
-            const triggerFound = listOfTriggers.some(trigger => message.includes(trigger));
-            console.log('Trigger found:', triggerFound); // Log if a trigger is found
-
             // Check if the current message ends with a punctuation mark followed by a newline
             // and does not contain a numbered list, or if a trigger is found
             if (currentMessage.match(/[.!?]/)) {
