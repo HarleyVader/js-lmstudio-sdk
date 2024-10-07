@@ -35,12 +35,12 @@ async function do_tts(_audioArray) {
     console.log("audio.duration ", audio.duration);
     duration = audio.duration * 1000;
     document.querySelector("#message").textContent = "Playing...";
+    delayer();
     audio.play();
   };
   audio.onended = function () {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
-    delayer();
   };
 }
 
