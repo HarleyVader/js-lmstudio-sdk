@@ -7,7 +7,7 @@ let roleplay;
 let triggers = [];
 
 const client = new LMStudioClient({
-  baseUrl: "ws://172.19.156.1:1234",
+  baseUrl: "ws://192.168.0.178:1234",
 });
 
 parentPort.on("message", async (msg) => {
