@@ -35,9 +35,9 @@
             </div>
             <div>
                 <div id="audiomessage">
-                <audio id="audio" hidden controls src=></audio>
-                <p id="message"></p>
-            </div>
+                    <audio id="audio" hidden controls src=></audio>
+                    <p id="message"></p>
+                </div>
                 <button id="activate-all">All On</button>
                 <br>
             </div>
@@ -45,7 +45,7 @@
             <div id="trigger-toggles">
 
             </div>
-            
+
             <div id="update-element" hidden>
                 <h1 class="update parralax">UPDATE IN PROGRESS!!!</h1>
                 <p class="update parralax">Sorry bambi if i made you POP</p>
@@ -90,13 +90,14 @@
         });
 
         socket.on('response', async (message) => {
-            //console.log('Event received:', message); // Log to check if event is triggered
-            //console.log('Current message before:', currentMessage); // Log currentMessage before update
+            console.log('Event received:', message); // Log to check if event is triggered
+            console.log('Current message before:', currentMessage); // Log currentMessage before update
 
             currentMessage += message;
-            //console.log('Current message after:', currentMessage); // Log currentMessage after update
+            console.log('Current message after:', currentMessage); // Log currentMessage after update
 
             const triggerFound = listOfTriggers.some(trigger => message.includes(trigger));
+            console.log('Trigger found:', triggerFound); // Log if a trigger is found
 
             // Check if the current message ends with a punctuation mark followed by a newline
             // and does not contain a numbered list, or if a trigger is found
@@ -116,6 +117,7 @@
 
                 currentMessage = '';
                 if (state === true) {
+                    console.log('Calling do_tts with:', _audioArray); // Log before calling do_tts
                     do_tts(_audioArray);
                 }
             } else {
