@@ -1,5 +1,5 @@
 const express = require("express");
-const path = require("path");
+const path = require('path');
 const fs = require("fs").promises;
 const http = require("http");
 const { Server } = require("socket.io");
@@ -8,10 +8,14 @@ const { LMStudioClient } = require("@lmstudio/sdk");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
+const Sentry = require("@sentry/node");
+
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+Sentry.setupExpressErrorHandler(app);
 
 const PORT = 6969;
 
@@ -66,14 +70,17 @@ async function sessionHistories(data, socketId) {
 let roleplay;
 // Load the model once
 const client = new LMStudioClient({
-  baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
+  baseUrl: "ws://84.115.142.2:1234", // Replace with your LMStudio server address
 });
 
+
+//TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_M.gguf
+//TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q8_0.gguf
 const modelConfig = {
   identifier:
-    "TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q8_0.gguf",
+    "TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_M.gguf", 
   config: {
-    gpuOffload: 0.3,
+    gpuOffload: 0.4,
     context_length: 8192,
     embedding_length: 512,
   },
@@ -91,6 +98,7 @@ async function loadModel() {
 
 let userSessions = new Set();
 let workers = new Map();
+let socketStore = new Map(); // Shared context for socket objects
 
 loadModel();
 
@@ -107,51 +115,11 @@ io.on("connection", (socket) => {
   const worker = new Worker("./worker.js");
   workers.set(socket.id, worker);
 
-  socket.on("message", (message) => {
-    //console.log(`Message from ${socket.id}: ${message}`);
-    const filteredMessage = filter(message);
-    //console.log(`Filtered message: ${filteredMessage}`);
-    worker.postMessage({
-      type: "message",
-      data: filteredMessage,
-      triggers: "",
-      socketId: socket.id,
-    });
-    console.log({ message });
-  });
+  // Store the socket object in the shared context
+  socketStore.set(socket.id, socket);
 
-  socket.on("triggers", (triggers) => {
-    worker.postMessage({ type: "triggers", triggers });
-  });
-
-  socket.on("disconnect", async () => {
-    worker.postMessage({ type: "disconnect", socketId: socket.id });
-  });
-
-  function terminator(socketId) {
-    userSessions.delete(socketId);
-    worker.terminate(socketId);
-    workers.delete(socketId);
-    console.log(
-      `Client disconnected: ${socket.id} clients: ${userSessions.size}`
-    );
-  }
-
-  // Receive messages from worker and forward them to the appropriate client
-  worker.on("message", (msg) => {
-    if (msg.type === "log") {
-      console.log(msg.data, msg.socketId); // Log worker messages
-    } else if (msg.type === "response") {
-      io.to(msg.socketId).emit("response", msg.data);
-    } else if (msg.type === "messageHistory") {
-      sessionHistories(msg.data, msg.socketId);
-      terminator(msg.socketId);
-    } else if (msg.type === "triggers") {
-      io.to(msg.socketId).emit("triggers", msg.data);
-    } else {
-      console.error("Unknown message type:", msg.type);
-    }
-  });
+  // Ensure socket.request.app is defined
+  socket.request.app = app;
 
   // Handle HTTP requests within the socket connection
   socket.request.app.get("/", (req, res) => {
@@ -187,6 +155,50 @@ io.on("connection", (socket) => {
     );
   });
 
+  socket.on("message", (message) => {
+  console.log(`Message from ${socket.id}: ${message}`);
+  const filteredMessage = filter(message);
+  console.log(`Filtered message: ${filteredMessage}`);
+  worker.postMessage({
+    type: "message",
+    data: filteredMessage,
+    triggers: "",
+    socketId: socket.id,
+  });
+});
+
+  socket.on("triggers", (triggers) => {
+    worker.postMessage({ type: "triggers", triggers });
+  });
+
+  socket.on("disconnect", async () => {
+    worker.postMessage({ type: "disconnect", socketId: socket.id });
+  });
+
+  function terminator(socketId) {
+    userSessions.delete(socketId);
+    worker.terminate(socketId);
+    workers.delete(socketId);
+    console.log(
+      `Client disconnected: ${socket.id} clients: ${userSessions.size}`
+    );
+  }
+
+  worker.on("message", (msg) => {
+    if (msg.type === "log") {
+      console.log(msg.data, msg.socketId);
+    } else if (msg.type === "response") {
+      io.to(msg.socketId).emit("response", msg.data);
+    } else if (msg.type === "messageHistory") {
+      sessionHistories(msg.data, msg.socketId);
+      terminator(msg.socketId);
+    } else if (msg.type === "triggers") {
+      io.to(msg.socketId).emit("triggers", msg.data);
+    } else {
+      console.error("Unknown message type:", msg.type);
+    }
+  });
+
   rl.on("line", async (line) => {
     if (line === "update") {
       console.log("Update mode");
@@ -200,10 +212,21 @@ io.on("connection", (socket) => {
   });
 });
 
+
+const telemetry = require(path.join(__dirname, 'public', 'telemetry', 'instrument.js'));
+
+// sentry error handling
+app.use(function onError(err, req, res, next) {
+  // The error id is attached to `res.sentry` to be returned
+  // and optionally displayed to the user for support.
+  res.statusCode = 500;
+  res.end(res.sentry + "\n");
+});
+
 app.use("/api/tts", (req, res) => {
   const { text } = req.query;
   axios
-    .get(`http://192.168.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
+    .get(`http://0.0.0.0:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
     .then((response) => {
       res.setHeader("Content-Type", "audio/wav");
       res.setHeader("Content-Length", response.data.length);
@@ -215,10 +238,13 @@ app.use("/api/tts", (req, res) => {
     });
 });
 
+
 // Start the server
 server.listen(PORT, () => {
   console.log(`Server listening on *:${PORT}`);
 });
+
+
 
 /*
 const { MongoClient } = require('mongodb');

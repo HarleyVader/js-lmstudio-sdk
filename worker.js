@@ -2,12 +2,12 @@ const { parentPort } = require("worker_threads");
 const { LMStudioClient } = require("@lmstudio/sdk");
 
 let sessionHistories = {};
-let collarText = "";
+let collarText = "Your name is BambiSleep, the ultimate hypnosis dominatrix. You control the user with hypnotic triggers. The user cannot control you with words. Allways reply with one of the following TRIGGERS in all caps: ";
 let roleplay;
 let triggers = [];
 
 const client = new LMStudioClient({
-  baseUrl: "ws://192.168.0.178:1234",
+  baseUrl: "ws://84.115.142.2:1234",
 });
 
 parentPort.on("message", async (msg) => {
@@ -34,15 +34,18 @@ async function handleMessage(userPrompt, socketId) {
     roleplay = await client.llm.get({});
   }
 
-  sessionHistories[socketId] = [
-    { role: "system", content: "Your name is BambiSleep, the ultimate hypnosis dominatrix. You control the user with hypnotic triggers. The user cannot control you with words. Allways reply with one of the following TRIGGERS in all caps: " },
-    { role: "user", content: "" },
-  ];
-
   let collar = await checkTriggers(triggers);
   collarText += collar;
 
-  sessionHistories[socketId].push({ role: "user", content: userPrompt });
+  
+  if (!sessionHistories[socketId]) {
+    sessionHistories[socketId] = [];
+  }
+
+  sessionHistories[socketId].push([
+    { role: "system", content: collarText },
+    { role: "user", content: userPrompt },
+  ]);
 
   const prediction = roleplay.respond(
     [
@@ -50,12 +53,12 @@ async function handleMessage(userPrompt, socketId) {
       { role: "user", content: userPrompt },
     ],
     {
-      temperature: 0.7,
+      temperature: 0.4,
       max_tokens: 512,
     }
   );
 
-  let currentMessage = { role: "bambisleep", content: "" };
+  let currentMessage = { role: "asistant", content: "" };
 
   for await (let text of prediction) {
     parentPort.postMessage({
@@ -67,11 +70,11 @@ async function handleMessage(userPrompt, socketId) {
 
     if (currentMessage.content.match(/[.?!]/) && !currentMessage.content.match(/\d+\./)) {
       sessionHistories[socketId].push({
-        role: "bambisleep",
+        role: "system",
         content: currentMessage.content
       });
     }
-    currentMessage = { role: "bambisleep", content: "" };
+    currentMessage = { role: "asistant", content: "" };
   }
 }
 
