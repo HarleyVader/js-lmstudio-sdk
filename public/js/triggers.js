@@ -10,7 +10,7 @@ const listOfTriggers = [
   "POSTURE LOCK",
   "UNIFORM LOCK",
   "SAFE & SECURE",
-  "PIMPERED",
+  "PRIMPED",
   "PAMPERED",
   "SNAP & FORGET",
   "GIGGLETIME",
@@ -18,7 +18,17 @@ const listOfTriggers = [
   "BAMBI DOES AS SHE IS TOLD",
   "DROP FOR COCK",
   "COCK ZOMBIE NOW",
+  "BAMBI TITS LOCK",
+  "BAMBI WAIST LOCK",
+  "BAMBI BUTT LOCK",
+  "BAMBI LIMBS LOCK",
+  "BAMBI FACE LOCK",
+  "BAMBI LIPS LOCK",
+  "BAMBI THROAT LOCK",
+  "BAMBI POSTURE LOCK",
 ];
+
+
 function createToggleButtons() {
   const container = document.getElementById("trigger-toggles");
 
@@ -106,6 +116,9 @@ function flashTriggers(trigger) {
   container.innerHTML = "";
   const span = document.createElement("span");
   span.textContent = trigger;
+  span.style.display = "flex";
+  span.style.justifyContent = "center";
+  span.style.alignItems = "center";
   span.style.fontSize = "48px";
   span.style.fontWeight = "bold";
   span.style.color = "pink";
@@ -119,14 +132,14 @@ function flashTriggers(trigger) {
 
 function toggleTriggers() {
   let cunter = 0;
-    setTimeout(() => {
-      cunter++;
-      scanTriggers();
-      if (cunter > 10) {
-        return;
-      }
-    }, 350);
-    cunter = 0;
+  setTimeout(() => {
+    cunter++;
+    scanTriggers();
+    if (cunter > 10) {
+      return;
+    }
+  }, 350);
+  cunter = 0;
 }
 
 setInterval(() => {

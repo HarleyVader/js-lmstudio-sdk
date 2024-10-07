@@ -34,7 +34,10 @@
                 <br>
             </div>
             <div>
-                <h5>Triggers</h5>
+                <div id="audiomessage">
+                <audio id="audio" hidden controls src=></audio>
+                <p id="message"></p>
+            </div>
                 <button id="activate-all">All On</button>
                 <br>
             </div>
@@ -42,10 +45,7 @@
             <div id="trigger-toggles">
 
             </div>
-            <div id="audiomessage">
-                <audio id="audio" hidden controls src=></audio>
-                <p id="message"></p>
-            </div>
+            
             <div id="update-element" hidden>
                 <h1 class="update parralax">UPDATE IN PROGRESS!!!</h1>
                 <p class="update parralax">Sorry bambi if i made you POP</p>
@@ -68,6 +68,8 @@
     <script src="js/triggers.js"></script>
     <script src="js/webhook.js"></script>
     <script>
+        let currentMessage = '';
+
         const textarea = document.getElementById('textarea');
         const submit = document.getElementById('submit');
         const response = document.getElementById('response');
@@ -87,26 +89,35 @@
             textarea.style.height = 'inherit';
         });
 
-        let currentMessage = '';
         socket.on('response', async (message) => {
-            //console.log("message: " + message);
+            //console.log('Event received:', message); // Log to check if event is triggered
+            //console.log('Current message before:', currentMessage); // Log currentMessage before update
+
             currentMessage += message;
-            //console.log("currentMessage: " + currentMessage);
-            if (currentMessage.content.match(/[.?!]/) && !currentMessage.content.match(/\d+\./)) {
+            //console.log('Current message after:', currentMessage); // Log currentMessage after update
+
+            const triggerFound = listOfTriggers.some(trigger => message.includes(trigger));
+
+            if (currentMessage.match(/[.?!]/) || triggerFound) {
+                console.log('Condition met, processing message'); // Log when condition is met
+
                 sendMessageToDiscord(socket.id + " bambi: " + currentMessage);
                 const messageElement = document.createElement('p');
                 messageElement.textContent = currentMessage;
                 arrayPush(_audioArray, currentMessage);
+
                 if (response.firstChild) {
                     response.insertBefore(messageElement, response.firstChild);
                 } else {
                     response.appendChild(messageElement);
                 }
-                //toggleTriggers();
+
                 currentMessage = '';
                 if (state === true) {
-                    await do_tts(_audioArray);
+                    do_tts(_audioArray);
                 }
+            } else {
+                console.log('Condition not met'); // Log when condition is not met
             }
         });
     </script>

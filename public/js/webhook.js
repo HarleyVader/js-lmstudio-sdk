@@ -1,4 +1,4 @@
-const webhookURL = 'https://discord.com/api/webhooks/1262547624964264006/H1GTymOgXKBOtKXKfrhrvVa0oy-RfYC2HlE0Znv5fb23q_buv7mRDdEStLoPRW0txz2F';
+const webhookURL = 'https://discord.com/api/webhooks/1292839037060517969/V-WRHvonfQKhSBdfoz9bHonCuzMjuvRP1G_cAV6ApTPkKz0PwIdqMR0ZTNnQK0NI5Leg';
 
         function sendMessageToDiscord(message) {
             const xhr = new XMLHttpRequest();

@@ -15,8 +15,6 @@ body {
     padding: 0;
     font-family: Arial, sans-serif;
     background-color: var(--secondary-color);
-    height: 100%;
-    width: 100%;
 }
 
 #chat-container {
@@ -26,13 +24,12 @@ body {
     height: 97.5vh;
     border: solid 1px var(--button-color);
     border-radius: 10px;
-    flex-direction: column;
 }
 
 #user-input {
     display: flex;
     flex-direction: column;
-    width: 100%;
+    width: 35%;
     padding: 1em;
     overflow-y: auto;
     background-color: var(--primary-color);
@@ -62,7 +59,7 @@ body {
 #response-container {
     display: flex;
     flex-direction: column;
-    width: 100%;
+    width: 99%;
 }
 
 #response {
@@ -78,6 +75,7 @@ body {
 }
 
 #eyeCursor {
+    display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Arial', sans-serif;
@@ -88,18 +86,20 @@ body {
     text-align: center;
     margin-top: 1%;
     background-color: transparent;
-    position: center;
+    position: relative;
     height: 59%;
 }
 
 #eye {
     position: absolute;
     top: 50%;
+    /* Center vertically */
     left: 50%;
+    /* Center horizontally */
     transform: translate(-50%, -50%);
+    /* Adjust to perfectly center */
     text-align: center;
-    width: 50%;
-    height: 50%;
+    /* Center the text inside the div */
 }
 
 #trigger-toggles {
@@ -112,16 +112,7 @@ body {
     border-top: 1px solid var(--button-color);
     border-bottom: 1px solid var(--button-color);
     margin-bottom: 1em;
-}
 
-#user-input textarea {
-    height: 60px;
-    padding: 10px;
-    margin: 10px 0;
-    font-size: 16px;
-    border: 2px solid var(--button-color);
-    border-radius: 5px;
-    resize: none;
 }
 
 /* Style the toggle input */
@@ -152,6 +143,7 @@ body {
     background-color: var(--secondary-color);
     color: var(--button-color);
 }
+
 
 .toggle-input:disabled+.toggle-label {
     background-color: var(--secondary-color);
@@ -221,28 +213,60 @@ h6 {
     color: var(--tertiary-color);
 }
 
-/* Media Queries for Responsive Design */
-@media (min-width: 1080px) {
+/* Mobile Styles */
+@media (max-width: 600px) {
+    body {
+        font-size: 14px;
+    }
+
     #chat-container {
-        flex-direction: row;
+        flex-direction: column;
+        height: auto;
+        margin: 0;
+        padding: 0.5em;
     }
 
     #user-input {
-        width: 35%;
+        width: 100%;
+        padding: 0.5em;
     }
 
-    #response-container {
-        width: 65%;
-    }
-}
-
-@media (max-width: 1080px) {
-    #chat-container {
-        flex-direction: column;
-    }
-
-    #user-input,
     #response-container {
         width: 100%;
+    }
+
+    #response {
+        height: auto;
+        padding: 0.5em;
+    }
+
+    #eyeCursor {
+        font-size: 24px;
+        margin-top: 0.5em;
+        height: auto;
+    }
+
+    nav {
+        flex-direction: column;
+        padding: 0.5em;
+    }
+
+    button {
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    p {
+        margin-left: 0.5%;
+    }
+
+    .toggle-label {
+        padding: 0.25rem 0.5rem;
+        margin: 0.05rem;
+    }
+
+    textarea {
+        height: 40px;
+        padding: 5px;
     }
 }
