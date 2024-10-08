@@ -44,7 +44,7 @@ async function do_tts(_audioArray) {
     if (audio.duration === 0) {
       play(duration);
     }
-    state = true;
+    
   };
 }
 
@@ -54,5 +54,6 @@ async function play(duration) {
       do_tts(_audioArray);
     }, await duration);
   }
-  play(duration);
+  state = true;
+  return state;
 }
