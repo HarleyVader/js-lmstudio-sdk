@@ -23,7 +23,7 @@ function arrayShift(_audioArray) {
 }
 
 async function do_tts(_audioArray) {
-  state = false;
+  if (state) state = false;
   document.querySelector("#message").textContent = "Synthesizing...";
   let audio = document.querySelector("audio");
   let currentURL = arrayShift(_audioArray);
@@ -43,6 +43,7 @@ async function do_tts(_audioArray) {
     if (_audioArray.length > 0) {
       delayer();
     }
+    state = true
   };
 }
 
