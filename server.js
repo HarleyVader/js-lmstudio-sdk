@@ -225,7 +225,7 @@ app.use(function onError(err, req, res, next) {
 app.use("/api/tts", (req, res) => {
   const { text } = req.query;
   axios
-    .get(`http://0.0.0.0:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
+    .get(`http://192.168.1.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
     .then((response) => {
       res.setHeader("Content-Type", "audio/wav");
       res.setHeader("Content-Length", response.data.length);
