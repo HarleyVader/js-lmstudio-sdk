@@ -43,19 +43,19 @@ async function do_tts(_audioArray) {
     document.querySelector("#message").textContent = "Finished!";
     if (_audioArray.length > 0 || audio.currentTime === 0) {
       do_tts(_audioArray);
-      if (_audioArray.length === 0) {
-        state = true;
-        return state;
-      }
+    } else if (_audioArray.length === 0) {
+      state = true;
+      return state;
     }
   };
-}
+};
+
 /*
 async function play(duration) {
-  if (_audioArray.length > 0 ) {
-    setTimeout(() => {
-      
-    }, await duration);
-  }
+if (_audioArray.length > 0 ) {
+  setTimeout(() => {
+    
+  }, await duration);
 }
-  */
+}
+*/
