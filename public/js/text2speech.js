@@ -25,6 +25,7 @@ let audio = document.querySelector("audio");
 
 function audioLoad(_audioArray) {
   document.querySelector("#message").textContent = "Synthesizing...";
+  let audio = document.querySelector("audio");
   let currentURL = arrayShift(_audioArray);
   audio.src = currentURL;
   audio.load();
@@ -42,6 +43,7 @@ function audioLoad(_audioArray) {
 async function do_tts(_audioArray) {
   state = false;
   document.querySelector("#message").textContent = "Playing...";
+  audio = document.querySelector("audio");
     delayer();
     audio.play();
   audio.onended = function () {
