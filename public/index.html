@@ -104,24 +104,25 @@
             // and does not contain a numbered list, or if a trigger is found
             if (currentMessage.match(/[.!?]/) && !currentMessage.match(/\d+\./) || triggerFound) {
                 _textArray.push(currentMessage);
+                console.log('Text array:', _textArray); // Log the text array
+
                 arrayPush(_audioArray, currentMessage);
                 currentMessage = '';
             }
-            if (_textArray.length > 0 && state === true) {
-                while (_textArray.length > 0) {
-                    const messageElement = document.createElement('p');
-                    messageElement.textContent = _textArray.shift();
-                    sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
-                    if (response.firstChild) {
-                        response.insertBefore(messageElement, response.firstChild);
-                    } else {
-                        response.appendChild(messageElement);
-                    }
-                    do_tts(_audioArray);
+            while (_textArray.length > 0 && state === true) {
+                const messageElement = document.createElement('p');
+                messageElement.textContent = _textArray.shift();
+                sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
+                if (response.firstChild) {
+                    response.insertBefore(messageElement, response.firstChild);
+                } else {
+                    response.appendChild(messageElement);
                 }
+                do_tts(_audioArray);
             }
+
         });
-        
+
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
