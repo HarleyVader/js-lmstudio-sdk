@@ -36,7 +36,6 @@ async function do_tts(_audioArray) {
     duration = audio.duration * 1000;
     document.querySelector("#message").textContent = "Playing...";
     audio.play();
-    delayer(duration);
   };
   audio.onended = function () {
     console.log("audio ended");
@@ -44,20 +43,8 @@ async function do_tts(_audioArray) {
     if (audio.currentTime === 0) {
       state = true;
     }
-    audio.onend = function () {
-      console.log("audio ended");
-      document.querySelector("#message").textContent = "Finished!";
-      if (audio.currentTime === 0) {
-        state = true;
-      }
+    if (_audioArray.length > 0 && state === true) {
+      do_tts(_audioArray);
     };
-  };
-}
-  async function delayer(duration) {
-    setTimeout(() => {
-      console.log("Delayer: Delayed message");
-      if (_audioArray.length > 0) {
-        do_tts(_audioArray);
-      }
-    }, await duration);
   }
+}
