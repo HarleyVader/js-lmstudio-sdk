@@ -52,7 +52,4 @@ async function delayer(duration) {
       do_tts(_audioArray);
     }
   }, await duration);
-  if (!state) state = true;
-  console.log("state ", state);
-  return state;
 }
