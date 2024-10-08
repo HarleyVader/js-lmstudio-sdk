@@ -31,7 +31,6 @@ async function do_tts(_audioArray) {
   console.log("audio.src ", audio.src);
   audio.load();
   audio.onloadedmetadata = function () {
-   
     console.log("audio ", audio);
     console.log("audio.duration ", audio.duration);
     duration = audio.duration * 1000;
@@ -40,14 +39,13 @@ async function do_tts(_audioArray) {
     return duration;
   };
   audio.onended = function () {
-    console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
     if (audio.currentTime === 0) {
-      console.log("audio.currentTime ", audio.currentTime);
+      if (!state) state = true;
       play(duration);
     }
   };
-
+  
 }
 
 function play(duration) {
@@ -56,6 +54,5 @@ function play(duration) {
       do_tts(_audioArray);
     }, duration);
   }
-  if (!state) state = true;
   play(duration);
 }

@@ -108,14 +108,14 @@
             }
 
         });
-        if (_textArray.length > 0 || _audioArray.length > 0) {
+        while (_textArray.length > 0) {
             const messageElement = document.createElement('p');
             messageElement.textContent = _textArray.shift();
             sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
             if (response.firstChild) {
-                response.insertBefore(messageElement, response.firstChild);
+            response.insertBefore(messageElement, response.firstChild);
             } else {
-                response.appendChild(messageElement);
+            response.appendChild(messageElement);
             }
             play();
         }
