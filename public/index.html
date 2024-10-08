@@ -10,13 +10,6 @@
 </head>
 
 <body>
-    <script>
-        const transaction = Sentry.startTransaction({ name: "test-transaction" });
-        const span = transaction.startChild({ op: "functionX" }); // This function returns a Span
-        // exampleFunctionCall();
-        span.finish(); // Remember that only finished spans will be sent with the transaction
-        transaction.finish(); // Finishing the transaction will send it to Sentry
-    </script>
     <nav>
         <a href="/">bambisleep.chat</a>
         <a href="/psychodelic-trigger-mania">Psychodelic Trigger Mania</a>
@@ -116,11 +109,7 @@
                 }
             }
         });
-
-
     </script>
-
-
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>

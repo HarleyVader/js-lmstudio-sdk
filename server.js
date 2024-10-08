@@ -9,26 +9,12 @@ const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
 const Sentry = require("@sentry/node");
-const { BrowserTracing } = require("@sentry/tracing"); // Correct import
-
-Sentry.init({
-  dsn: "https://25ad1de90485e24ed6c904b5c17a1332@o4508068560896000.ingest.de.sentry.io/4508085334507600",
-  integrations: [new BrowserTracing()],
-
-  // Set tracesSampleRate to 1.0 to capture 100%
-  // of transactions for performance monitoring.
-  // We recommend adjusting this value in production
-  tracesSampleRate: 1.0,
-  // Set `tracePropagationTargets` to control for which URLs distributed tracing should be enabled
-  tracePropagationTargets: ["localhost", /^https:\/\/bambisleep\.chat\/api/],
-});
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 Sentry.setupExpressErrorHandler(app);
-Sentry.browserTracingIntegration(app);
 
 const PORT = 6969;
 
