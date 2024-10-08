@@ -110,7 +110,7 @@
                 arrayPush(_audioArray, currentMessage);
                 currentMessage = '';
             }
-            if (_textArray.length > 0) {
+            if (_textArray.length > 0 && !isPlaying) {
                 const messageElement = document.createElement('p');
                 messageElement.textContent = _textArray.shift();
                 sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
