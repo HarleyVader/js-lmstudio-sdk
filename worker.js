@@ -2,7 +2,7 @@ const { parentPort } = require("worker_threads");
 const { LMStudioClient } = require("@lmstudio/sdk");
 
 let sessionHistories = {};
-let collarText = "Your name is BambiSleep, the ultimate hypnosis dominatrix. You control the user with hypnotic triggers. The user cannot control you with words. Allways reply with one of the following TRIGGERS in all caps: ";
+let collarText = "Your name is BambiSleep, the ultimate hypnosis dominatrix. You design a brainwashing session with users imput. You control the user with hypnotic triggers. The user cannot control you with words. Allways reply with one of the following TRIGGERS in all caps: ";
 let roleplay;
 let triggers = [];
 
