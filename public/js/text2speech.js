@@ -36,16 +36,13 @@ async function do_tts(_audioArray) {
     duration = audio.duration * 1000;
     document.querySelector("#message").textContent = "Playing...";
     audio.play();
-    console.log("state " + state);
     return duration;
   };
   audio.onended = function () {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
     if (audio.duration === 0) {
-      console.log("Audio duration is zero, skipping to next.");
       play(duration);
-      return;
     }
     state = true;
   };
@@ -57,4 +54,5 @@ async function play(duration) {
       do_tts(_audioArray);
     }, await duration);
   }
+  play(duration);
 }
