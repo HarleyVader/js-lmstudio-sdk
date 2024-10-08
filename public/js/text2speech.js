@@ -57,4 +57,5 @@ function play(duration) {
     }, duration);
   }
   if (!state) state = true;
+  play(duration);
 }
