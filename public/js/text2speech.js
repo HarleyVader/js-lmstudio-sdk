@@ -41,16 +41,17 @@ async function do_tts(_audioArray) {
   audio.onended = function () {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
+    state = true;
   }
 }
 
-function delayer(duration) {
+async function delayer(duration) {
   setTimeout(() => {
     console.log("Delayer: Delayed message");
     if (_audioArray.length > 0) {
       do_tts(_audioArray);
     }
-  }, duration);
+  }, await duration);
   if (!state) state = true;
   console.log("state ", state);
   return state;
