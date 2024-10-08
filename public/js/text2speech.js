@@ -24,6 +24,8 @@ function arrayShift(_audioArray) {
 
 async function do_tts(_audioArray) {
   state = false;
+  console.log("state " + state);
+  
   document.querySelector("#message").textContent = "Synthesizing...";
   let audio = document.querySelector("audio");
   let currentURL = arrayShift(_audioArray);
@@ -37,6 +39,8 @@ async function do_tts(_audioArray) {
     document.querySelector("#message").textContent = "Playing...";
     audio.play();
     state = true;
+    console.log("state " + state);
+    return state;
   };
   audio.onended = function () {
     console.log("audio ended");
