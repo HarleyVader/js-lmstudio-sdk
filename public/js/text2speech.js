@@ -40,9 +40,9 @@ async function do_tts(_audioArray) {
     audio.play();
     state = true;
     console.log("state " + state);
-    return state;
+
   };
-  audio.onended = function () {
+  audio.onend = function () {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
     if (audio.currentTime === 0) {
@@ -53,7 +53,7 @@ async function do_tts(_audioArray) {
 }
 
 function play() {
-  if (state === true) {
+  if (_audioArray.length > 0 && state) {
     do_tts(_audioArray);
   }
 }
