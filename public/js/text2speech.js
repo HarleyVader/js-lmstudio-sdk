@@ -9,7 +9,7 @@ function arrayPush(_audioArray, e) {
   document.querySelector("#audio").hidden = true;
   _audioArray.push(URL);
   console.log("audioArray ", _audioArray);
-  let lenght = _audioArray.length;
+
   console.log("lenght ", _audioArray.length);
   return _audioArray;
 }
@@ -41,15 +41,23 @@ async function do_tts(_audioArray) {
   audio.onended = function () {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
-    state = true;
-  }
-}
-
-async function delayer(duration) {
-  setTimeout(() => {
-    console.log("Delayer: Delayed message");
-    if (_audioArray.length > 0) {
-      do_tts(_audioArray);
+    if (audio.currentTime === 0) {
+      state = true;
     }
-  }, await duration);
+    audio.onend = function () {
+      console.log("audio ended");
+      document.querySelector("#message").textContent = "Finished!";
+      if (audio.currentTime === 0) {
+        state = true;
+      }
+    };
+  };
 }
+  async function delayer(duration) {
+    setTimeout(() => {
+      console.log("Delayer: Delayed message");
+      if (_audioArray.length > 0) {
+        do_tts(_audioArray);
+      }
+    }, await duration);
+  }
