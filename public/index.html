@@ -103,11 +103,6 @@
                 _textArray.push(currentMessage);
                 console.log('Text array:', _textArray); // Log the text array
                 arrayPush(_audioArray, currentMessage);
-                currentMessage = '';
-                console.log('Audio array:', _audioArray); // Log the audio array
-            }
-
-            if (_textArray.length > 0) {
                 const messageElement = document.createElement('p');
                 messageElement.textContent = _textArray.shift();
                 sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
@@ -116,7 +111,11 @@
                 } else {
                     response.appendChild(messageElement);
                 }
-                play();
+                currentMessage = '';
+                if (state === true) {
+                    do_tts(_audioArray);
+                }
+
             }
         });
         
