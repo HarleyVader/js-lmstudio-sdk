@@ -42,15 +42,16 @@ async function do_tts(_audioArray) {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
     if (audio.duration === 0) {
-      play(duration);
+      do_tts(_audioArray);
     }
   };
 }
-
+/*
 async function play(duration) {
   if (_audioArray.length > 0 ) {
     setTimeout(() => {
-      do_tts(_audioArray);
+      
     }, await duration);
   }
 }
+  */
