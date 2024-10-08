@@ -88,10 +88,6 @@ function scanTriggers() {
   const triggers = enabledToggleButtons.map(
     (buttonId) => listOfTriggers[parseInt(buttonId.split("-")[1])]
   );
-  if (triggers.length === 0) {
-    console.error("No valid triggers found");
-    return;
-  }
   if (typeof currentMessage === 'undefined') {
     console.error('currentMessage is not defined');
     return;
@@ -147,5 +143,5 @@ function toggleTriggers() {
 }
 
 setInterval(() => {
-  scanTriggers();
+  toggleTriggers();
 }, 450);
