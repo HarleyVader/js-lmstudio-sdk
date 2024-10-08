@@ -40,22 +40,15 @@ async function do_tts(_audioArray) {
   audio.onended = function () {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
-    if (audio.currentTime === 0) {
-      state = true;
-      return state;
-    }
-    if (_audioArray.length > 0 && state === true) {
+    if (audio.currentTime === 0 && state === true) {
       do_tts(_audioArray);
     };
   }
   audio.onend = function () {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
-    if (audio.currentTime === 0) {
-      state = true;
-      return state;
-    }
-    while (_audioArray.length > 0 && state === true) {
+  
+    if (audio.currentTime === 0 && state === true) {
       do_tts(_audioArray);
     };
   }
