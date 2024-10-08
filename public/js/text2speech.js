@@ -21,31 +21,31 @@ function arrayShift(_audioArray) {
     return _currentURL;
   }
 }
-let audio = document.querySelector("audio");
+
 
 function audioLoad(_audioArray) {
   document.querySelector("#message").textContent = "Synthesizing...";
-  let audio = document.querySelector("audio");
   let currentURL = arrayShift(_audioArray);
+  let audio = document.querySelector("audio");
   audio.src = currentURL;
   audio.load();
   audio.onloadedmetadata = function () {
     console.log("audio ", audio);
     console.log("Audio loaded with duration: ", audio.duration);
     duration = audio.duration * 1000;
-    delayer();
+    delayer(audio);
+    return audio;
   };
   audio.onerror = function () {
     console.error("Error loading audio");
   };
 }
 
-async function do_tts(_audioArray) {
+async function do_tts(_audioArray, audio) {
   state = false;
   document.querySelector("#message").textContent = "Playing...";
-  audio = document.querySelector("audio");
     delayer();
-    audio.play();
+    audio.play()
   audio.onended = function () {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
@@ -54,11 +54,11 @@ async function do_tts(_audioArray) {
 }
 
 
-function delayer() {
+function delayer(audio) {
   setTimeout(() => {
     console.log("Delayer: Delayed message");
     if (_audioArray.length > 0) {
-      do_tts(_audioArray);
+      do_tts(_audioArray, audio);
     }
   }, duration);
   if (!state) state = true;
