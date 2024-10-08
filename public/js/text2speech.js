@@ -35,12 +35,14 @@ async function do_tts(_audioArray) {
     console.log("audio.duration ", audio.duration);
     duration = audio.duration * 1000;
     document.querySelector("#message").textContent = "Playing...";
-    delayer();
     audio.play();
   };
   audio.onended = function () {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
+    if (_audioArray.length > 0) {
+      delayer();
+    }
   };
 }
 
@@ -48,7 +50,7 @@ async function do_tts(_audioArray) {
 function delayer() {
   setTimeout(() => {
     console.log("Delayer: Delayed message");
-    if (_audioArray.length > 0 && state === true) {
+    if (_audioArray.length > 0) {
       do_tts(_audioArray);
     }
   }, duration);
