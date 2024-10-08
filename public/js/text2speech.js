@@ -51,7 +51,7 @@ async function do_tts(_audioArray) {
 }
 
 function play(duration) {
-  if (_audioArray.length > 0 && !isPlaying) {
+  if (_audioArray.length > 0 && state) {
     setTimeout(() => {
       do_tts(_audioArray);
     }, duration);
