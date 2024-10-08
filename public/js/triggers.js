@@ -92,6 +92,10 @@ function scanTriggers() {
     console.error("No valid triggers found");
     return;
   }
+  if (typeof currentMessage === 'undefined') {
+    console.error('currentMessage is not defined');
+    return;
+  }
 
   triggers.forEach((trigger) => {
     if (currentMessage.includes(trigger)) {
