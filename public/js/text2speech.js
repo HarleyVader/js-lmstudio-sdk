@@ -42,7 +42,7 @@ async function do_tts(_audioArray) {
   audio.onended = function () {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
-    if (_audioArray.length > 0) {
+    if (audio.duration === 0) {
       state = true;
       play(duration);
     }
