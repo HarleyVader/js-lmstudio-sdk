@@ -43,6 +43,10 @@ async function do_tts(_audioArray) {
     document.querySelector("#message").textContent = "Finished!";
     if (_audioArray.length > 0 || audio.currentTime === 0) {
       do_tts(_audioArray);
+      if (_audioArray.length === 0) {
+        state = true;
+        return state;
+      }
     }
   };
 }
