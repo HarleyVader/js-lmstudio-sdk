@@ -110,11 +110,10 @@
                 }
                 currentMessage = '';
             }
-            if (state && _audioArray.length > 0) {
-                await play();
-            }
-            
         });
+        if (state && _audioArray.length > 0) {
+            await play();
+        }
 
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
