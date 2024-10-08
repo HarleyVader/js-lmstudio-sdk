@@ -36,6 +36,7 @@ async function do_tts(_audioArray) {
     duration = audio.duration * 1000;
     document.querySelector("#message").textContent = "Playing...";
     audio.play();
+    
   };
   audio.onended = function () {
     console.log("audio ended");
@@ -53,3 +54,8 @@ async function do_tts(_audioArray) {
     };
   }
 }
+setTimeout(function () {
+  if (audio.currentTime === 0) {
+    do_tts(_audioArray);
+  }
+}, duration);
