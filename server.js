@@ -8,7 +8,7 @@ const { LMStudioClient } = require("@lmstudio/sdk");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
-require("./instrument.js");
+require("./public/telemetry/instrument.js");
 const Sentry = require("@sentry/node");
 
 
