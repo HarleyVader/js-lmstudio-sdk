@@ -107,8 +107,7 @@
                 arrayPush(_audioArray, currentMessage);
                 currentMessage = '';
             }
-        });
-        if (_textArray.length > 0 && state === true) {
+            if (_textArray.length > 0 && state === true) {
                 const messageElement = document.createElement('p');
                 messageElement.textContent = _textArray.shift();
                 sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
@@ -119,6 +118,8 @@
                 }
                 do_tts(_audioArray);
             }
+        });
+        
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
