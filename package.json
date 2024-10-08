@@ -26,6 +26,7 @@
   "homepage": "https://github.com/HarleyVader/js-lmstudio-sdk#readme",
   "dependencies": {
     "@lmstudio/sdk": "^0.1.0",
+    "@sentry/browser": "^8.33.1",
     "@sentry/node": "^8.33.1",
     "@sentry/profiling-node": "^8.33.1",
     "axios": "^1.7.7",

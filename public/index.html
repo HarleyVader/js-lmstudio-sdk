@@ -6,11 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BambiSleep AI GF</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://js-de.sentry-cdn.com/25ad1de90485e24ed6c904b5c17a1332.min.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
+    <script>
+        const transaction = Sentry.startTransaction({ name: "test-transaction" });
+        const span = transaction.startChild({ op: "functionX" }); // This function returns a Span
+        // exampleFunctionCall();
+        span.finish(); // Remember that only finished spans will be sent with the transaction
+        transaction.finish(); // Finishing the transaction will send it to Sentry
+    </script>
     <nav>
         <a href="/">bambisleep.chat</a>
         <a href="/psychodelic-trigger-mania">Psychodelic Trigger Mania</a>
@@ -114,17 +120,7 @@
 
     </script>
 
-    <script>
-        Sentry.onLoad(function () {
-            Sentry.init({
-                // Tracing
-                tracesSampleRate: 1.0, // Capture 100% of the transactions
-                // Session Replay
-                replaysSessionSampleRate: 1.0, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-                replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
-            });
-        });
-    </script>
+
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>

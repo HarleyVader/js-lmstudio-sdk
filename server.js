@@ -10,6 +10,22 @@ const cors = require('cors');
 const axios = require("axios");
 const Sentry = require("@sentry/node");
 
+import * as Sentry from "@sentry/browser";
+
+Sentry.init({
+  dsn: "https://25ad1de90485e24ed6c904b5c17a1332@o4508068560896000.ingest.de.sentry.io/4508085334507600",
+  integrations: [Sentry.browserTracingIntegration()],
+
+  // Set tracesSampleRate to 1.0 to capture 100%
+  // of transactions for performance monitoring.
+  // We recommend adjusting this value in production
+  tracesSampleRate: 1.0,
+  // Set `tracePropagationTargets` to control for which URLs distributed tracing should be enabled
+  tracePropagationTargets: ["localhost", /^https:/ / yourserver.io / api ],
+
+});
+
+
 
 const app = express();
 const server = http.createServer(app);
@@ -77,7 +93,7 @@ const client = new LMStudioClient({
 //TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q8_0.gguf
 const modelConfig = {
   identifier:
-    "TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_M.gguf", 
+    "TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_M.gguf",
   config: {
     gpuOffload: 0.2,
     context_length: 8192,
@@ -155,16 +171,16 @@ io.on("connection", (socket) => {
   });
 
   socket.on("message", (message) => {
-  console.log(`Message from ${socket.id}: ${message}`);
-  const filteredMessage = filter(message);
-  console.log(`Filtered message: ${filteredMessage}`);
-  worker.postMessage({
-    type: "message",
-    data: filteredMessage,
-    triggers: "",
-    socketId: socket.id,
+    console.log(`Message from ${socket.id}: ${message}`);
+    const filteredMessage = filter(message);
+    console.log(`Filtered message: ${filteredMessage}`);
+    worker.postMessage({
+      type: "message",
+      data: filteredMessage,
+      triggers: "",
+      socketId: socket.id,
+    });
   });
-});
 
   socket.on("triggers", (triggers) => {
     worker.postMessage({ type: "triggers", triggers });
