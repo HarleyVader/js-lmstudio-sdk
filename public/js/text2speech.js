@@ -44,7 +44,7 @@ async function do_tts(_audioArray) {
       state = true;
       return state;
     }
-    while (_audioArray.length > 0 && state === true) {
+    if (_audioArray.length > 0 && state === true) {
       do_tts(_audioArray);
     };
   }
