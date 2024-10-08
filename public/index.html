@@ -69,6 +69,7 @@
     <script src="js/webhook.js"></script>
     <script>
         let currentMessage = '';
+        let _textArray = [];
 
         const textarea = document.getElementById('textarea');
         const submit = document.getElementById('submit');
@@ -102,26 +103,20 @@
             // Check if the current message ends with a punctuation mark followed by a newline
             // and does not contain a numbered list, or if a trigger is found
             if (currentMessage.match(/[.!?]/) && !currentMessage.match(/\d+\./) || triggerFound) {
-                console.log('Condition met, processing message'); // Log when condition is met
-
-                sendMessageToDiscord(socket.id + " bambi: " + currentMessage);
-                const messageElement = document.createElement('p');
-                messageElement.textContent = currentMessage;
+                _textArray.push(currentMessage);
                 arrayPush(_audioArray, currentMessage);
-
+                currentMessage = '';
+            }
+            if (_textArray.length > 0 && state === true) {
+                const messageElement = document.createElement('p');
+                messageElement.textContent = _textArray.shift();
+                sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
                 if (response.firstChild) {
                     response.insertBefore(messageElement, response.firstChild);
                 } else {
                     response.appendChild(messageElement);
                 }
-
-                currentMessage = '';
-                if (state === true) {
-                    console.log('Calling do_tts with:', _audioArray); // Log before calling do_tts
-                    do_tts(_audioArray);
-                }
-            } else {
-                console.log('Condition not met'); // Log when condition is not met
+                do_tts(_audioArray);
             }
         });
     </script>
