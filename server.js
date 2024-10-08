@@ -8,7 +8,6 @@ const { LMStudioClient } = require("@lmstudio/sdk");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
-require("./public/telemetry/instrument.js");
 const Sentry = require("@sentry/node");
 
 
@@ -214,6 +213,7 @@ io.on("connection", (socket) => {
   });
 });
 
+require("./public/telemetry/instrument.js");
 
 // Optional fallthrough error handler
 app.use(function onError(err, req, res, next) {
