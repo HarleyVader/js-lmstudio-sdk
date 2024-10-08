@@ -109,11 +109,12 @@
                     response.appendChild(messageElement);
                 }
                 currentMessage = '';
+                if (state) {
+                    do_tts(_audioArray);
+                }
             }
         });
-        if (state && _audioArray.length > 0) {
-            await play();
-        }
+
 
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
