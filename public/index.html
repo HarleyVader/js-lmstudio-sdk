@@ -109,10 +109,11 @@
 
                 arrayPush(_audioArray, currentMessage);
                 currentMessage = '';
+                return _textArray;
             }
             
         });
-        while (_textArray.length > 0) {
+        if (_textArray.length > 0) {
                 const messageElement = document.createElement('p');
                 messageElement.textContent = _textArray.shift();
                 sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
