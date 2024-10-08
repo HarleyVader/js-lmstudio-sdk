@@ -70,6 +70,7 @@
     <script>
         let currentMessage = '';
         let _textArray = [];
+        let duration = 3000;
 
         const textarea = document.getElementById('textarea');
         const submit = document.getElementById('submit');
@@ -115,7 +116,7 @@
                 } else {
                     response.appendChild(messageElement);
                 }
-                play();
+                play(duration);
             }
         });
     </script>

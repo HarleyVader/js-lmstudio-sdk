@@ -36,7 +36,6 @@ async function do_tts(_audioArray) {
     duration = audio.duration * 1000;
     document.querySelector("#message").textContent = "Playing...";
     audio.play();
-    return duration;
   };
   audio.onended = function () {
     document.querySelector("#message").textContent = "Finished!";
