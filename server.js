@@ -8,16 +8,10 @@ const { LMStudioClient } = require("@lmstudio/sdk");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
-const Sentry = require("@sentry/node");
-
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-
-
-// The error handler must be registered before any other error middleware and after all controllers
-Sentry.setupExpressErrorHandler(app);
 
 const PORT = 6969;
 
@@ -211,28 +205,6 @@ io.on("connection", (socket) => {
       console.log("Invalid command! update or normal");
     }
   });
-});
-
-require("./public/telemetry/instrument.js");
-
-// Optional fallthrough error handler
-app.use(function onError(err, req, res, next) {
-  // The error id is attached to `res.sentry` to be returned
-  // and optionally displayed to the user for support.
-  res.statusCode = 500;
-  res.end(res.sentry + "\n");
-});
-
-app.get("/debug-sentry", function mainHandler(req, res) {
-  throw new Error("My first Sentry error!");
-});
-
-// sentry error handling
-app.use(function onError(err, req, res, next) {
-  // The error id is attached to `res.sentry` to be returned
-  // and optionally displayed to the user for support.
-  res.statusCode = 500;
-  res.end(res.sentry + "\n");
 });
 
 app.use("/api/tts", (req, res) => {
