@@ -28,20 +28,6 @@ async function loadModel() {
   });
 }
 
-const filteredWords = require("../fw.json");
-
-function filter(message) {
-  if (typeof message !== "string") {
-    message = String(message);
-  }
-  return message
-    .split(" ")
-    .map((word) => {
-      return filteredWords.includes(word.toLowerCase()) ? " " : word;
-    })
-    .join(" ");
-}
-
 async function sessionHistori1es(data, socketId) {
   sessionHistories[socketId] = data;
 

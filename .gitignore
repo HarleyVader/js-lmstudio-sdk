@@ -3,4 +3,5 @@ node_modules
 *-lock.json
 images
 history
+tests
 

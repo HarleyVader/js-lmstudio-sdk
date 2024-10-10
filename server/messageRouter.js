@@ -1,12 +1,26 @@
 const { Worker } = require("worker_threads");
-const path = require('path');
-const fs = require("fs").promises;
 const axios = require("axios");
+const { Message } = require('./models');
+const { startDatabase } = require('./database');
 
 function startMessageRouter(app, io) {
   let userSessions = new Set();
   let workers = new Map();
   let socketStore = new Map(); // Shared context for socket objects
+
+  const filteredWords = require("../fw.json");
+
+  function filter(message) {
+    if (typeof message !== "string") {
+      message = String(message);
+    }
+    return message
+      .split(" ")
+      .map((word) => {
+        return filteredWords.includes(word.toLowerCase()) ? " " : word;
+      })
+      .join(" ");
+  }
 
   // Handle connection
   io.on("connection", (socket) => {
@@ -20,47 +34,26 @@ function startMessageRouter(app, io) {
     // Store the socket object in the shared context
     socketStore.set(socket.id, socket);
 
-    // Ensure socket.request.app is defined
-    socket.request.app = app;
-
-    // Handle HTTP requests within the socket connection
-    socket.request.app.get("/", (req, res) => {
-      res.sendFile(path.join(__dirname, "public", "index.html"));
-    });
-
-    socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
-
-    socket.request.app.get("/images", async (req, res) => {
-      const directoryPath = path.join(__dirname, "images");
-      const files = await fs.readdir(directoryPath);
-      let html = "<html><body>";
-      files.forEach((file) => {
-        if (
-          file.endsWith(".png") ||
-          file.endsWith(".jpg") ||
-          file.endsWith(".jpeg")
-        ) {
-          html += `<img src="/images/${file}" width="64" height="64" />`;
-        }
-      });
-      html += "</body></html>";
-      res.send(html);
-    });
-
-    socket.request.app.get("/help", (req, res) => {
-      res.sendFile(path.join(__dirname, "public", "help.html"));
-    });
-
-    socket.request.app.get("/psychodelic-trigger-mania", (req, res) => {
-      res.sendFile(
-        path.join(__dirname, "public", "psychodelic-trigger-mania.html")
-      );
-    });
-
-    socket.on("message", (message) => {
+    socket.on("message", async (message) => {
       console.log(`Message from ${socket.id}: ${message}`);
       const filteredMessage = filter(message);
       console.log(`Filtered message: ${filteredMessage}`);
+
+      const userMessage = new Message({
+        socketId: socket.id,
+        timestamp: new Date(),
+        sender: 'user',
+        message: filteredMessage
+      });
+
+      try {
+        // Save the client message
+        await userMessage.save();
+        console.log('Client message saved to MongoDB');
+      } catch (error) {
+        console.error('Error saving client message:', error);
+      }
+
       worker.postMessage({
         type: "message",
         data: filteredMessage,
@@ -86,7 +79,22 @@ function startMessageRouter(app, io) {
       );
     }
 
-    worker.on("message", (msg) => {
+    worker.on("message", async (msg) => {
+      const llmMessage = new Message({
+        socketId: msg.socketId,
+        timestamp: new Date(),
+        sender: 'LLM',
+        message: msg.data
+      });
+
+      try {
+        // Save the LLM message
+        await llmMessage.save();
+        console.log('LLM message saved to MongoDB');
+      } catch (error) {
+        console.error('Error saving LLM message:', error);
+      }
+
       if (msg.type === "log") {
         console.log(msg.data, msg.socketId);
       } else if (msg.type === "response") {
