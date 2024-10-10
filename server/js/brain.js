@@ -1,6 +1,6 @@
-const { startWebHost } = require('./webhost');
+const { startWebHost } = require('./server/js/webhost');
 const { startMessageRouter } = require('../messageRouter');
-const { startDatabase } = require('./database');
+const { startDatabase } = require('./server/js/database');
 const { LMStudioClient } = require("@lmstudio/sdk");
 
 async function startServer() {

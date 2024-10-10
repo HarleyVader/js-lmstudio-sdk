@@ -1,5 +1,5 @@
 const { MongoClient } = require('mongodb');
-const { Message } = require('./models');
+const { Message } = require('./.config/models');
 
 const uri = "mongodb://localhost:27017"; // Replace with your MongoDB connection string
 const clientDB = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });

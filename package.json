@@ -1,10 +1,10 @@
 {
   "name": "js-lmstudio-sdk",
-  "version": "2.3.1",
-  "description": "AI GF implementation using express socket.io @lmstudio/sdk in pure javascript on node",
+  "version": "3.5.0",
+  "description": "Brandynette's AI Girlfriend - Node.js socket.io and express website server with worker-thread",
   "main": "server.js",
   "scripts": {
-    "test": "node server.js",
+    "test": "jest",
     "start": "node server.js"
   },
   "repository": {
@@ -29,20 +29,11 @@
     "axios": "^1.7.7",
     "cors": "^2.8.5",
     "express": "^4.21.0",
-    "readline": "^1.3.0",
+    "jest": "^27.4.7", 
     "socket.io": "^4.8.0",
     "worker-thread": "^1.1.0"
   },
-  "contributes": {
-        "commands": [
-            {
-                "command": "extension.sendCodeBase",
-                "title": "Github Copilot send Codebase to Github Web"
-            }
-        ]
-    },
-    "activationEvents": [
-        "onCommand:extension.sendCodeBase"
-    ]
+  "devDependencies": {
+    "eslint": "^9.12.0"
+  }
 }
-

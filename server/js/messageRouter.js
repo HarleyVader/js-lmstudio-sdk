@@ -1,6 +1,6 @@
 const { Worker } = require("worker_threads");
 const axios = require("axios");
-const { Message } = require('./models');
+const { Message } = require('./config/models');
 const { startDatabase } = require('./database');
 
 function startMessageRouter(app, io) {
