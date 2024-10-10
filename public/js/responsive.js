@@ -8,6 +8,7 @@ function autoExpand(element) {
   element.style.height = height + "px";
 }
 
+const textarea = document.querySelector('textarea'); // Ensure textarea is defined
 textarea.addEventListener("keypress", function (event) {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();

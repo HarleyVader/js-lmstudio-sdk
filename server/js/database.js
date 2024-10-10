@@ -1,8 +1,21 @@
 const { MongoClient } = require('mongodb');
-const { Message } = require('./.config/models');
+const { Message } = require('../.config/models'); // Adjust the path as needed
 
-const uri = "mongodb://localhost:27017"; // Replace with your MongoDB connection string
-const clientDB = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+async function connectToMongoDB() {
+  const uri = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.3.2";
+  const client = new MongoClient(uri);
+
+  try {
+      await client.connect();
+      console.log("Connected to MongoDB");
+  } catch (err) {
+      console.error("Error connecting to MongoDB:", err);
+  } finally {
+      await client.close();
+  }
+}
+
+connectToMongoDB();
 
 async function startDatabase(io) {
   try {

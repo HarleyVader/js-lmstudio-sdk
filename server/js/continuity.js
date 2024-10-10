@@ -1,6 +1,6 @@
 const { MongoClient } = require('mongodb');
 
-const uri = "mongodb://localhost:27017"; // Replace with your MongoDB connection string
+const uri = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.3.2"; // Replace with your MongoDB connection string
 const clientDB = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 async function startContinuity(io) {
