@@ -23,7 +23,3 @@ function unhideUpdateElement() {
     updateElement.setAttribute("hidden", "true");
   }
 }
-
-socket.on("update", (message) => {
-  unhideUpdateElement();
-});
