@@ -1,0 +1,36 @@
+/bambisleep-chat
+  ├── server
+  │   ├── config.js
+  │   ├── initServer.js
+  │   ├── initReadline.js
+  │   ├── errorHandler.js
+  │   ├── webhost.js
+  │   ├── brain
+  │   │   ├── continuity.js
+  │   │   ├── emotion.js
+  │   │   ├── memory.js
+  │   │   └── brain.js
+  │   ├── database
+  │   │   ├── user.js
+  │   │   ├── chat.js
+  │   │   ├── history.js
+  │   │   ├── login.js
+  │   │   └── admin.js
+  │   ├── socketRouter
+  │   │   ├── message.js
+  │   │   ├── constructor.js
+  │   │   ├── class.js
+  │   │   └── socketRouter.js
+  │   ├── sentiment
+  │   │   ├── emotion.js
+  │   │   ├── reaction.js
+  │   │   ├── desire.js
+  │   │   └── achieve.js
+  │   └── main.js
+  ├── public
+  │   ├── index.html
+  │   ├── styles.css
+  │   └── app.js
+  ├── Dockerfile
+  ├── docker-compose.yml
+  └── README.md

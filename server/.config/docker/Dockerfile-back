@@ -1,0 +1,93 @@
+# Use an official Debian 12 image as a parent image
+FROM debian:12-slim
+
+# Install Node.js and npm
+RUN apt-get update && apt install -y \
+    curl \
+    wget \
+    sudo \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Apache2 and Nginx
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    python3 \
+    net-tools \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y \
+    apache2 \
+    nginx \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash \
+    && nvm -v \
+    && export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")" \
+    && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" \
+    && nvm install node
+
+# Enable necessary Apache2 modules
+RUN a2enmod proxy proxy_http
+
+# Configure Apache2 as a reverse proxy
+COPY apache2.conf /etc/apache2/sites-available/000-default.conf
+
+# Configure Nginx as a reverse proxy
+COPY nginx.conf /etc/nginx/sites-available/default
+
+# Enable and start Apache2 and Nginx services
+RUN systemctl enable apache2 && systemctl enable nginx
+RUN systemctl enable apache2 && systemctl enable nginx
+
+# Create necessary directories and set permissions
+ARG user
+ARG domain
+ARG nodeapp
+ARG docroot
+RUN mkdir -p $docroot \
+    && chown -R root:root $docroot
+
+# Copy application files to the container
+COPY . $docroot
+
+# Set working directory
+WORKDIR $docroot
+
+# Define environment variable
+ENV NAME bambisleep
+ENV NVM_DIR /root/.nvm
+ENV HOME /root
+
+
+
+# Install necessary packages
+RUN apt-get update && apt-get install -y \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
+
+# Install any needed packages specified in package.json
+RUN git clone https://github.com/HarleyVader/js-lmstudio-sdk.git \
+    && cd js-lmstudio-sdk \
+    && npm install \
+    && npm run build \
+    && npm link
+
+# Copy the current directory contents into the container at /usr/src/app
+COPY . /usr/src/app
+
+RUN curl https://get.docker.com | sh
+
+# Make port 6969 available to the world outside this container
+EXPOSE 6969
+
+# Create the .sock file using a Node.js script
+RUN node -e "const fs = require('fs'); const path = '$docroot/app.sock'; fs.closeSync(fs.openSync(path, 'w')); console.log('Socket file created at ' + path);"
+
+# Optional: Add a health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:3000/ || exit 1

@@ -1,11 +1,11 @@
 {
   "name": "js-lmstudio-sdk",
-  "version": "3.5.0",
+  "version": "3.5server/.0",
   "type": "module",
-  "description": "Brandynette's AI Girlfriend - Node.js socket.io and express website server with worker-thread",
-  "main": "server.js",
+  "description": "Brandynserver/ette's AI Girlfriend - Node.js socket.io and express website server with worker-thread",
+  "main": "server/main.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server/main.js"
   },
   "repository": {
     "type": "git",
