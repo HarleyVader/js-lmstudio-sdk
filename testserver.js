@@ -16,6 +16,16 @@ app.get('/', (req, res) => {
     res.send('BambiSleep is alive');
 });
 
-https.createServer(options, app).listen(port, () => {
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+});
+
+https.createServer(options, app).listen(port, (err) => {
+    if (err) {
+        console.error('Failed to start server:', err);
+        return;
+    }
     console.log(`HTTPS server running on port ${port}`);
 });
