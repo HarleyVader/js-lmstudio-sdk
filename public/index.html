@@ -7,7 +7,7 @@
     <title>BambiSleep AI GF</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://js-de.sentry-cdn.com/a83614b52ba56c8f6aaf2814a8a26482.min.js" crossorigin="anonymous"></script>
+
 </head>
 
 <body>
@@ -58,7 +58,6 @@
         </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
-    <script>const socket = io();</script>
     <script src="js/psychodelic-trigger-mania.js"></script>
     <script src="js/text2speech.js"></script>
     <script src="js/responsive.js"></script>
@@ -73,6 +72,19 @@
         const response = document.getElementById('response');
         const userPrompt = document.getElementById('user-prompt');
 
+        const socket = io();
+        socket.on('connect', () => {
+            console.log('Connected to WebSocket server');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('WebSocket connection error:', error);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from WebSocket server');
+        });
+
         submit.addEventListener('click', () => {
             const message = textarea.value;
             if (message.trim() === '') {
@@ -81,7 +93,9 @@
             }
             userPrompt.textContent = message;
             sendTriggers();
-            socket.emit('message', message);
+            socket.emit('message', message).catch(error => {
+                console.error('Error sending message:', error);
+            });
             sendMessageToDiscord(socket.id + " user: " + message);
             textarea.value = '';
             textarea.style.height = 'inherit';

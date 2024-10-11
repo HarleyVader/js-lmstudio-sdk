@@ -64,10 +64,6 @@ async function sessionHistories(data, socketId) {
 }
 
 let roleplay;
-// Load the model once
-const client = new LMStudioClient({
-  baseUrl: "ws://192.168.0.178/:1234", // Replace with your LMStudio server address
-});
 
 //TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_M.gguf
 //TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q8_0.gguf
@@ -81,21 +77,29 @@ const modelConfig = {
   },
 };
 
+const client = new LMStudioClient({
+  baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
+});
+
 async function loadModel() {
-  if (!roleplay) {
-    await client.llm.get({});
-  } else {
-    await client.llm.load(modelConfig.identifier, {
-      config: modelConfig.config,
-    });
+  try {
+    if (!roleplay) {
+      await client.llm.get({});
+    } else {
+      await client.llm.load(modelConfig.identifier, {
+        config: modelConfig.config,
+      });
+    }
+  } catch (error) {
+    console.error('Error loading model:', error);
   }
 }
+
+loadModel();
 
 let userSessions = new Set();
 let workers = new Map();
 let socketStore = new Map(); // Shared context for socket objects
-
-loadModel();
 
 //Serve static files from the 'public' directory
 app.use(cors());

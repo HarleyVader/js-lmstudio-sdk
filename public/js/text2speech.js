@@ -3,11 +3,12 @@ let _audioArray = [];
 let duration = 0;
 
 function arrayPush(_audioArray, e) {
-
-  let URL = "http://[::1]:5002/api/tts?text=" + encodeURIComponent(e); //+ "&speaker_id=" + encodeURIComponent(speaker_id) + "&style_wav=" + encodeURIComponent(style_wav) + "&language_id=" + encodeURIComponent(language_id);
   //console.log("URL ", URL);
   document.querySelector("#audio").hidden = true;
-  _audioArray.push(URL);
+  if (e !== (/[,.!?]/) && (/\d+\./) ) {
+    let URL = "http://[::1]:5002/api/tts?text=" + encodeURIComponent(e); //+ "&speaker_id=" + encodeURIComponent(speaker_id) + "&style_wav=" + encodeURIComponent(style_wav) + "&language_id=" + encodeURIComponent(language_id);
+    _audioArray.push(URL);
+  }
   console.log("audioArray ", _audioArray);
 
   console.log("lenght ", _audioArray.length);
