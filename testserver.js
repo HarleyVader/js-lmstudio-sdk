@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const port = 443;
+const port = 6969;
 
 // SSL certificate and key from Let's Encrypt
 const options = {
