@@ -106,7 +106,7 @@
             const triggerFound = listOfTriggers.some(trigger => currentMessage.includes(trigger));
             console.log('Trigger found:', triggerFound); // Log if a trigger is found
 
-            if (currentMessage.match(/[,.!?]/) && !currentMessage.match(/\d+\./) || triggerFound === true) {
+            if (currentMessage.match(/[,.!?]/) && !currentMessage.match(/\d+\./) || triggerFound === true && currentMessage.match(/[,.!?]/)) {
                 _textArray.push(currentMessage);
                 console.log('Text array:', _textArray); // Log the text array
                 arrayPush(_audioArray, currentMessage);
