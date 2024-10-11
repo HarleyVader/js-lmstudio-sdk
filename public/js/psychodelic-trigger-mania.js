@@ -17,7 +17,7 @@ let ydPred=0;
 
 function setup() {
   // Get the #eyeCursor element
-  const eyeCursor = document.getElementById('eyeCursor');
+  //const eyeCursor = document.getElementById('eyeCursor');
 
   // Use the clientWidth and clientHeight of #eyeCursor for the canvas size
   const width = eyeCursor.clientWidth;
