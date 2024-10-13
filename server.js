@@ -8,8 +8,6 @@ const { LMStudioClient } = require("@lmstudio/sdk");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
-const session = require('express-session');
-const sharedsession = require("express-socket.io-session");
 
 const app = express();
 const server = http.createServer(app);
@@ -115,20 +113,6 @@ let userSessions = new Set();
 let workers = new Map();
 let socketStore = new Map(); // Shared context for socket objects
 
-// Set up session middleware
-const sessionMiddleware = session({
-  secret: 'your-secret-key',
-  resave: true,
-  saveUninitialized: true
-});
-
-app.use(sessionMiddleware);
-
-// Share session with io sockets
-io.use(sharedsession(sessionMiddleware, {
-  autoSave: true
-}));
-
 // Serve static files from the 'public' directory
 app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
@@ -136,15 +120,7 @@ app.set('view engine', 'ejs');
 
 // Handle connection
 io.on("connection", (socket) => {
-  const session = socket.handshake.session;
-  if (!session.socketId) {
-    session.socketId = socket.id;
-    session.save();
-  } else {
-    socket.id = session.socketId;
-  }
-
-  userSessions.add(socket.id);
+    userSessions.add(socket.id);
   console.log(`Client connected: ${socket.id} clients: ${userSessions.size}`);
 
   // Create a new worker for this client
