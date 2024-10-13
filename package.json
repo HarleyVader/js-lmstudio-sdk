@@ -29,20 +29,20 @@
     "axios": "^1.7.7",
     "cors": "^2.8.5",
     "express": "^4.21.0",
+    "mjs": "^1.0.0",
     "readline": "^1.3.0",
     "socket.io": "^4.8.0",
     "worker-thread": "^1.1.0"
   },
   "contributes": {
-        "commands": [
-            {
-                "command": "extension.sendCodeBase",
-                "title": "Github Copilot send Codebase to Github Web"
-            }
-        ]
-    },
-    "activationEvents": [
-        "onCommand:extension.sendCodeBase"
+    "commands": [
+      {
+        "command": "extension.sendCodeBase",
+        "title": "Github Copilot send Codebase to Github Web"
+      }
     ]
+  },
+  "activationEvents": [
+    "onCommand:extension.sendCodeBase"
+  ]
 }
-

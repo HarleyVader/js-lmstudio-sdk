@@ -104,6 +104,7 @@ let socketStore = new Map(); // Shared context for socket objects
 //Serve static files from the 'public' directory
 app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
+app.set('view engine', 'ejs');
 
 // Handle connection
 io.on("connection", (socket) => {
@@ -125,6 +126,34 @@ io.on("connection", (socket) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
   });
 
+  socket.request.app.get('/history', (req, res) => {
+    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+        if (err) throw err;
+        const chatHistory = JSON.parse(data);
+        res.render('history', { chatHistory });
+    });
+  });
+
+  socket.request.app.post('/vote/:index/:type', (req, res) => {
+    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+        if (err) throw err;
+        const chatHistory = JSON.parse(data);
+        const index = req.params.index;
+        const type = req.params.type;
+
+        if (type === 'up') {
+            chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
+        } else if (type === 'down') {
+            chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+        }
+
+        fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
+            if (err) throw err;
+            res.json({ votes: chatHistory[index].votes });
+        });
+    });
+  });
+  /* removed /images due to lack of images to show
   socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
 
   socket.request.app.get("/images", async (req, res) => {
@@ -143,7 +172,7 @@ io.on("connection", (socket) => {
     html += "</body></html>";
     res.send(html);
   });
-
+*/
   socket.request.app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
   });
@@ -214,7 +243,7 @@ io.on("connection", (socket) => {
 app.use("/api/tts", (req, res) => {
   const { text } = req.query;
   axios
-    .get(`http://0.0.0.0:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
+    .get(`http://192.168.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
     .then((response) => {
       res.setHeader("Content-Type", "audio/wav");
       res.setHeader("Content-Length", response.data.length);

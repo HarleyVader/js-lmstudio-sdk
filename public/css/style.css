@@ -18,12 +18,11 @@ body {
 }
 
 #chat-container {
-    padding-left: 0.25em;
-    margin-right: 0.3em;
     display: flex;
-    height: 97.5vh;
-    border: solid 1px var(--button-color);
-    border-radius: 10px;
+    height: 97.3vh;
+    border: ridge 3px var(--button-color);
+    border-radius: 8px;
+
 }
 
 #user-input {
@@ -35,7 +34,16 @@ body {
     background-color: var(--primary-color);
 }
 
-#textarea,
+#textarea {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: var(--primary-color);
+    color: var(--tertiary-color);
+    border-top: 1px solid var(--button-color);
+    border-bottom: 1px solid var(--button-color);
+}
+
 #user-prompt,
 #collar,
 #user-collar {
@@ -59,7 +67,7 @@ body {
 #response-container {
     display: flex;
     flex-direction: column;
-    width: 99%;
+    width: 100%;
 }
 
 #response {
@@ -84,7 +92,6 @@ body {
     color: rgb(252, 72, 186);
     text-shadow: 10px 10px 10px rgb(238, 93, 249);
     text-align: center;
-    margin-top: 1%;
     background-color: transparent;
     position: relative;
     height: 59%;
@@ -158,8 +165,6 @@ textarea {
     width: 100%;
     height: 50px;
     padding: 10px;
-    box-sizing: border-box;
-    resize: none;
 }
 
 button {
@@ -190,9 +195,8 @@ nav {
     align-items: center;
     background-color: var(--primary-color);
     color: var(--tertiary-color);
-    padding: 0.1em;
-    border: var(--button-color) 1px;
-    border-style: ridge;
+    border: ridge var(--button-color) 3px;
+    border-radius: 8px;
     font-weight: bold;
 }
 
@@ -205,6 +209,7 @@ a:hover {
 }
 
 h1 {
+    padding-top: 0.1em;
     color: var(--button-color);
 }
 

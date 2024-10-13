@@ -7,23 +7,18 @@
     <title>BambiSleep AI GF</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 
 <body>
-    <nav>
-        <a href="/">bambisleep.chat</a>
-        <a href="/psychodelic-trigger-mania">Psychodelic Trigger Mania</a>
-       <!-- <a href="/images">Images</a> -->
-        <a href="/help">Help</a>
-        <a href="https://www.likera.com/forum/mybb/Thread-bambisleep-chat-Multipurpose-Bambi-Sleep-oriented-AI-GF">Like
-            Ra's</a>
-    </nav>
+    <script type="module" src="mjs/main.mjs"></script>
     <div id="chat-container">
         <div id="user-input">
             <h1>BambiSleep AI GF 👁️</h1>
             <textarea id="textarea" oninput="autoExpand(this)" placeholder="Talk to BambiSleep"></textarea>
-
             <div>
                 <button id="submit" type="submit">Submit</button>
                 <br>
@@ -42,7 +37,6 @@
             <div id="trigger-toggles">
 
             </div>
-
             <div id="update-element" hidden>
                 <h1 class="update parralax">UPDATE IN PROGRESS!!!</h1>
                 <p class="update parralax">Sorry bambi if i made you POP</p>
@@ -93,9 +87,7 @@
             }
             userPrompt.textContent = message;
             sendTriggers();
-            socket.emit('message', message).catch(error => {
-                console.error('Error sending message:', error);
-            });
+            socket.emit('message', message);
             sendMessageToDiscord(socket.id + " user: " + message);
             textarea.value = '';
             textarea.style.height = 'inherit';
