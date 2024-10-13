@@ -137,35 +137,35 @@ io.on("connection", (socket) => {
   socket.request.app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
   });
-  /*
-    socket.request.app.get('/history', (req, res) => {
-      fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+
+  socket.request.app.get('/history', (req, res) => {
+    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+      if (err) throw err;
+      const chatHistory = JSON.parse(data);
+      res.render('history', { chatHistory });
+    });
+  });
+
+  socket.request.app.post('/vote/:index/:type', (req, res) => {
+    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+      if (err) throw err;
+      const chatHistory = JSON.parse(data);
+      const index = req.params.index;
+      const type = req.params.type;
+
+      if (type === 'up') {
+        chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
+      } else if (type === 'down') {
+        chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+      }
+
+      fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
         if (err) throw err;
-        const chatHistory = JSON.parse(data);
-        res.render('history', { chatHistory });
+        res.json({ votes: chatHistory[index].votes });
       });
     });
-  
-    socket.request.app.post('/vote/:index/:type', (req, res) => {
-      fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
-        if (err) throw err;
-        const chatHistory = JSON.parse(data);
-        const index = req.params.index;
-        const type = req.params.type;
-  
-        if (type === 'up') {
-          chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
-        } else if (type === 'down') {
-          chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
-        }
-  
-        fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
-          if (err) throw err;
-          res.json({ votes: chatHistory[index].votes });
-        });
-      });
-    });
-  */
+  });
+
   socket.request.app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
   });
