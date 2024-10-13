@@ -5,10 +5,8 @@ let duration = 0;
 function arrayPush(_audioArray, e) {
   //console.log("URL ", URL);
   document.querySelector("#audio").hidden = true;
-
-  let URL = "https://bambisleep.chat/api/tts?text=" + encodeURIComponent(e); //+ "&speaker_id=" + encodeURIComponent(speaker_id) + "&style_wav=" + encodeURIComponent(style_wav) + "&language_id=" + encodeURIComponent(language_id);
+  let URL = "https://[::1]:5002/api/tts?text=" + encodeURIComponent(e); //+ "&speaker_id=" + encodeURIComponent(speaker_id) + "&style_wav=" + encodeURIComponent(style_wav) + "&language_id=" + encodeURIComponent(language_id);
   _audioArray.push(URL);
-
   console.log("audioArray ", _audioArray);
   console.log("lenght ", _audioArray.length);
   return _audioArray;
