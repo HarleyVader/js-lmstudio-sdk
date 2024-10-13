@@ -130,46 +130,47 @@ io.on("connection", (socket) => {
   // Store the socket object in the shared context
   socketStore.set(socket.id, socket);
 
-  
+  // Ensure socket.request.app is defined
+  socket.request.app = app;
 
   // Handle HTTP requests within the socket connection
-  socket.get("/", (req, res) => {
+  socket.request.app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
   });
-
-  socket.get('/history', (req, res) => {
-    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
-      if (err) throw err;
-      const chatHistory = JSON.parse(data);
-      res.render('history', { chatHistory });
-    });
-  });
-
-  socket.post('/vote/:index/:type', (req, res) => {
-    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
-      if (err) throw err;
-      const chatHistory = JSON.parse(data);
-      const index = req.params.index;
-      const type = req.params.type;
-
-      if (type === 'up') {
-        chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
-      } else if (type === 'down') {
-        chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
-      }
-
-      fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
+  
+    socket.request.app.get('/history', (req, res) => {
+      fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
         if (err) throw err;
-        res.json({ votes: chatHistory[index].votes });
+        const chatHistory = JSON.parse(data);
+        res.render('history', { chatHistory });
       });
     });
-  });
-
-  socket.get("/help", (req, res) => {
+  
+    socket.request.app.post('/vote/:index/:type', (req, res) => {
+      fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+        if (err) throw err;
+        const chatHistory = JSON.parse(data);
+        const index = req.params.index;
+        const type = req.params.type;
+  
+        if (type === 'up') {
+          chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
+        } else if (type === 'down') {
+          chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+        }
+  
+        fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
+          if (err) throw err;
+          res.json({ votes: chatHistory[index].votes });
+        });
+      });
+    });
+  
+  socket.request.app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
   });
 
-  socket.get("/psychodelic-trigger-mania", (req, res) => {
+  socket.request.app.get("/psychodelic-trigger-mania", (req, res) => {
     res.sendFile(
       path.join(__dirname, "public", "psychodelic-trigger-mania.html")
     );
