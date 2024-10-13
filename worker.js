@@ -1,9 +1,10 @@
 const { parentPort } = require("worker_threads");
-const { LMStudioClient } = require("@lmstudio/sdk");
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 
 let sessionHistories = {};
+
 let role = require("./fw.json");
 let collarText = role.role;
 
@@ -12,92 +13,117 @@ fs.readFile(path.join(__dirname, 'role.json'), 'utf8', (err, data) => {
     console.error('Error reading role.json:', err);
     return;
   }
-  try {
-    const roleData = JSON.parse(data);
-    collarText = roleData.role;
-  } catch (parseError) {
-    console.error('Error parsing role.json:', parseError);
-  }
+  const roleData = JSON.parse(data);
+  collarText = roleData.role;
 });
 
-
-let roleplay;
 let triggers = [];
-
-const client = new LMStudioClient({
-  baseUrl: "ws://192.168.0.178:1234",
-});
-
 async function checkTriggers(triggers) {
-  let triggersArray = [];
-  for (let i = 0; i < triggers.length; i++) {
-    triggersArray.push(triggers[i]);
-  }
-  return triggersArray;
+  return triggers;
 }
 
-async function handleMessage(userPrompt, socketId) {
-  try {
-    if (!roleplay) {
-      roleplay = await client.llm.get({});
-    }
-
-    let collar = await checkTriggers(triggers);
-    collarText += collar;
-
-    if (!sessionHistories[socketId]) {
-      sessionHistories[socketId] = [];
-    }
-
+function getSessionHistories(collarText, userPrompt, socketId) {
+  if (!sessionHistories[socketId]) {
+    sessionHistories[socketId] = [];
+  }
+  if (sessionHistories[socketId].length === 0) {
     sessionHistories[socketId].push([
       { role: "system", content: collarText },
       { role: "user", content: userPrompt },
     ]);
+  }
+  return sessionHistories[socketId];
+}
 
-    const prediction = roleplay.respond(
-      [
+async function handleMessage(userPrompt, socketId) {
+  try {
+    
+    let collar = await checkTriggers(triggers);
+    collarText += collar;
+
+    sessionHistories = getSessionHistories(collarText, userPrompt, socketId);
+
+    // Make the HTTP request using axios
+    const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', {
+      model: "solar-10.7b-instruct-v1.0-uncensored",
+      messages: [
+        { role: "system", content: collarText },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: 0.3,
+      max_tokens: 512,
+      stream: true,
+    }, {
+      responseType: 'stream',
+    });
+
+    let responseData = '';
+    let finalContent = '';
+
+    response.data.on('data', (chunk) => {
+      responseData += chunk.toString();
+
+      // Split the chunk by newlines to process each JSON object
+      const lines = responseData.split('\n');
+      responseData = lines.pop(); // Keep the last partial line for the next chunk
+
+      for (const line of lines) {
+        if (line.trim() === 'data: [DONE]') {
+          continue;
+        }
+
+        if (line.startsWith('data: ')) {
+          const json = line.substring(6);
+          const parsed = JSON.parse(json);
+          if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+            finalContent += parsed.choices[0].delta.content;
+            handleResponse(parsed.choices[0].delta.content, socketId);
+          }
+        }
+      }
+    });
+
+    response.data.on('end', () => {
+      parentPort.postMessage({ 'response': finalContent });
+
+      // Ensure sessionHistories[socketId] is initialized
+      if (!sessionHistories[socketId]) {
+        sessionHistories[socketId] = [];
+      }
+
+      sessionHistories[socketId].push([
         { role: "system", content: collarText },
         { role: "user", content: userPrompt },
-      ],
-      {
-        temperature: 0.4,
-        max_tokens: 512,
-      }
-    );
+        { role: "system", content: finalContent },
+      ]);
+    });
 
-    let currentMessage = { role: "assistant", content: "" };
-
-    for await (let text of prediction) {
-      parentPort.postMessage({
-        type: "response",
-        data: text,
-        socketId: socketId
-      });
-      currentMessage.content += text;
-
-      if (currentMessage.content.match(/[.?!]/) && !currentMessage.content.match(/\d+\./)) {
-        sessionHistories[socketId].push({
-          role: "system",
-          content: currentMessage.content
-        });
-      }
-      currentMessage = { role: "assistant", content: "" };
-    }
   } catch (error) {
     console.error('Error handling message:', error);
+    parentPort.postMessage({ 'log': `Error handling message: ${error}` });
   }
 }
 
 parentPort.on("message", async (msg) => {
+  console.log(`Received message: ${JSON.stringify(msg)}`);
   if (msg.type === "triggers") {
     triggers = msg.triggers;
-    //parentPort.postMessage({ type: "log", data: `Triggers arrive: ${triggers}`, socketId: msg.socketId });
   } else if (msg.type === "message") {
+    parentPort.postMessage({ 'log': `Message to worker: ${msg.data}` });
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "disconnect") {
     handleDisconnect(msg.socketId);
   }
+  parentPort.postMessage({ 'log': `Session Histories: ${JSON.stringify(sessionHistories)}` });
 });
+
+async function handleResponse(response, socketId) {
+  parentPort.postMessage({
+    type: "response",
+    data: response,
+    socketId: socketId,
+  });
+}
 
 async function handleDisconnect(socketId) {
   parentPort.postMessage({
@@ -105,7 +131,4 @@ async function handleDisconnect(socketId) {
     data: sessionHistories[socketId],
     socketId: socketId,
   });
-
-  //delete sessionHistories[socketId];
-  //delete socketId;
 }

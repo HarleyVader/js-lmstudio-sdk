@@ -52,6 +52,9 @@
         </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+    </script>
     <script src="js/psychodelic-trigger-mania.js"></script>
     <script src="js/text2speech.js"></script>
     <script src="js/responsive.js"></script>
@@ -66,7 +69,7 @@
         const response = document.getElementById('response');
         const userPrompt = document.getElementById('user-prompt');
 
-        const socket = io();
+        
         socket.on('connect', () => {
             console.log('Connected to WebSocket server');
         });

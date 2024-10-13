@@ -37,7 +37,10 @@ function filter(message) {
     .join(" ");
 }
 
-async function sessionHistories(data, socketId) {
+let sessionHistories = {};
+
+
+async function saveSessionHistories(data, socketId) {
   sessionHistories[socketId] = data;
 
   if (!sessionHistories[socketId]) {
@@ -65,29 +68,38 @@ async function sessionHistories(data, socketId) {
 
 let roleplay;
 
-//TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_M.gguf
-//TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q8_0.gguf
 const modelConfig = {
-  identifier:
-    "TheBloke/SOLAR-10.7B-Instruct-v1.0-uncensored-GGUF/solar-10.7b-instruct-v1.0-uncensored.Q4_K_M.gguf",
+  identifier: "solar-10.7b-instruct-v1.0-uncensored",
   config: {
     gpuOffload: 0.2,
     context_length: 8192,
     embedding_length: 8192,
   },
 };
-
+/*
 const client = new LMStudioClient({
   baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
 });
 
 async function loadModel() {
   try {
+    const history = [
+      {
+        role: "system",
+        content: [{ type: "text", text: "My name is Bambisleep" }],
+      },
+      {
+        role: "user",
+        content: [{ type: "text", text: "brainwash me" }],
+      },
+    ]; // Define the history parameter with the correct structure
+
     if (!roleplay) {
       await client.llm.get({});
     } else {
       await client.llm.load(modelConfig.identifier, {
         config: modelConfig.config,
+        history: history, // Include the history parameter
       });
     }
   } catch (error) {
@@ -96,12 +108,12 @@ async function loadModel() {
 }
 
 loadModel();
-
+*/
 let userSessions = new Set();
 let workers = new Map();
 let socketStore = new Map(); // Shared context for socket objects
 
-//Serve static files from the 'public' directory
+// Serve static files from the 'public' directory
 app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
 app.set('view engine', 'ejs');
@@ -125,54 +137,35 @@ io.on("connection", (socket) => {
   socket.request.app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
   });
-
-  socket.request.app.get('/history', (req, res) => {
-    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+  /*
+    socket.request.app.get('/history', (req, res) => {
+      fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
         if (err) throw err;
         const chatHistory = JSON.parse(data);
         res.render('history', { chatHistory });
+      });
     });
-  });
-
-  socket.request.app.post('/vote/:index/:type', (req, res) => {
-    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+  
+    socket.request.app.post('/vote/:index/:type', (req, res) => {
+      fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
         if (err) throw err;
         const chatHistory = JSON.parse(data);
         const index = req.params.index;
         const type = req.params.type;
-
+  
         if (type === 'up') {
-            chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
+          chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
         } else if (type === 'down') {
-            chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+          chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
         }
-
+  
         fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
-            if (err) throw err;
-            res.json({ votes: chatHistory[index].votes });
+          if (err) throw err;
+          res.json({ votes: chatHistory[index].votes });
         });
+      });
     });
-  });
-  /* removed /images due to lack of images to show
-  socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
-
-  socket.request.app.get("/images", async (req, res) => {
-    const directoryPath = path.join(__dirname, "images");
-    const files = await fs.readdir(directoryPath);
-    let html = "<html><body>";
-    files.forEach((file) => {
-      if (
-        file.endsWith(".png") ||
-        file.endsWith(".jpg") ||
-        file.endsWith(".jpeg")
-      ) {
-        html += `<img src="/images/${file}" width="64" height="64" />`;
-      }
-    });
-    html += "</body></html>";
-    res.send(html);
-  });
-*/
+  */
   socket.request.app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
   });
@@ -196,36 +189,62 @@ io.on("connection", (socket) => {
   });
 
   socket.on("triggers", (triggers) => {
+    console.log(`Triggers from ${socket.id}: ${triggers}`);
     worker.postMessage({ type: "triggers", triggers });
   });
 
   socket.on("disconnect", async () => {
+    console.log(`Disconnect from ${socket.id}`);
     worker.postMessage({ type: "disconnect", socketId: socket.id });
+  });
+
+  socket.on("error", (error) => {
+    console.error(`Error from ${socket.id}: ${error}`);
+  });
+
+  worker.on("message", (msg) => {
+    console.log(`Message from worker: ${JSON.stringify(msg)}`);
+    if (msg.type === "log") {
+      console.log(msg.data, msg.socketId);
+    } else if (msg.type === "messageHistory") {
+      saveSessionHistories(msg.data, msg.socketId);
+      terminator(msg.socketId);
+    } else if (msg.type === 'response') {
+      console.log(`Response from worker: ${msg}`);
+      io.to(msg.socketId).emit("response", msg.data);
+      console.log(`Response to ${msg.socketId}: ${msg.data}`);
+    }
   });
 
   function terminator(socketId) {
     userSessions.delete(socketId);
-    worker.terminate(socketId);
+    workers.get(socketId);
     workers.delete(socketId);
     console.log(
-      `Client disconnected: ${socket.id} clients: ${userSessions.size}`
+      `Client disconnected: ${socketId} clients: ${userSessions.size}`
     );
   }
 
-  worker.on("message", (msg) => {
-    if (msg.type === "log") {
-      console.log(msg.data, msg.socketId);
-    } else if (msg.type === "response") {
-      io.to(msg.socketId).emit("response", msg.data);
-    } else if (msg.type === "messageHistory") {
-      sessionHistories(msg.data, msg.socketId);
-      terminator(msg.socketId);
-    } else if (msg.type === "triggers") {
-      io.to(msg.socketId).emit("triggers", msg.data);
-    } else {
-      console.error("Unknown message type:", msg.type);
-    }
+  /* removed /images due to lack of images to show
+  socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
+
+  socket.request.app.get("/images", async (req, res) => {
+    const directoryPath = path.join(__dirname, "images");
+    const files = await fs.readdir(directoryPath);
+    let html = "<html><body>";
+    files.forEach((file) => {
+      if (
+        file.endsWith(".png") ||
+        file.endsWith(".jpg") ||
+        file.endsWith(".jpeg")
+      ) {
+        html += `<img src="/images/${file}" width="64" height="64" />`;
+      }
+    });
+    html += "</body></html>";
+    res.send(html);
   });
+*/
 
   rl.on("line", async (line) => {
     if (line === "update") {
@@ -237,13 +256,14 @@ io.on("connection", (socket) => {
     } else {
       console.log("Invalid command! update or normal");
     }
+
   });
 });
 
 app.use("/api/tts", (req, res) => {
   const { text } = req.query;
   axios
-    .get(`http://192.168.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
+    .get(`http://192.178.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
     .then((response) => {
       res.setHeader("Content-Type", "audio/wav");
       res.setHeader("Content-Length", response.data.length);
@@ -255,12 +275,10 @@ app.use("/api/tts", (req, res) => {
     });
 });
 
-
 // Start the server
 server.listen(PORT, () => {
   console.log(`Server listening on *:${PORT}`);
 });
-
 
 
 /*
