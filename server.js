@@ -159,6 +159,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", async () => {
     console.log(`Disconnect from ${socket.id} clients: ${userSessions.size}`);
     worker.postMessage({ type: "disconnect", socketId: socket.id });
+    terminator(socket.id);
   });
 
   socket.on("error", (error) => {
@@ -203,6 +204,7 @@ io.on("connection", (socket) => {
   });
 });
 
+
 app.use("/api/tts", (req, res) => {
   const { text } = req.query;
   axios
@@ -230,10 +232,9 @@ function getServerAddress() {
   return '127.0.0.1';
 }
 
-const serverAddress = getServerAddress();
-
 // Start the server
 server.listen(PORT, () => {
+  const serverAddress = getServerAddress();
   console.log(`Server running at http://${serverAddress}:${PORT}`);
 });
 
