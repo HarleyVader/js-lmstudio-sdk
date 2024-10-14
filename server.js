@@ -2,11 +2,13 @@ const express = require("express");
 const path = require('path');
 const fs = require("fs").promises;
 const http = require("http");
+const { Worker } = require("worker_threads");
 const { Server } = require("socket.io");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
 const { LMStudioClient } = require('@lmstudio/sdk');
+
 
 const PORT = 6969;
 
@@ -76,7 +78,7 @@ async function saveSessionHistories(data, socketId) {
       });
   }
 }
-
+let worker;
 let userSessions = new Set();
 let workers = new Map();
 let socketStore = new Map(); // Shared context for socket objects
