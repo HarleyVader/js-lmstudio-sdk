@@ -61,7 +61,7 @@
         let currentMessage = '';
         let _textArray = [];
 
-        const socket = io('https://bambisleep:4848');
+        const socket = io('https://bambisleep');
 
         socket.on('connect_error', (err) => {
             console.error('Connection Error:', err);
