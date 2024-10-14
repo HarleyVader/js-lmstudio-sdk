@@ -235,13 +235,10 @@ function getServerAddress() {
 }
 
 const serverAddress = getServerAddress();
-console.log(`Server running at http://${serverAddress}:${EXPRESS_PORT}`);
-
-
 
 // Start the server
 server.listen(PORT, () => {
-  console.log(`Server listening on *:${PORT}`);
+  console.log(`Server running at http://${serverAddress}:${PORT}`);
 });
 
 /* removed /images due to lack of images to show
