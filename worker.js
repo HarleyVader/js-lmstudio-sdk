@@ -58,6 +58,7 @@ async function checkTriggers(triggers) {
   }
 }
 
+
 async function setSession(socketId) {
   if (!sessionHistories) {
     sessionHistories = {};
@@ -68,7 +69,7 @@ async function setSession(socketId) {
   }
 
 }
-setSession(socketId);
+setSession(msg.socketId);
 
 if (!collarText) {
   fs.readFile(path.join(__dirname, 'role.json'), 'utf8', (err, data) => {
