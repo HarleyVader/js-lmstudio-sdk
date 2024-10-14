@@ -77,7 +77,7 @@ async function saveSessionHistories(data, socketId) {
 }
 let userSessions = new Set();
 let workers = new Map();
-let socketStore = new Map(); // Shared context for socket objects
+let socketStore = new Map(); 
 
 // Serve static files from the 'public' directory
 app.use(cors());
@@ -191,6 +191,39 @@ io.on("connection", (socket) => {
     );
   }
 
+  rl.on("line", async (line) => {
+    if (line === "update") {
+      console.log("Update mode");
+      io.emit("update");
+    } else if (line === "normal") {
+      io.emit("update");
+      console.log("Normal mode");
+    } else {
+      console.log("Invalid command! update or normal");
+    }
+  });
+});
+
+app.use("/api/tts", (req, res) => {
+  const { text } = req.query;
+  axios
+    .get(`http://192.178.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
+    .then((response) => {
+      res.setHeader("Content-Type", "audio/wav");
+      res.setHeader("Content-Length", response.data.length);
+      res.send(response.data);
+    })
+    .catch((error) => {
+      console.error("Error fetching TTS audio:", error);
+      res.status(500).send("Error fetching TTS audio");
+    });
+});
+
+// Start the server
+server.listen(PORT, () => {
+  console.log(`Server listening on *:${PORT}`);
+});
+
   /* removed /images due to lack of images to show
   socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
 
@@ -211,43 +244,6 @@ io.on("connection", (socket) => {
     res.send(html);
   });
 */
-
-  rl.on("line", async (line) => {
-    if (line === "update") {
-      console.log("Update mode");
-      io.emit("update");
-    } else if (line === "normal") {
-      io.emit("update");
-      console.log("Normal mode");
-    } else {
-      console.log("Invalid command! update or normal");
-    }
-
-  });
-});
-
-app.use("/api/tts", (req, res) => {
-  const { text } = req.query;
-  axios
-    .get(`http://192.178.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
-    .then((response) => {
-      res.setHeader("Content-Type", "audio/wav");
-      res.setHeader("Content-Length", response.data.length);
-      res.send(response.data);
-    })
-    .catch((error) => {
-      console.error("Error fetching TTS audio:", error);
-      res.status(500).send("Error fetching TTS audio");
-    });
-});
-
-
-
-// Start the server
-server.listen(PORT, () => {
-  console.log(`Server listening on *:${PORT}`);
-});
-
 
 /*
 const { MongoClient } = require('mongodb');
