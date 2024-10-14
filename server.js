@@ -1,24 +1,30 @@
 const express = require("express");
+const os = require('os');
 const path = require('path');
 const fs = require("fs").promises;
 const http = require("http");
 const { Worker } = require("worker_threads");
 const { Server } = require("socket.io");
+const { wss } = require("socket.io");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
 const { LMStudioClient } = require('@lmstudio/sdk');
 
-const PORT = 6969;
+const EXPRESS_PORT = 6969;
+const SOCKET_PORT = 4848;
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-      origin: "https://bambisleep.chat", 
-      methods: ["GET", "POST"]
-  }
-});
+const io = new Server(server);
+
+try {
+  wss = new Server(http.createServer(app)
+    .listen(SOCKET_PORT, () => console.log(`WebSocket on *:${SOCKET_PORT}`)));
+}
+catch (error) {
+  console.error('Error initializing WebSocket server:', error);
+}
 
 try {
   client = new LMStudioClient({
@@ -86,7 +92,7 @@ app.set('view engine', 'ejs');
 
 // Handle connection
 io.on("connection", (socket) => {
-    userSessions.add(socket.id);
+  userSessions.add(socket.id);
   console.log(`Client connected: ${socket.id} clients: ${userSessions.size}`);
 
   // Create a new worker for this client
@@ -160,7 +166,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", async () => {
-    console.log(`Disconnect from ${socket.id}`);
+    console.log(`Disconnect from ${socket.id} clients: ${userSessions.size}`);
     worker.postMessage({ type: "disconnect", socketId: socket.id });
   });
 
@@ -219,9 +225,27 @@ app.use("/api/tts", (req, res) => {
     });
 });
 
+/*
+function getServerAddress() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return '127.0.0.1';
+}
+
+const serverAddress = getServerAddress();
+console.log(`Server running at http://${serverAddress}:${EXPRESS_PORT}`);
+
+*/
+
 // Start the server
-server.listen(PORT, () => {
-  console.log(`Server listening on *:${PORT}`);
+server.listen(EXPRESS_PORT, () => {
+  console.log(`Server listening on *:${EXPRESS_PORT}`);
 });
 
   /* removed /images due to lack of images to show
@@ -249,6 +273,7 @@ server.listen(PORT, () => {
 const { MongoClient } = require('mongodb');
 const axios = require("axios");
 const WebSocket = require('ws');
+
 const uri = "mongodb://localhost:27017"; // Replace with your MongoDB connection string
 const clientDB = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
