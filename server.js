@@ -2,19 +2,30 @@ const express = require("express");
 const path = require('path');
 const fs = require("fs").promises;
 const http = require("http");
-const { Server } = require("socket.io");
-const { Worker } = require("worker_threads");
+const { socketIo } = require("socket.io");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
+const { LMStudioClient } = require('@lmstudio/sdk');
+
+const PORT = 6969;
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = socketIo(server, {
+  cors: {
+      origin: "https://bambisleep.chat",
+      methods: ["GET", "POST"]
+  }
+});
 
-io.listen(4848);
-
-const PORT = 6969;
+try {
+  client = new LMStudioClient({
+    baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
+  });
+} catch (error) {
+  console.error('Error initializing LMStudioClient:', error);
+}
 
 // Create a readline interface to read from the terminal
 const rl = readline.createInterface({
@@ -39,7 +50,6 @@ function filter(message) {
 }
 
 let sessionHistories = {};
-
 
 async function saveSessionHistories(data, socketId) {
   sessionHistories[socketId] = data;

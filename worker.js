@@ -7,6 +7,8 @@ const { LMStudioClient } = require('@lmstudio/sdk');
 let roleplay;
 let client;
 let sessionHistories = {}; // Initialize sessionHistories as an empty object
+let triggers;
+let collarText;
 
 const modelConfig = {
   identifier: "solar-10.7b-instruct-v1.0-uncensored",
@@ -27,16 +29,14 @@ try {
 
 async function loadModel() {
   try {
-    const history = [
-      {
-        role: "system",
-        content: [{ type: "text", text: "My name is Bambisleep" }],
-      },
-      {
-        role: "user",
-        content: [{ type: "text", text: "brainwash me" }],
-      },
-    ]; // Define the history parameter with the correct structure
+    const history = [{
+      role: "system",
+      content: { type: "text", text: collarText }
+    },
+    {
+      role: "user",
+      content: { type: "text", text: userPrompt },
+    }];
 
     if (!roleplay) {
       await client.llm.get({});
@@ -50,11 +50,6 @@ async function loadModel() {
     console.error('Error loading model:', error);
   }
 }
-
-loadModel();
-
-let triggers;
-let collarText;
 
 async function checkTriggers(triggers) {
   if (!triggers) {
@@ -91,6 +86,7 @@ async function getSessionHistories(collarText, userPrompt, socketId) {
 
   return sessionHistories[socketId];
 }
+loadModel();
 
 async function saveSessionHistories(collarText, userPrompt, finalContent, socketId) {
   if (!sessionHistories) {
@@ -111,6 +107,7 @@ async function saveSessionHistories(collarText, userPrompt, finalContent, socket
 
   return sessionHistories[socketId];
 }
+
 
 async function handleMessage(userPrompt, socketId) {
   try {
@@ -197,5 +194,5 @@ async function handleDisconnect(socketId) {
       data: sessionHistories[socketId],
       socketId: socketId,
     });
-  } 
+  }
 }
