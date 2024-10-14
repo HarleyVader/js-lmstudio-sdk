@@ -1,9 +1,8 @@
 const express = require("express");
-const http = require("http");
-const fs = require("fs").promises;
-const path = require('path');
 const os = require('os');
-
+const path = require('path');
+const fs = require("fs").promises;
+const http = require("http");
 const { Worker } = require("worker_threads");
 const { Server } = require("socket.io");
 const readline = require("readline");
@@ -43,22 +42,6 @@ function filter(message) {
       return filteredWords.includes(word.toLowerCase()) ? " " : word;
     })
     .join(" ");
-}
-const chatHistoryPath = path.join(__dirname, "histroy", "chatHistory.json");
-
-async function readChatHistory() {
-  try {
-    const data = await fs.readFile(chatHistoryPath, "utf8");
-    return JSON.parse(data);
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      console.error("Chat history file not found, creating a new one.");
-      await fs.writeFile(chatHistoryPath, JSON.stringify([]));
-      return [];
-    } else {
-      throw error;
-    }
-  }
 }
 
 let sessionHistories = {};
@@ -118,25 +101,33 @@ io.on("connection", (socket) => {
   });
 
   socket.request.app.get('/history', (req, res) => {
-    readChatHistory();
+    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+      if (err) throw err;
+      const chatHistory = JSON.parse(data);
+      res.render('history', { chatHistory });
+    });
   });
 
   socket.request.app.post('/vote/:index/:type', (req, res) => {
-    const chatHistory = readChatHistory();
-    const index = req.params.index;
-    const type = req.params.type;
-
-    if (type === 'up') {
-      chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
-    } else if (type === 'down') {
-      chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
-    }
-    fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
+    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
       if (err) throw err;
-      res.json({ votes: chatHistory[index].votes });
+      const chatHistory = JSON.parse(data);
+      const index = req.params.index;
+      const type = req.params.type;
+
+      if (type === 'up') {
+        chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
+      } else if (type === 'down') {
+        chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+      }
+
+      fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
+        if (err) throw err;
+        res.json({ votes: chatHistory[index].votes });
+      });
     });
   });
-  
+
   socket.request.app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
   });
@@ -187,6 +178,15 @@ io.on("connection", (socket) => {
     }
   });
 
+  function terminator(socketId) {
+    userSessions.delete(socketId);
+    workers.get(socketId);
+    workers.delete(socketId);
+    console.log(
+      `Client disconnected: ${socketId} clients: ${userSessions.size}`
+    );
+  }
+
   rl.on("line", async (line) => {
     if (line === "update") {
       console.log("Update mode");
@@ -198,15 +198,6 @@ io.on("connection", (socket) => {
       console.log("Invalid command! update or normal");
     }
   });
-
-  function terminator(socketId) {
-    userSessions.delete(socketId);
-    workers.get(socketId);
-    workers.delete(socketId);
-    console.log(
-      `Client disconnected: ${socketId} clients: ${userSessions.size}`
-    );
-  }
 });
 
 app.use("/api/tts", (req, res) => {
@@ -224,8 +215,6 @@ app.use("/api/tts", (req, res) => {
     });
 });
 
-
-
 function getServerAddress() {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
@@ -238,10 +227,11 @@ function getServerAddress() {
   return '127.0.0.1';
 }
 
+const serverAddress = getServerAddress();
+
 // Start the server
 server.listen(PORT, () => {
-  const serverAddress = getServerAddress();
-  console.log(`Server running at ${serverAddress}:${PORT}`);
+  console.log(`Server running at http://${serverAddress}:${PORT}`);
 });
 
 /* removed /images due to lack of images to show
