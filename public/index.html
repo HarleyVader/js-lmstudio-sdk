@@ -64,9 +64,9 @@
         const socket = io('https://bambisleep.chat', {
             transports: ['websocket'],
             upgrade: false,
-            reconnectionAttempts: 5, // Number of reconnection attempts
-            reconnectionDelay: 5000, // Delay between reconnections in ms
-            timeout: 20000 // Connection timeout in ms
+            reconnectionAttempts: 5,
+            reconnectionDelay: 5000,
+            timeout: 20000
         });
 
         socket.on('connect_error', (err) => {
