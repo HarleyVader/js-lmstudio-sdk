@@ -91,7 +91,7 @@ io.on("connection", (socket) => {
 
   // Store the socket object in the shared context
   socketStore.set(socket.id, socket);
-  console.log(`Client disconnected: ${socket.Id} clients: ${userSessions.size} sockets: ${socketStore.size}`);
+  console.log(`Client disconnected: ${socket.id} clients: ${userSessions.size} sockets: ${socketStore.size}`);
 
   // Ensure socket.request.app is defined
   socket.request.app = app;
