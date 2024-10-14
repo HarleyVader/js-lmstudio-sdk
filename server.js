@@ -12,7 +12,7 @@ const PORT = 6969;
 
 const app = express();
 const server = http.createServer(app);
-const io = Server(server, {
+const io = new Server(server, {
   cors: {
       origin: "https://bambisleep.chat",
       methods: ["GET", "POST"]
