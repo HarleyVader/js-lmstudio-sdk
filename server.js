@@ -91,17 +91,17 @@ io.on("connection", (socket) => {
 
   // Store the socket object in the shared context
   socketStore.set(socket.id, socket);
-  console.log(`Socket stored: ${socket.id} sockets: ${socketStore.size}`);
+  console.log(`Client disconnected: ${socket.Id} clients: ${userSessions.size} sockets: ${socketStore.size}`);
 
   // Ensure socket.request.app is defined
   socket.request.app = app;
 
   // Handle HTTP requests within the socket connection
-  socket.request.app.get("/", (req, res) => {
+  app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
   });
 
-  socket.request.app.get('/history', (req, res) => {
+  app.get('/history', (req, res) => {
     fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
       if (err) throw err;
       const chatHistory = JSON.parse(data);
@@ -109,7 +109,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.request.app.post('/vote/:index/:type', (req, res) => {
+  app.post('/vote/:index/:type', (req, res) => {
     fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
       if (err) throw err;
       const chatHistory = JSON.parse(data);
@@ -129,11 +129,11 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.request.app.get("/help", (req, res) => {
+  app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
   });
 
-  socket.request.app.get("/psychodelic-trigger-mania", (req, res) => {
+  app.get("/psychodelic-trigger-mania", (req, res) => {
     res.sendFile(
       path.join(__dirname, "public", "psychodelic-trigger-mania.html")
     );
@@ -151,18 +151,18 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.request.app.on("triggers", (triggers) => {
+  app.on("triggers", (triggers) => {
     console.log(`Triggers from ${socket.id}: ${triggers}`);
     worker.postMessage({ type: "triggers", triggers });
   });
 
-  socket.request.app.on("disconnect", async () => {
+  app.on("disconnect", async () => {
     console.log(`Disconnect from ${socket.id} clients: ${userSessions.size}`);
     worker.postMessage({ type: "disconnect", socketId: socket.id });
     terminator(socket.id);
   });
 
-  socket.request.app.on("error", (error) => {
+  app.on("error", (error) => {
     console.error(`Error from ${socket.id}: ${error}`);
   });
 
@@ -178,18 +178,18 @@ io.on("connection", (socket) => {
       console.log(`Response to ${msg.socketId}: ${msg.data}`);
     }
   });
-});
 
-function terminator(socketId) {
-  userSessions.delete(socketId);
-  const worker = workers.get(socketId);
-  if (worker) {
-    worker.terminate();
+  function terminator(socketId) {
+    userSessions.delete(socketId);
+    const worker = workers.get(socketId);
+    if (worker) {
+      worker.terminate();
+    }
+    workers.delete(socketId);
+    socketStore.delete(socketId);
+    console.log(`Client disconnected: ${socket.id} clients: ${userSessions.size} sockets: ${socketStore.size}`);
   }
-  workers.delete(socketId);
-  socketStore.delete(socketId);
-  console.log(`Client disconnected: ${socketId} clients: ${userSessions.size} sockets: ${socketStore.size}`);
-}
+});
 
 rl.on("line", async (line) => {
   if (line === "update") {
@@ -204,7 +204,10 @@ rl.on("line", async (line) => {
 });
 
 app.use("/api/tts", (req, res) => {
-  const { text } = req.query;
+  if (typeof req.query.text !== "string") {
+    return res.status(469).send("Invalid input: text must be an encodeURIComponent");
+  } else {
+  const text = req.query.text;
   axios
     .get(`http://192.178.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
     .then((response) => {
@@ -216,6 +219,7 @@ app.use("/api/tts", (req, res) => {
       console.error("Error fetching TTS audio:", error);
       res.status(500).send("Error fetching TTS audio");
     });
+  }
 });
 
 function getServerAddress() {
