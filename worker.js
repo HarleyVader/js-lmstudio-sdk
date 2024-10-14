@@ -88,17 +88,27 @@ async function getSessionHistories(collarText, userPrompt, socketId) {
       { role: "user", content: userPrompt },
     ]);
   }
+
   return sessionHistories[socketId];
 }
 
 async function saveSessionHistories(collarText, userPrompt, finalContent, socketId) {
-  if (sessionHistories[socketId].length != 0) {
+  if (!sessionHistories) {
+    sessionHistories = {};
+  }
+
+  if (!sessionHistories[socketId]) {
+    sessionHistories[socketId] = [];
+  }
+
+  if (sessionHistories[socketId].length !== 0) {
     sessionHistories[socketId].push([
       { role: "system", content: collarText },
       { role: "user", content: userPrompt },
-      { role: "system", content: finalContent },
+      { role: "assistant", content: finalContent },
     ]);
   }
+
   return sessionHistories[socketId];
 }
 
