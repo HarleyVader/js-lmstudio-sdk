@@ -153,6 +153,7 @@ io.on("connection", (socket) => {
   socket.on("triggers", (triggers) => {
     console.log(`Triggers from ${socket.id}: ${triggers}`);
     worker.postMessage({ type: "triggers", triggers });
+    terminator(msg.socketId);
   });
 
   socket.on("disconnect", async () => {
@@ -170,7 +171,6 @@ io.on("connection", (socket) => {
       console.log(msg.data, msg.socketId);
     } else if (msg.type === "messageHistory") {
       saveSessionHistories(msg.data, msg.socketId);
-      terminator(msg.socketId);
     } else if (msg.type === 'response') {
       console.log(`Response from worker: ${msg}`);
       io.to(msg.socketId).emit("response", msg.data);
