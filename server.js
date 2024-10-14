@@ -138,7 +138,7 @@ io.on("connection", (socket) => {
         res.json({ votes: chatHistory[index].votes });
       });
     });
-  });
+  
 
   socket.request.app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
@@ -210,6 +210,7 @@ io.on("connection", (socket) => {
       console.log("Invalid command! update or normal");
     }
   });
+});
 
 
 app.use("/api/tts", (req, res) => {
