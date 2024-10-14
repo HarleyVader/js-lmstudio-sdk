@@ -2,30 +2,86 @@ const { parentPort } = require("worker_threads");
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const LMStudioClient = require('@lmstudio/sdk');
 
-let sessionHistories = {};
+let roleplay;
 
-let role = require("./fw.json");
-let collarText = role.role;
+const modelConfig = {
+  identifier: "solar-10.7b-instruct-v1.0-uncensored",
+  config: {
+    gpuOffload: 0.2,
+    context_length: 8192,
+    embedding_length: 8192,
+  },
+};
 
-fs.readFile(path.join(__dirname, 'role.json'), 'utf8', (err, data) => {
-  if (err) {
-    console.error('Error reading role.json:', err);
-    return;
-  }
-  const roleData = JSON.parse(data);
-  collarText = roleData.role;
+const client = new LMStudioClient({
+  baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
 });
 
-let triggers = [];
-async function checkTriggers(triggers) {
-  return triggers;
+async function loadModel() {
+  try {
+    const history = [
+      {
+        role: "system",
+        content: [{ type: "text", text: "My name is Bambisleep" }],
+      },
+      {
+        role: "user",
+        content: [{ type: "text", text: "brainwash me" }],
+      },
+    ]; // Define the history parameter with the correct structure
+
+    if (!roleplay) {
+      await client.llm.get({});
+    } else {
+      await client.llm.load(modelConfig.identifier, {
+        config: modelConfig.config,
+        history: history, // Include the history parameter
+      });
+    }
+  } catch (error) {
+    console.error('Error loading model:', error);
+  }
 }
 
-function getSessionHistories(collarText, userPrompt, socketId) {
+loadModel();
+
+
+let triggers;
+let collarText;
+let sessionHistories;
+
+async function checkTriggers(triggers) {
+  if (!triggers) {
+    return triggers;
+  }
+}
+
+async function setSession(socketId) {
+  if (!sessionHistories) {
+    sessionHistories = {};
+  }
+
   if (!sessionHistories[socketId]) {
     sessionHistories[socketId] = [];
   }
+
+}
+setSession(socketId);
+
+if (!collarText) {
+  fs.readFile(path.join(__dirname, 'role.json'), 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading role.json:', err);
+      return;
+    }
+    const roleData = JSON.parse(data);
+    collarText = roleData.role;
+  });
+}
+
+async function getSessionHistories(collarText, userPrompt, socketId) {
   if (sessionHistories[socketId].length === 0) {
     sessionHistories[socketId].push([
       { role: "system", content: collarText },
@@ -35,20 +91,29 @@ function getSessionHistories(collarText, userPrompt, socketId) {
   return sessionHistories[socketId];
 }
 
+async function saveSessionHistories(collarText, userPrompt, finalContent, socketId) {
+  if (sessionHistories[socketId].length >= 0) {
+    sessionHistories[socketId].push([
+      { role: "system", content: collarText },
+      { role: "user", content: userPrompt },
+      { role: "system", content: finalContent },
+    ]);
+  }
+  return sessionHistories[socketId];
+}
+
 async function handleMessage(userPrompt, socketId) {
   try {
-    
     let collar = await checkTriggers(triggers);
     collarText += collar;
-
     sessionHistories = getSessionHistories(collarText, userPrompt, socketId);
-
-    // Make the HTTP request using axios
+   
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', {
       model: "solar-10.7b-instruct-v1.0-uncensored",
       messages: [
         { role: "system", content: collarText },
-        { role: "user", content: userPrompt }
+        { role: "user", content: userPrompt },
+        { role: "system", content: finalContent },
       ],
       temperature: 0.3,
       max_tokens: 512,
@@ -85,17 +150,7 @@ async function handleMessage(userPrompt, socketId) {
 
     response.data.on('end', () => {
       parentPort.postMessage({ 'response': finalContent });
-
-      // Ensure sessionHistories[socketId] is initialized
-      if (!sessionHistories[socketId]) {
-        sessionHistories[socketId] = [];
-      }
-
-      sessionHistories[socketId].push([
-        { role: "system", content: collarText },
-        { role: "user", content: userPrompt },
-        { role: "system", content: finalContent },
-      ]);
+      saveSessionHistories(collarText, userPrompt, finalContent, socketId);
     });
 
   } catch (error) {

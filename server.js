@@ -4,7 +4,6 @@ const fs = require("fs").promises;
 const http = require("http");
 const { Server } = require("socket.io");
 const { Worker } = require("worker_threads");
-const { LMStudioClient } = require("@lmstudio/sdk");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
@@ -65,49 +64,6 @@ async function saveSessionHistories(data, socketId) {
       });
   }
 }
-
-let roleplay;
-
-const modelConfig = {
-  identifier: "solar-10.7b-instruct-v1.0-uncensored",
-  config: {
-    gpuOffload: 0.2,
-    context_length: 8192,
-    embedding_length: 8192,
-  },
-};
-
-const client = new LMStudioClient({
-  baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
-});
-
-async function loadModel() {
-  try {
-    const history = [
-      {
-        role: "system",
-        content: [{ type: "text", text: "My name is Bambisleep" }],
-      },
-      {
-        role: "user",
-        content: [{ type: "text", text: "brainwash me" }],
-      },
-    ]; // Define the history parameter with the correct structure
-
-    if (!roleplay) {
-      await client.llm.get({});
-    } else {
-      await client.llm.load(modelConfig.identifier, {
-        config: modelConfig.config,
-        history: history, // Include the history parameter
-      });
-    }
-  } catch (error) {
-    console.error('Error loading model:', error);
-  }
-}
-
-loadModel();
 
 let userSessions = new Set();
 let workers = new Map();
