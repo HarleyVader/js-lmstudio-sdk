@@ -53,6 +53,7 @@
         </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
+    <script>const socket = io();</script>
     <script src="js/psychodelic-trigger-mania.js"></script>
     <script src="js/text2speech.js"></script>
     <script src="js/responsive.js"></script>
@@ -61,7 +62,7 @@
     <script>
         let currentMessage = '';
         let _textArray = [];
-
+/*
         const socket = io('https://bambisleep.chat:6969', {
             transports: ['websocket'],
             upgrade: false,
@@ -69,7 +70,7 @@
             reconnectionDelay: 5000,
             timeout: 5000
         });
-
+*/
         socket.on('connect_error', (err) => {
             console.error('Connection Error:', err, 'Message:', err.message);
             // Retry logic
