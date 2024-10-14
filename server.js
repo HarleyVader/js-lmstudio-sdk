@@ -123,22 +123,21 @@ io.on("connection", (socket) => {
   });
 
   socket.request.app.post('/vote/:index/:type', (req, res) => {
-      const chatHistory = readChatHistory();
-      const index = req.params.index;
-      const type = req.params.type;
+    const chatHistory = readChatHistory();
+    const index = req.params.index;
+    const type = req.params.type;
 
-      if (type === 'up') {
-        chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
-      } else if (type === 'down') {
-        chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
-      }
+    if (type === 'up') {
+      chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
+    } else if (type === 'down') {
+      chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+    }
 
-      fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
-        if (err) throw err;
-        res.json({ votes: chatHistory[index].votes });
-      });
+    fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
+      if (err) throw err;
+      res.json({ votes: chatHistory[index].votes });
     });
-  
+  });
 
   socket.request.app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
@@ -190,15 +189,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  function terminator(socketId) {
-    userSessions.delete(socketId);
-    workers.get(socketId);
-    workers.delete(socketId);
-    console.log(
-      `Client disconnected: ${socketId} clients: ${userSessions.size}`
-    );
-  }
-
   rl.on("line", async (line) => {
     if (line === "update") {
       console.log("Update mode");
@@ -212,39 +202,47 @@ io.on("connection", (socket) => {
   });
 });
 
+  app.use("/api/tts", (req, res) => {
+    const { text } = req.query;
+    axios
+      .get(`http://192.178.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
+      .then((response) => {
+        res.setHeader("Content-Type", "audio/wav");
+        res.setHeader("Content-Length", response.data.length);
+        res.send(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching TTS audio:", error);
+        res.status(500).send("Error fetching TTS audio");
+      });
+  });
 
-app.use("/api/tts", (req, res) => {
-  const { text } = req.query;
-  axios
-    .get(`http://192.178.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
-    .then((response) => {
-      res.setHeader("Content-Type", "audio/wav");
-      res.setHeader("Content-Length", response.data.length);
-      res.send(response.data);
-    })
-    .catch((error) => {
-      console.error("Error fetching TTS audio:", error);
-      res.status(500).send("Error fetching TTS audio");
-    });
-});
+  function terminator(socketId) {
+    userSessions.delete(socketId);
+    workers.get(socketId);
+    workers.delete(socketId);
+    console.log(
+      `Client disconnected: ${socketId} clients: ${userSessions.size}`
+    );
+  }
 
-function getServerAddress() {
-  const interfaces = os.networkInterfaces();
-  for (const name of Object.keys(interfaces)) {
-    for (const iface of interfaces[name]) {
-      if (iface.family === 'IPv4' && !iface.internal) {
-        return iface.address;
+  function getServerAddress() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          return iface.address;
+        }
       }
     }
+    return '127.0.0.1';
   }
-  return '127.0.0.1';
-}
 
-// Start the server
-server.listen(PORT, () => {
-  const serverAddress = getServerAddress();
-  console.log(`Server running at ${serverAddress}:${PORT}`);
-});
+  // Start the server
+  server.listen(PORT, () => {
+    const serverAddress = getServerAddress();
+    console.log(`Server running at ${serverAddress}:${PORT}`);
+  });
 
 /* removed /images due to lack of images to show
 socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
