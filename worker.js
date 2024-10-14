@@ -58,7 +58,6 @@ async function checkTriggers(triggers) {
   }
 }
 
-
 async function setSession(socketId) {
   if (!sessionHistories) {
     sessionHistories = {};
@@ -67,9 +66,7 @@ async function setSession(socketId) {
   if (!sessionHistories[socketId]) {
     sessionHistories[socketId] = [];
   }
-
 }
-setSession(msg.socketId);
 
 if (!collarText) {
   fs.readFile(path.join(__dirname, 'role.json'), 'utf8', (err, data) => {
@@ -166,7 +163,9 @@ parentPort.on("message", async (msg) => {
     triggers = msg.triggers;
   } else if (msg.type === "message") {
     parentPort.postMessage({ 'log': `Message to worker: ${msg.data}` });
+    await setSession(msg.socketId);
     await handleMessage(msg.data, msg.socketId);
+    
   } else if (msg.type === "disconnect") {
     handleDisconnect(msg.socketId);
   }
