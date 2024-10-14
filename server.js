@@ -14,13 +14,7 @@ const PORT = 6969;
 
 const app = express();
 const server = http.createServer(app);
-io = new Server(server, {
-  cors: {
-    origin: "https://bambisleep.chat",
-    methods: ["GET", "POST"],
-    credentials: true
-  }
-});
+io = new Server(server, { cors: { origin: "*" }});
 /*
 try {
  client = new LMStudioClient({
