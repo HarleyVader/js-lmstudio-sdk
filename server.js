@@ -153,7 +153,6 @@ io.on("connection", (socket) => {
   socket.on("triggers", (triggers) => {
     console.log(`Triggers from ${socket.id}: ${triggers}`);
     worker.postMessage({ type: "triggers", triggers });
-    terminator(msg.socketId);
   });
 
   socket.on("disconnect", async () => {
