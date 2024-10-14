@@ -2,7 +2,7 @@ const { parentPort } = require("worker_threads");
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const LMStudioClient = require('@lmstudio/sdk');
+const { LMStudioClient } = require('@lmstudio/sdk');
 
 let roleplay;
 
