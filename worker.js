@@ -2,14 +2,17 @@ const { parentPort } = require("worker_threads");
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const { LMStudioClient } = require('@lmstudio/sdk');
+//const { LMStudioClient } = require('@lmstudio/sdk');
 
+/*
 let roleplay;
 let client;
+*/
 let sessionHistories = {}; // Initialize sessionHistories as an empty object
 let triggers;
 let collarText;
 
+/*
 const modelConfig = {
   identifier: "solar-10.7b-instruct-v1.0-uncensored",
   config: {
@@ -18,7 +21,7 @@ const modelConfig = {
     embedding_length: 8192,
   },
 };
-/*
+
 try {
   client = new LMStudioClient({
     baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address

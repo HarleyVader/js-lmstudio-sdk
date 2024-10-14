@@ -8,7 +8,7 @@ const { Server } = require("socket.io");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
-const { LMStudioClient } = require('@lmstudio/sdk');
+//const { LMStudioClient } = require('@lmstudio/sdk');
 
 const PORT = 6969;
 
