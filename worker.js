@@ -5,6 +5,7 @@ const axios = require('axios');
 const { LMStudioClient } = require('@lmstudio/sdk');
 
 let roleplay;
+let client;
 
 const modelConfig = {
   identifier: "solar-10.7b-instruct-v1.0-uncensored",
@@ -15,9 +16,14 @@ const modelConfig = {
   },
 };
 
-const client = new LMStudioClient({
-  baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
-});
+
+try {
+  client = new LMStudioClient({
+    baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
+  });
+} catch (error) {
+  console.error('Error initializing LMStudioClient:', error);
+}
 
 async function loadModel() {
   try {
