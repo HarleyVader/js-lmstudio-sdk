@@ -62,7 +62,25 @@
         let currentMessage = '';
         let _textArray = [];
 
-        const socket = io();
+        const socket = io('wss://bambisleep.chat', {
+            transports: ['websocket'],
+            upgrade: false,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 5000,
+            timeout: 5000
+        });
+
+        socket.on('connect_error', (err) => {
+            console.error('Connection Error:', err);
+            // Retry logic
+            setTimeout(() => {
+                socket.connect();
+            }, 30000); // Retry after 30 seconds
+        });
+
+        socket.on('connect', () => {
+            console.log('Connected successfully');
+        });
 
         const textarea = document.getElementById('textarea');
         const submit = document.getElementById('submit');
