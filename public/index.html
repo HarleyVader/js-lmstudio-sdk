@@ -53,13 +53,23 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-       const socket = io('https://bambisleep.chat:4848', {
-        transports: ['websocket']
-    });
+        const socket = io('https://bambisleep.chat:4848', {
+            transports: ['websocket'],
+            timeout: 5000 // Set a timeout for the connection
+        });
 
-    socket.on('connect_error', (err) => {
-        console.error('Connection Error:', err);
-    });
+        socket.on('connect_error', (err) => {
+            console.error('Connection Error:', err);
+            alert('Connection Error: ' + err.message);
+            // Retry logic
+            setTimeout(() => {
+                socket.connect();
+            }, 3000); // Retry after 3 seconds
+        });
+
+        socket.on('connect', () => {
+            console.log('Connected successfully');
+        });
     </script>
     <script src="js/psychodelic-trigger-mania.js"></script>
     <script src="js/text2speech.js"></script>
@@ -75,7 +85,7 @@
         const response = document.getElementById('response');
         const userPrompt = document.getElementById('user-prompt');
         const updateElement = document.getElementById('update-element');
-        
+
 
         submit.addEventListener('click', () => {
             const message = textarea.value;
