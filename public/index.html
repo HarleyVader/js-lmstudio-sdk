@@ -63,7 +63,10 @@
 
         const socket = io('wss://84.115.142.3:4848', {
             transports: ['websocket'],
-            upgrade: false
+            upgrade: false,
+            reconnectionAttempts: 5, // Number of reconnection attempts
+            reconnectionDelay: 5000, // Delay between reconnections in ms
+            timeout: 20000 // Connection timeout in ms
         });
 
         socket.on('connect_error', (err) => {
@@ -71,7 +74,7 @@
             // Retry logic
             setTimeout(() => {
                 socket.connect();
-            }, 30000); // Retry after 3 seconds
+            }, 30000); // Retry after 30 seconds
         });
 
         socket.on('connect', () => {

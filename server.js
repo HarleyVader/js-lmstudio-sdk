@@ -15,7 +15,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-      origin: "wss://84.115.142.3:4848", 
+      origin: "https://bambisleep.chat", 
       methods: ["GET", "POST"]
   }
 });
@@ -240,6 +240,8 @@ app.use("/api/tts", (req, res) => {
       res.status(500).send("Error fetching TTS audio");
     });
 });
+
+
 
 // Start the server
 server.listen(PORT, () => {
