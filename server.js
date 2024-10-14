@@ -19,7 +19,8 @@ const server = http.createServer(app);
 io = new Server(server, {
   cors: {
     origin: "https://bambisleep.chat",
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    
   }
 });
 /*
