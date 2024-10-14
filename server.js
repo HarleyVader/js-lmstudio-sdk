@@ -14,7 +14,7 @@ const PORT = 6969;
 
 const app = express();
 const server = http.createServer(app);
-io = new Server(server, { cors: { origin: "*" }});
+const io = new Server(server);
 /*
 try {
  client = new LMStudioClient({
