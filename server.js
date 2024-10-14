@@ -170,26 +170,28 @@ io.on("connection", (socket) => {
       console.log(msg.data, msg.socketId);
     } else if (msg.type === "messageHistory") {
       saveSessionHistories(msg.data, msg.socketId);
-      terminator(socket.id);
+      terminator(msg.socketId);
     } else if (msg.type === 'response') {
       console.log(`Response from worker: ${msg}`);
       io.to(msg.socketId).emit("response", msg.data);
       console.log(`Response to ${msg.socketId}: ${msg.data}`);
     }
   });
+
+  function terminator(socketId) {
+    userSessions.delete(socketId);
+    const worker = workers.get(socketId);
+    if (worker) {
+      worker.terminate();
+    }
+    workers.delete(socketId);
+    console.log(
+      `Client disconnected: ${socketId} clients: ${userSessions.size}`
+    );
+  }
 });
 
-function terminator(socketId) {
-  userSessions.delete(socketId);
-  const worker = workers.get(socketId);
-  if (worker) {
-    worker.terminate();
-  }
-  workers.delete(socketId);
-  console.log(
-    `Client disconnected: ${socketId} clients: ${userSessions.size}`
-  );
-}
+
 
 rl.on("line", async (line) => {
   if (line === "update") {
