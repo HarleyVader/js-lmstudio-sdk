@@ -18,7 +18,7 @@
     <script type="module" src="mjs/main.mjs"></script>
     <div id="chat-container">
         <div id="user-input">
-            <h1>BambiSleep AI GF 👁️</h1>
+                <h1>BambiSleep AIGF 👁️</h1>
             <textarea id="textarea" oninput="autoExpand(this)" placeholder="Talk to BambiSleep"></textarea>
             <div>
                 <button id="submit" type="submit">Submit</button>
@@ -62,15 +62,12 @@
     <script>
         let currentMessage = '';
         let _textArray = [];
-/*
-        const socket = io('https://bambisleep.chat:6969', {
-            transports: ['websocket'],
-            upgrade: false,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 5000,
-            timeout: 5000
+        let _audioArray = [];
+
+        socket.on('connect', () => {
+            console.log('Connected successfully');
         });
-*/
+
         socket.on('connect_error', (err) => {
             console.error('Connection Error:', err, 'Message:', err.message);
             // Retry logic
@@ -79,8 +76,13 @@
             }, 30000); // Retry after 30 seconds
         });
 
-        socket.on('connect', () => {
-            console.log('Connected successfully');
+        socket.on('disconnect', () => {
+            console.log('Disconnected');
+            alert('Bambi disconnected! refresh bambisleep.chat');
+        });
+
+        socket.on("update", (message) => {
+            unhideUpdateElement();
         });
 
         const textarea = document.getElementById('textarea');
@@ -88,7 +90,6 @@
         const response = document.getElementById('response');
         const userPrompt = document.getElementById('user-prompt');
         const updateElement = document.getElementById('update-element');
-
 
         submit.addEventListener('click', () => {
             const message = textarea.value;
@@ -128,10 +129,7 @@
             }
         });
 
-        socket.on("update", (message) => {
-            unhideUpdateElement();
-        });
-
+        
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
