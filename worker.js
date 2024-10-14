@@ -92,7 +92,7 @@ async function getSessionHistories(collarText, userPrompt, socketId) {
 }
 
 async function saveSessionHistories(collarText, userPrompt, finalContent, socketId) {
-  if (sessionHistories[socketId].length >= 0) {
+  if (sessionHistories[socketId].length != 0) {
     sessionHistories[socketId].push([
       { role: "system", content: collarText },
       { role: "user", content: userPrompt },
