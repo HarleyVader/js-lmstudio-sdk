@@ -83,7 +83,6 @@ app.set('view engine', 'ejs');
 // Handle connection
 io.on("connection", (socket) => {
   userSessions.add(socket.id);
-  console.log(`Client connected: ${socket.id} clients: ${userSessions.size}`);
 
   // Create a new worker for this client
   const worker = new Worker("./worker.js");
@@ -91,7 +90,7 @@ io.on("connection", (socket) => {
 
   // Store the socket object in the shared context
   socketStore.set(socket.id, socket);
-  console.log(`Client disconnected: ${socket.id} clients: ${userSessions.size} sockets: ${socketStore.size}`);
+  console.log(`Client connected: ${socket.id} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`);
 
   // Ensure socket.request.app is defined
   socket.request.app = app;
@@ -157,9 +156,8 @@ io.on("connection", (socket) => {
   });
 
   app.on("disconnect", async () => {
-    console.log(`Disconnect from ${socket.id} clients: ${userSessions.size}`);
     worker.postMessage({ type: "disconnect", socketId: socket.id });
-    terminator(socket.id);
+    terminator();
   });
 
   app.on("error", (error) => {
@@ -179,15 +177,15 @@ io.on("connection", (socket) => {
     }
   });
 
-  function terminator(socketId) {
-    userSessions.delete(socketId);
-    const worker = workers.get(socketId);
+  function terminator() {
+    userSessions.delete(socket.id);
+    const worker = workers.get(socket.id);
     if (worker) {
-      worker.terminate();
+      worker.terminate(socket.id);
     }
-    workers.delete(socketId);
-    socketStore.delete(socketId);
-    console.log(`Client disconnected: ${socket.id} clients: ${userSessions.size} sockets: ${socketStore.size}`);
+    workers.delete(socket.id);
+    socketStore.delete(socket.id);
+    console.log(`Client disconnected: ${socket.id} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`);
   }
 });
 
@@ -207,18 +205,18 @@ app.use("/api/tts", (req, res) => {
   if (typeof req.query.text !== "string") {
     return res.status(469).send("Invalid input: text must be an encodeURIComponent");
   } else {
-  const text = req.query.text;
-  axios
-    .get(`http://192.178.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
-    .then((response) => {
-      res.setHeader("Content-Type", "audio/wav");
-      res.setHeader("Content-Length", response.data.length);
-      res.send(response.data);
-    })
-    .catch((error) => {
-      console.error("Error fetching TTS audio:", error);
-      res.status(500).send("Error fetching TTS audio");
-    });
+    const text = req.query.text;
+    axios
+      .get(`http://192.178.0.178:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
+      .then((response) => {
+        res.setHeader("Content-Type", "audio/wav");
+        res.setHeader("Content-Length", response.data.length);
+        res.send(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching TTS audio:", error);
+        res.status(500).send("Error fetching TTS audio");
+      });
   }
 });
 
