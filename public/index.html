@@ -55,16 +55,15 @@
     <script>
         const socket = io('https://bambisleep.chat:4848', {
             transports: ['websocket'],
-            timeout: 5000 // Set a timeout for the connection
+            timeout: 20000 // Set a timeout for the connection
         });
 
         socket.on('connect_error', (err) => {
             console.error('Connection Error:', err);
-            alert('Connection Error: ' + err.message);
             // Retry logic
             setTimeout(() => {
                 socket.connect();
-            }, 3000); // Retry after 3 seconds
+            }, 30000); // Retry after 3 seconds
         });
 
         socket.on('connect', () => {
