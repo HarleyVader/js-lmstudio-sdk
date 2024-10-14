@@ -31,11 +31,11 @@ async function loadModel() {
   try {
     const history = [{
       role: "system",
-      content: { type: "text", text: collarText }
+      content: { type: "text", text: "" }
     },
     {
       role: "user",
-      content: { type: "text", text: userPrompt },
+      content: { type: "text", text: "" },
     }];
 
     if (!roleplay) {
@@ -50,6 +50,8 @@ async function loadModel() {
     console.error('Error loading model:', error);
   }
 }
+
+loadModel();
 
 async function checkTriggers(triggers) {
   if (!triggers) {
@@ -86,7 +88,7 @@ async function getSessionHistories(collarText, userPrompt, socketId) {
 
   return sessionHistories[socketId];
 }
-loadModel();
+
 
 async function saveSessionHistories(collarText, userPrompt, finalContent, socketId) {
   if (!sessionHistories) {
@@ -166,6 +168,8 @@ async function handleMessage(userPrompt, socketId) {
   }
 }
 
+
+
 parentPort.on("message", async (msg) => {
   console.log(`Received message: ${JSON.stringify(msg)}`);
   if (msg.type === "triggers") {
@@ -178,6 +182,8 @@ parentPort.on("message", async (msg) => {
   }
   parentPort.postMessage({ 'log': `Session Histories: ${JSON.stringify(sessionHistories)}` });
 });
+
+
 
 async function handleResponse(response, socketId) {
   parentPort.postMessage({
