@@ -89,18 +89,15 @@ io.on("connection", (socket) => {
   const worker = new Worker("./worker.js");
   workers.set(socket.id, worker);
 
-  // Store the socket object in the shared context
+  // Store the socket in a map for easy access
   socketStore.set(socket.id, socket);
 
-  // Ensure socket.request.app is defined
-  socket.request.app = app;
-
   // Handle HTTP requests within the socket connection
-  socket.request.app.get("/", (req, res) => {
+  socket.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
   });
 
-  socket.request.app.get('/history', (req, res) => {
+  socket.get('/history', (req, res) => {
     fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
       if (err) throw err;
       const chatHistory = JSON.parse(data);
@@ -108,7 +105,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.request.app.post('/vote/:index/:type', (req, res) => {
+  socket.post('/vote/:index/:type', (req, res) => {
     fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
       if (err) throw err;
       const chatHistory = JSON.parse(data);
@@ -128,11 +125,11 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.request.app.get("/help", (req, res) => {
+  socket.app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
   });
 
-  socket.request.app.get("/psychodelic-trigger-mania", (req, res) => {
+  socket.get("/psychodelic-trigger-mania", (req, res) => {
     res.sendFile(
       path.join(__dirname, "public", "psychodelic-trigger-mania.html")
     );
