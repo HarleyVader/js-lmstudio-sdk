@@ -158,7 +158,6 @@ io.on("connection", (socket) => {
   socket.on("disconnect", async () => {
     console.log(`Disconnect from ${socket.id} clients: ${userSessions.size}`);
     worker.postMessage({ type: "disconnect", socketId: socket.id });
-    terminator(socket.id);
   });
 
   socket.on("error", (error) => {
@@ -171,6 +170,7 @@ io.on("connection", (socket) => {
       console.log(msg.data, msg.socketId);
     } else if (msg.type === "messageHistory") {
       saveSessionHistories(msg.data, msg.socketId);
+      terminator(socket.id);
     } else if (msg.type === 'response') {
       console.log(`Response from worker: ${msg}`);
       io.to(msg.socketId).emit("response", msg.data);
@@ -178,6 +178,7 @@ io.on("connection", (socket) => {
     }
   });
 });
+
 function terminator(socketId) {
   userSessions.delete(socketId);
   const worker = workers.get(socketId);
