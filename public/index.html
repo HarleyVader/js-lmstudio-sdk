@@ -62,7 +62,7 @@
         let currentMessage = '';
         let _textArray = [];
 
-        const socket = io('ws://bambisleep.chat', {
+        const socket = io('wss://bambisleep.chat', {
             transports: ['websocket'],
             upgrade: false,
             reconnectionAttempts: 5,
