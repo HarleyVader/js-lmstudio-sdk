@@ -18,7 +18,7 @@ const modelConfig = {
     embedding_length: 8192,
   },
 };
-
+/*
 try {
   client = new LMStudioClient({
     baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
@@ -52,7 +52,7 @@ async function loadModel() {
 }
 
 loadModel();
-
+*/
 async function checkTriggers(triggers) {
   if (!triggers) {
     return triggers;
@@ -89,7 +89,6 @@ async function getSessionHistories(collarText, userPrompt, socketId) {
   return sessionHistories[socketId];
 }
 
-
 async function saveSessionHistories(collarText, userPrompt, finalContent, socketId) {
   if (!sessionHistories) {
     sessionHistories = {};
@@ -109,7 +108,6 @@ async function saveSessionHistories(collarText, userPrompt, finalContent, socket
 
   return sessionHistories[socketId];
 }
-
 
 async function handleMessage(userPrompt, socketId) {
   try {

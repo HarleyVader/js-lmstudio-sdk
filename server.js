@@ -5,38 +5,35 @@ const fs = require("fs").promises;
 const http = require("http");
 const { Worker } = require("worker_threads");
 const { Server } = require("socket.io");
-const { wss } = require("socket.io");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
 const { LMStudioClient } = require('@lmstudio/sdk');
 
-const EXPRESS_PORT = 6969;
-const SOCKET_PORT = 4848;
+const PORT = 6969;
+
+
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
-
+io = new Server(server, {
+  cors: {
+    origin: "https://bambisleep.chat",
+    methods: ["GET", "POST"]
+  }
+});
+/*
 try {
-  wss = new Server(http.createServer(app)
-    .listen(SOCKET_PORT, () => console.log(`WebSocket on *:${SOCKET_PORT}`)));
-}
-catch (error) {
-  console.error('Error initializing WebSocket server:', error);
-}
-
-try {
-  client = new LMStudioClient({
-    baseUrl: "ws://192.168.0.178:1234", 
+ client = new LMStudioClient({
+    baseUrl: "ws://192.168.0.178:1234",
   });
 } catch (error) {
   console.error('Error initializing LMStudioClient:', error);
 }
-
+*/
 const rl = readline.createInterface({
-  input: process.stdin, 
-  output: process.stdout, 
+  input: process.stdin,
+  output: process.stdout,
 });
 
 rl.setMaxListeners(20);
@@ -83,7 +80,7 @@ async function saveSessionHistories(data, socketId) {
 }
 let userSessions = new Set();
 let workers = new Map();
-let socketStore = new Map(); 
+let socketStore = new Map();
 
 // Serve static files from the 'public' directory
 app.use(cors());
@@ -109,35 +106,35 @@ io.on("connection", (socket) => {
   socket.request.app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
   });
-  
-    socket.request.app.get('/history', (req, res) => {
-      fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+
+  socket.request.app.get('/history', (req, res) => {
+    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+      if (err) throw err;
+      const chatHistory = JSON.parse(data);
+      res.render('history', { chatHistory });
+    });
+  });
+
+  socket.request.app.post('/vote/:index/:type', (req, res) => {
+    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+      if (err) throw err;
+      const chatHistory = JSON.parse(data);
+      const index = req.params.index;
+      const type = req.params.type;
+
+      if (type === 'up') {
+        chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
+      } else if (type === 'down') {
+        chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+      }
+
+      fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
         if (err) throw err;
-        const chatHistory = JSON.parse(data);
-        res.render('history', { chatHistory });
+        res.json({ votes: chatHistory[index].votes });
       });
     });
-  
-    socket.request.app.post('/vote/:index/:type', (req, res) => {
-      fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
-        if (err) throw err;
-        const chatHistory = JSON.parse(data);
-        const index = req.params.index;
-        const type = req.params.type;
-  
-        if (type === 'up') {
-          chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
-        } else if (type === 'down') {
-          chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
-        }
-  
-        fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
-          if (err) throw err;
-          res.json({ votes: chatHistory[index].votes });
-        });
-      });
-    });
-  
+  });
+
   socket.request.app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
   });
@@ -225,7 +222,6 @@ app.use("/api/tts", (req, res) => {
     });
 });
 
-/*
 function getServerAddress() {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
@@ -241,32 +237,32 @@ function getServerAddress() {
 const serverAddress = getServerAddress();
 console.log(`Server running at http://${serverAddress}:${EXPRESS_PORT}`);
 
-*/
+
 
 // Start the server
-server.listen(EXPRESS_PORT, () => {
-  console.log(`Server listening on *:${EXPRESS_PORT}`);
+server.listen(PORT, () => {
+  console.log(`Server listening on *:${PORT}`);
 });
 
-  /* removed /images due to lack of images to show
-  socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
+/* removed /images due to lack of images to show
+socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
 
-  socket.request.app.get("/images", async (req, res) => {
-    const directoryPath = path.join(__dirname, "images");
-    const files = await fs.readdir(directoryPath);
-    let html = "<html><body>";
-    files.forEach((file) => {
-      if (
-        file.endsWith(".png") ||
-        file.endsWith(".jpg") ||
-        file.endsWith(".jpeg")
-      ) {
-        html += `<img src="/images/${file}" width="64" height="64" />`;
-      }
-    });
-    html += "</body></html>";
-    res.send(html);
+socket.request.app.get("/images", async (req, res) => {
+  const directoryPath = path.join(__dirname, "images");
+  const files = await fs.readdir(directoryPath);
+  let html = "<html><body>";
+  files.forEach((file) => {
+    if (
+      file.endsWith(".png") ||
+      file.endsWith(".jpg") ||
+      file.endsWith(".jpeg")
+    ) {
+      html += `<img src="/images/${file}" width="64" height="64" />`;
+    }
   });
+  html += "</body></html>";
+  res.send(html);
+});
 */
 
 /*
