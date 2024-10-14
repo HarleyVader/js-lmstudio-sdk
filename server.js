@@ -180,7 +180,10 @@ io.on("connection", (socket) => {
 
   function terminator(socketId) {
     userSessions.delete(socketId);
-    workers.get(socketId);
+    const worker = workers.get(socketId);
+    if (worker) {
+      worker.terminate();
+    }
     workers.delete(socketId);
     console.log(
       `Client disconnected: ${socketId} clients: ${userSessions.size}`
