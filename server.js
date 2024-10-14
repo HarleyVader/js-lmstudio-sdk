@@ -15,7 +15,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-      origin: "ws://84.115.142.3:4848", 
+      origin: "wss://84.115.142.3:4848", 
       methods: ["GET", "POST"]
   }
 });
