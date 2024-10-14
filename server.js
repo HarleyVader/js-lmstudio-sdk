@@ -2,7 +2,7 @@ const express = require("express");
 const path = require('path');
 const fs = require("fs").promises;
 const http = require("http");
-const { socketIo } = require("socket.io");
+const { Server } = require("socket.io");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
@@ -12,7 +12,7 @@ const PORT = 6969;
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
+const io = Server(server, {
   cors: {
       origin: "https://bambisleep.chat",
       methods: ["GET", "POST"]
