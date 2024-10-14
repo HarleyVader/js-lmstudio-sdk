@@ -52,9 +52,6 @@
         </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-        
-    </script>
     <script src="js/psychodelic-trigger-mania.js"></script>
     <script src="js/text2speech.js"></script>
     <script src="js/responsive.js"></script>
@@ -64,7 +61,19 @@
         let currentMessage = '';
         let _textArray = [];
 
-        const socket = io();
+        const socket = io('https://bambisleep:4848');
+
+        socket.on('connect_error', (err) => {
+            console.error('Connection Error:', err);
+            // Retry logic
+            setTimeout(() => {
+                socket.connect();
+            }, 30000); // Retry after 3 seconds
+        });
+
+        socket.on('connect', () => {
+            console.log('Connected successfully');
+        });
 
         const textarea = document.getElementById('textarea');
         const submit = document.getElementById('submit');

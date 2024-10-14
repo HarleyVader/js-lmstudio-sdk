@@ -9,33 +9,30 @@ const cors = require('cors');
 const axios = require("axios");
 const { LMStudioClient } = require('@lmstudio/sdk');
 
-
 const PORT = 6969;
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-      origin: "wss://bambisleep.chat",
+      origin: "ws://84.115.142.3:4848", 
       methods: ["GET", "POST"]
   }
 });
 
 try {
   client = new LMStudioClient({
-    baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
+    baseUrl: "ws://192.168.0.178:1234", 
   });
 } catch (error) {
   console.error('Error initializing LMStudioClient:', error);
 }
 
-// Create a readline interface to read from the terminal
 const rl = readline.createInterface({
-  input: process.stdin, //standard terminal device input
-  output: process.stdout, //standard terminal device output
+  input: process.stdin, 
+  output: process.stdout, 
 });
 
-// Increase the max listeners for the readline interface
 rl.setMaxListeners(20);
 
 const filteredWords = require("./fw.json");
@@ -78,7 +75,6 @@ async function saveSessionHistories(data, socketId) {
       });
   }
 }
-let worker;
 let userSessions = new Set();
 let workers = new Map();
 let socketStore = new Map(); // Shared context for socket objects
