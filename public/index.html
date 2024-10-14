@@ -61,7 +61,10 @@
         let currentMessage = '';
         let _textArray = [];
 
-        const socket = io('https://bambisleep');
+        const socket = io('https://bambisleep.chat', {
+            transports: ['websocket'],
+            upgrade: false
+        });
 
         socket.on('connect_error', (err) => {
             console.error('Connection Error:', err);
