@@ -62,12 +62,12 @@
         let currentMessage = '';
         let _textArray = [];
 
-        const socket = io('wss://bambisleep.chat:6969', {
+        const socket = io('wss://bambisleep.chat', {
             transports: ['websocket'],
             upgrade: false,
             reconnectionAttempts: 5,
             reconnectionDelay: 5000,
-            timeout: 20000
+            timeout: 5000
         });
 
         socket.on('connect_error', (err) => {
