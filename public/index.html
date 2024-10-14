@@ -53,8 +53,8 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-       const socket = io('https://bambisleep.chat', {
-        transports: ['websocket', 'polling']
+       const socket = io('https://bambisleep.chat:4848', {
+        transports: ['websocket']
     });
 
     socket.on('connect_error', (err) => {
