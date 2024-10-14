@@ -177,30 +177,29 @@ io.on("connection", (socket) => {
       console.log(`Response to ${msg.socketId}: ${msg.data}`);
     }
   });
-
-  function terminator(socketId) {
-    userSessions.delete(socketId);
-    const worker = workers.get(socketId);
-    if (worker) {
-      worker.terminate();
-    }
-    workers.delete(socketId);
-    console.log(
-      `Client disconnected: ${socketId} clients: ${userSessions.size}`
-    );
+});
+function terminator(socketId) {
+  userSessions.delete(socketId);
+  const worker = workers.get(socketId);
+  if (worker) {
+    worker.terminate();
   }
+  workers.delete(socketId);
+  console.log(
+    `Client disconnected: ${socketId} clients: ${userSessions.size}`
+  );
+}
 
-  rl.on("line", async (line) => {
-    if (line === "update") {
-      console.log("Update mode");
-      io.emit("update");
-    } else if (line === "normal") {
-      io.emit("update");
-      console.log("Normal mode");
-    } else {
-      console.log("Invalid command! update or normal");
-    }
-  });
+rl.on("line", async (line) => {
+  if (line === "update") {
+    console.log("Update mode");
+    io.emit("update");
+  } else if (line === "normal") {
+    io.emit("update");
+    console.log("Normal mode");
+  } else {
+    console.log("Invalid command! update or normal");
+  }
 });
 
 
@@ -233,8 +232,7 @@ function getServerAddress() {
 
 // Start the server
 server.listen(PORT, () => {
-  const serverAddress = getServerAddress();
-  console.log(`Server running at http://${serverAddress}:${PORT}`);
+  console.log(`Server is running on http://${getServerAddress()}:${PORT}`);
 });
 
 /* removed /images due to lack of images to show
