@@ -66,10 +66,6 @@
 
         socket.on('connect_error', (err) => {
             console.error('Connection Error:', err, 'Message:', err.message);
-            // Retry logic
-            setTimeout(() => {
-                socket.connect();
-            }, 30000); // Retry after 30 seconds
         });
 
         socket.on('disconnect', () => {
