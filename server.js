@@ -12,6 +12,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+io.listen(4848);
+
 const PORT = 6969;
 
 // Create a readline interface to read from the terminal
@@ -240,6 +242,7 @@ server.listen(PORT, () => {
 /*
 const { MongoClient } = require('mongodb');
 const axios = require("axios");
+const WebSocket = require('ws');
 const uri = "mongodb://localhost:27017"; // Replace with your MongoDB connection string
 const clientDB = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 

@@ -53,8 +53,12 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io('wss://bambisleep.chat', {
-        transports: ['websocket']
+       const socket = io('https://bambisleep.chat', {
+        transports: ['websocket', 'polling']
+    });
+
+    socket.on('connect_error', (err) => {
+        console.error('Connection Error:', err);
     });
     </script>
     <script src="js/psychodelic-trigger-mania.js"></script>
