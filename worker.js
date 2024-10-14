@@ -6,6 +6,7 @@ const { LMStudioClient } = require('@lmstudio/sdk');
 
 let roleplay;
 let client;
+let sessionHistories = {}; // Initialize sessionHistories as an empty object
 
 const modelConfig = {
   identifier: "solar-10.7b-instruct-v1.0-uncensored",
@@ -15,7 +16,6 @@ const modelConfig = {
     embedding_length: 8192,
   },
 };
-
 
 try {
   client = new LMStudioClient({
@@ -53,10 +53,8 @@ async function loadModel() {
 
 loadModel();
 
-
 let triggers;
 let collarText;
-let sessionHistories;
 
 async function checkTriggers(triggers) {
   if (!triggers) {
@@ -83,13 +81,14 @@ async function getSessionHistories(collarText, userPrompt, socketId) {
   if (!sessionHistories[socketId]) {
     sessionHistories[socketId] = [];
   }
-  
+
   if (sessionHistories[socketId].length === 0) {
     sessionHistories[socketId].push([
       { role: "system", content: collarText },
       { role: "user", content: userPrompt },
     ]);
   }
+
   return sessionHistories[socketId];
 }
 
@@ -108,14 +107,15 @@ async function handleMessage(userPrompt, socketId) {
   try {
     let collar = await checkTriggers(triggers);
     collarText += collar;
-    sessionHistories = getSessionHistories(collarText, userPrompt, socketId);
-   
+
+    sessionHistories = await getSessionHistories(collarText, userPrompt, socketId);
+
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', {
       model: "solar-10.7b-instruct-v1.0-uncensored",
       messages: [
         { role: "system", content: collarText },
         { role: "user", content: userPrompt },
-        { role: "system", content: finalContent },
+        { role: "assistant", content: collarText },
       ],
       temperature: 0.3,
       max_tokens: 512,
@@ -130,9 +130,8 @@ async function handleMessage(userPrompt, socketId) {
     response.data.on('data', (chunk) => {
       responseData += chunk.toString();
 
-      // Split the chunk by newlines to process each JSON object
       const lines = responseData.split('\n');
-      responseData = lines.pop(); // Keep the last partial line for the next chunk
+      responseData = lines.pop();
 
       for (const line of lines) {
         if (line.trim() === 'data: [DONE]') {
@@ -183,9 +182,17 @@ async function handleResponse(response, socketId) {
 }
 
 async function handleDisconnect(socketId) {
-  parentPort.postMessage({
-    type: "messageHistory",
-    data: sessionHistories[socketId],
-    socketId: socketId,
-  });
+  if (sessionHistories && sessionHistories[socketId]) {
+    parentPort.postMessage({
+      type: "messageHistory",
+      data: sessionHistories[socketId],
+      socketId: socketId,
+    });
+  } else {
+    parentPort.postMessage({
+      type: "messageHistory",
+      data: [],
+      socketId: socketId,
+    });
+  }
 }
