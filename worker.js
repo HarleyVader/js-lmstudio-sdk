@@ -88,7 +88,6 @@ async function getSessionHistories(collarText, userPrompt, socketId) {
       { role: "user", content: userPrompt },
     ]);
   }
-
   return sessionHistories[socketId];
 }
 
@@ -188,11 +187,5 @@ async function handleDisconnect(socketId) {
       data: sessionHistories[socketId],
       socketId: socketId,
     });
-  } else {
-    parentPort.postMessage({
-      type: "messageHistory",
-      data: [],
-      socketId: socketId,
-    });
-  }
+  } 
 }
