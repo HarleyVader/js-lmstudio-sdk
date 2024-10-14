@@ -44,8 +44,7 @@ function filter(message) {
     })
     .join(" ");
 }
-
-const chatHistoryPath = path.join(__dirname, "data", "chatHistory.json");
+const chatHistoryPath = path.join(__dirname, "histroy", "chatHistory.json");
 
 async function readChatHistory() {
   try {
@@ -126,13 +125,13 @@ io.on("connection", (socket) => {
     const chatHistory = readChatHistory();
     const index = req.params.index;
     const type = req.params.type;
-
+  
     if (type === 'up') {
       chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
     } else if (type === 'down') {
       chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
     }
-
+  
     fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
       if (err) throw err;
       res.json({ votes: chatHistory[index].votes });
@@ -200,6 +199,15 @@ io.on("connection", (socket) => {
       console.log("Invalid command! update or normal");
     }
   });
+
+  function terminator(socketId) {
+    userSessions.delete(socketId);
+    workers.get(socketId);
+    workers.delete(socketId);
+    console.log(
+      `Client disconnected: ${socketId} clients: ${userSessions.size}`
+    );
+  }
 });
 
   app.use("/api/tts", (req, res) => {
@@ -217,14 +225,7 @@ io.on("connection", (socket) => {
       });
   });
 
-  function terminator(socketId) {
-    userSessions.delete(socketId);
-    workers.get(socketId);
-    workers.delete(socketId);
-    console.log(
-      `Client disconnected: ${socketId} clients: ${userSessions.size}`
-    );
-  }
+  
 
   function getServerAddress() {
     const interfaces = os.networkInterfaces();
