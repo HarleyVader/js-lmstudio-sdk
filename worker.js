@@ -169,8 +169,6 @@ async function handleMessage(userPrompt, socketId) {
   }
 }
 
-
-
 parentPort.on("message", async (msg) => {
   console.log(`Received message: ${JSON.stringify(msg)}`);
   if (msg.type === "triggers") {
@@ -183,8 +181,6 @@ parentPort.on("message", async (msg) => {
   }
   parentPort.postMessage({ 'log': `Session Histories: ${JSON.stringify(sessionHistories)}` });
 });
-
-
 
 async function handleResponse(response, socketId) {
   parentPort.postMessage({

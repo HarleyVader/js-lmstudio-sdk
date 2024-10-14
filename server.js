@@ -185,13 +185,10 @@ io.on("connection", (socket) => {
       worker.terminate();
     }
     workers.delete(socketId);
-    console.log(
-      `Client disconnected: ${socketId} clients: ${userSessions.size}`
-    );
+    socketStore.delete(socketId); // Ensure socketStore is cleaned up
+    console.log(`Client disconnected: ${socketId} clients: ${userSessions.size}`);
   }
 });
-
-
 
 rl.on("line", async (line) => {
   if (line === "update") {
@@ -204,7 +201,6 @@ rl.on("line", async (line) => {
     console.log("Invalid command! update or normal");
   }
 });
-
 
 app.use("/api/tts", (req, res) => {
   const { text } = req.query;
