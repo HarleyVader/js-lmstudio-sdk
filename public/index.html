@@ -53,7 +53,7 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+        const socket = io('http://bambisleep:1234');  );
 
         socket.on('connect_error', (err) => {
             console.error('Connection Error:', err);

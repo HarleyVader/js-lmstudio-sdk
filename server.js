@@ -16,7 +16,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-      origin: "https://bambisleep.chat",
+      origin: "wss://bambisleep.chat",
       methods: ["GET", "POST"]
   }
 });
