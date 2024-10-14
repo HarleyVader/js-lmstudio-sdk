@@ -92,7 +92,7 @@ io.on("connection", (socket) => {
   // Store the socket object in the shared context
   socketStore.set(socket.id, socket);
   console.log(`Socket stored: ${socket.id} sockets: ${socketStore.size}`);
-  
+
   // Ensure socket.request.app is defined
   socket.request.app = app;
 
@@ -159,6 +159,7 @@ io.on("connection", (socket) => {
   socket.request.app.on("disconnect", async () => {
     console.log(`Disconnect from ${socket.id} clients: ${userSessions.size}`);
     worker.postMessage({ type: "disconnect", socketId: socket.id });
+    terminator(socket.id);
   });
 
   socket.request.app.on("error", (error) => {
@@ -171,7 +172,6 @@ io.on("connection", (socket) => {
       console.log(msg.data, msg.socketId);
     } else if (msg.type === "messageHistory") {
       saveSessionHistories(msg.data, msg.socketId);
-      terminator(msg.socketId);
     } else if (msg.type === 'response') {
       console.log(`Response from worker: ${msg}`);
       io.to(msg.socketId).emit("response", msg.data);
