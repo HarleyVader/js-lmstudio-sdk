@@ -44,6 +44,23 @@ function filter(message) {
     .join(" ");
 }
 
+const chatHistoryPath = path.join(__dirname, "data", "chatHistory.json");
+
+async function readChatHistory() {
+  try {
+    const data = await fs.readFile(chatHistoryPath, "utf8");
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      console.error("Chat history file not found, creating a new one.");
+      await fs.writeFile(chatHistoryPath, JSON.stringify([]));
+      return [];
+    } else {
+      throw error;
+    }
+  }
+}
+
 let sessionHistories = {};
 
 async function saveSessionHistories(data, socketId) {
@@ -101,17 +118,11 @@ io.on("connection", (socket) => {
   });
 
   socket.request.app.get('/history', (req, res) => {
-    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
-      if (err) throw err;
-      const chatHistory = JSON.parse(data);
-      res.render('history', { chatHistory });
-    });
+    readChatHistory();
   });
 
   socket.request.app.post('/vote/:index/:type', (req, res) => {
-    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
-      if (err) throw err;
-      const chatHistory = JSON.parse(data);
+      const chatHistory = readChatHistory();
       const index = req.params.index;
       const type = req.params.type;
 
@@ -198,7 +209,7 @@ io.on("connection", (socket) => {
       console.log("Invalid command! update or normal");
     }
   });
-});
+
 
 app.use("/api/tts", (req, res) => {
   const { text } = req.query;
@@ -227,11 +238,10 @@ function getServerAddress() {
   return '127.0.0.1';
 }
 
-const serverAddress = getServerAddress();
-
 // Start the server
 server.listen(PORT, () => {
-  console.log(`Server running at http://${serverAddress}:${PORT}`);
+  const serverAddress = getServerAddress();
+  console.log(`Server running at ${serverAddress}:${PORT}`);
 });
 
 /* removed /images due to lack of images to show
