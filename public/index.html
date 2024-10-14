@@ -18,7 +18,7 @@
     <script type="module" src="mjs/main.mjs"></script>
     <div id="chat-container">
         <div id="user-input">
-                <h1>BambiSleep AIGF 👁️</h1>
+            <h1>BambiSleep AIGF 👁️</h1>
             <textarea id="textarea" oninput="autoExpand(this)" placeholder="Talk to BambiSleep"></textarea>
             <div>
                 <button id="submit" type="submit">Submit</button>
@@ -53,16 +53,13 @@
         </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
-    <script>const socket = io();</script>
     <script src="js/psychodelic-trigger-mania.js"></script>
     <script src="js/text2speech.js"></script>
     <script src="js/responsive.js"></script>
     <script src="js/triggers.js"></script>
     <script src="js/webhook.js"></script>
     <script>
-        let currentMessage = '';
-        let _textArray = [];
-
+        const socket = io();
         socket.on('connect', () => {
             console.log('Connected successfully');
         });
@@ -83,6 +80,9 @@
         socket.on("update", (message) => {
             unhideUpdateElement();
         });
+
+        let currentMessage = '';
+        let _textArray = [];
 
         const textarea = document.getElementById('textarea');
         const submit = document.getElementById('submit');
@@ -127,8 +127,6 @@
                 }
             }
         });
-
-        
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
