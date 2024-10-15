@@ -3,6 +3,7 @@ const os = require('os');
 const path = require('path');
 const fs = require("fs").promises;
 const http = require("http");
+const https = require('https');
 const { Worker } = require("worker_threads");
 const { Server } = require("socket.io");
 const readline = require("readline");
@@ -10,17 +11,19 @@ const cors = require('cors');
 const axios = require("axios");
 
 const PORT = 6969;
+const WSS_PORT = 4848;
+
+const options = {
+  key: fs.readFileSync('~/conf/web/bambisleep.chat/ssl/bambisleep.chat.key'),
+  cert: fs.readFileSync('~/conf/web/bambisleep.chat/ssl/bambisleep.chat.pem')
+};
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(cors({
-  origin: 'https://bambisleep.chat',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type'],
-  credentials: true
-}));
+const httpsServer = https.createServer(options, app);
+const wss = new Server(httpsServer);
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -73,8 +76,13 @@ let userSessions = new Set();
 let workers = new Map();
 let socketStore = new Map();
 
-// Serve static files from the 'public' directory
-app.use(cors());
+app.use(cors({
+  origin: 'https://bambisleep.chat',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+  credentials: true
+}));
+
 app.use(express.static(path.join(__dirname, "public")));
 app.set('view engine', 'ejs');
 
@@ -229,6 +237,10 @@ function getServerAddress() {
   }
   return '127.0.0.1';
 }
+
+wss.listen(WSS_PORT, () => {
+  console.log(`Server is running on https://${getServerAddress()}:${WSS_PORT}`);
+});
 
 // Start the server
 server.listen(PORT, () => {
