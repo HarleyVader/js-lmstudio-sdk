@@ -59,6 +59,11 @@
     <script src="js/webhook.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        let currentMessage = '';
+        const _textArray = [];
+        const _audioArray = [];
+        
+
         const textarea = document.getElementById('textarea');
         const submit = document.getElementById('submit');
         const response = document.getElementById('response');
