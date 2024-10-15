@@ -14,8 +14,8 @@ const PORT = 6969;
 const WSS_PORT = 4848;
 
 const options = {
-  key: fs.readFileSync('~/conf/web/bambisleep.chat/ssl/bambisleep.chat.key'),
-  cert: fs.readFileSync('~/conf/web/bambisleep.chat/ssl/bambisleep.chat.pem')
+  key: fs.readFileSync(path.join(os.homedir(), 'conf/web/bambisleep.chat/ssl/bambisleep.chat.key')),
+  cert: fs.readFileSync(path.join(os.homedir(), 'conf/web/bambisleep.chat/ssl/bambisleep.chat.pem'))
 };
 
 const app = express();
