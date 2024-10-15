@@ -1,7 +1,7 @@
 const express = require("express");
 const os = require('os');
 const path = require('path');
-const fs = require("fs").promises;
+const fs = require("fs");
 const http = require("http");
 const https = require('https');
 const { Worker } = require("worker_threads");
