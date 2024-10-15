@@ -69,7 +69,7 @@
         const triggerToggles = document.getElementById('trigger-toggles');
         const activateAll = document.getElementById('activate-all');
 
-        const socket = io('https://bambisleep.chat');
+        const socket = io('wss://bambisleep.chat');
         socket.on('disconnect', () => {
             console.log('Disconnected');
             alert('Bambi disconnected!\nrefresh bambisleep.chat');
@@ -77,6 +77,8 @@
 
         socket.on('connect', () => {
             console.log('Connected');
+            console.log('Connected to BambiSleep chat server');
+            console.log('Socket ID:', socket.id);
         });
 
         socket.on("update", (message) => {
