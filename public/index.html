@@ -69,10 +69,6 @@
         const triggerToggles = document.getElementById('trigger-toggles');
         const activateAll = document.getElementById('activate-all');
 
-        const unhideUpdateElement = () => {
-            updateElement.hidden = false;
-        };
-
         const socket = io();
         socket.on('connect', () => {
             console.log('Connected successfully');
