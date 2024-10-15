@@ -105,9 +105,9 @@ io.on("connection", (socket) => {
   app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
   });
-
+/*
   app.get('/history', (req, res) => {
-    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+    fs.readFile(path.join(__dirname, 'public', 'chatHistory.json'), (err, data) => {
       if (err) throw err;
       const chatHistory = JSON.parse(data);
       res.render('history', { chatHistory });
@@ -115,7 +115,7 @@ io.on("connection", (socket) => {
   });
 
   app.post('/vote/:index/:type', (req, res) => {
-    fs.readFile(path.join(__dirname, 'data', 'chatHistory.json'), (err, data) => {
+    fs.readFile(path.join(__dirname, 'public', 'chatHistory.json'), (err, data) => {
       if (err) throw err;
       const chatHistory = JSON.parse(data);
       const index = req.params.index;
@@ -127,13 +127,13 @@ io.on("connection", (socket) => {
         chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
       }
 
-      fs.writeFile(path.join(__dirname, 'history', 'voteHistrory.json'), JSON.stringify(chatHistory), (err) => {
+      fs.writeFile(path.join(__dirname, 'public', 'chatHistrory.json'), JSON.stringify(chatHistory), (err) => {
         if (err) throw err;
         res.json({ votes: chatHistory[index].votes });
       });
     });
   });
-
+*/
   app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
   });
