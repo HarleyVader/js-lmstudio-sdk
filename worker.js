@@ -2,60 +2,11 @@ const { parentPort } = require("worker_threads");
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-//const { LMStudioClient } = require('@lmstudio/sdk');
 
-/*
-let roleplay;
-let client;
-*/
 let sessionHistories = {}; // Initialize sessionHistories as an empty object
 let triggers;
 let collarText;
 
-/*
-const modelConfig = {
-  identifier: "solar-10.7b-instruct-v1.0-uncensored",
-  config: {
-    gpuOffload: 0.2,
-    context_length: 8192,
-    embedding_length: 8192,
-  },
-};
-
-try {
-  client = new LMStudioClient({
-    baseUrl: "ws://192.168.0.178:1234", // Replace with your LMStudio server address
-  });
-} catch (error) {
-  console.error('Error initializing LMStudioClient:', error);
-}
-
-async function loadModel() {
-  try {
-    const history = [{
-      role: "system",
-      content: { type: "text", text: "" }
-    },
-    {
-      role: "user",
-      content: { type: "text", text: "" },
-    }];
-
-    if (!roleplay) {
-      await client.llm.get({});
-    } else {
-      await client.llm.load(modelConfig.identifier, {
-        config: modelConfig.config,
-        history: history, // Include the history parameter
-      });
-    }
-  } catch (error) {
-    console.error('Error loading model:', error);
-  }
-}
-
-loadModel();
-*/
 async function checkTriggers(triggers) {
   if (!triggers) {
     return triggers;

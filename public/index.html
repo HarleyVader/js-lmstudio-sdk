@@ -28,7 +28,7 @@
             </div>
             <div>
                 <div id="audiomessage">
-                    <audio id="audio" hidden controls src=></audio>
+                    <audio id="audio" hidden controls src></audio>
                     <p id="message"></p>
                 </div>
                 <button id="activate-all">All On</button>
@@ -52,13 +52,25 @@
             </div>
         </div>
     </div>
-    <script src="/socket.io/socket.io.js"></script>
     <script src="js/psychodelic-trigger-mania.js"></script>
     <script src="js/text2speech.js"></script>
     <script src="js/responsive.js"></script>
     <script src="js/triggers.js"></script>
     <script src="js/webhook.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        const textarea = document.getElementById('textarea');
+        const submit = document.getElementById('submit');
+        const response = document.getElementById('response');
+        const userPrompt = document.getElementById('user-prompt');
+        const updateElement = document.getElementById('update-element');
+        const triggerToggles = document.getElementById('trigger-toggles');
+        const activateAll = document.getElementById('activate-all');
+
+        const unhideUpdateElement = () => {
+            updateElement.hidden = false;
+        };
+
         const socket = io();
         socket.on('connect', () => {
             console.log('Connected successfully');
@@ -76,15 +88,6 @@
         socket.on("update", (message) => {
             unhideUpdateElement();
         });
-
-        let currentMessage = '';
-        let _textArray = [];
-
-        const textarea = document.getElementById('textarea');
-        const submit = document.getElementById('submit');
-        const response = document.getElementById('response');
-        const userPrompt = document.getElementById('user-prompt');
-        const updateElement = document.getElementById('update-element');
 
         submit.addEventListener('click', () => {
             const message = textarea.value;
@@ -105,7 +108,7 @@
             const triggerFound = listOfTriggers.some(trigger => currentMessage.includes(trigger));
             console.log('Trigger found:', triggerFound); // Log if a trigger is found
 
-            if (currentMessage.match(/[,.!?]/) && !currentMessage.match(/\d+\./) || triggerFound === true && currentMessage.match(/[,.!?]/)) {
+            if ((currentMessage.match(/[,.!?]/) && !currentMessage.match(/\d+\./)) || (triggerFound === true && currentMessage.match(/[,.!?]/))) {
                 _textArray.push(currentMessage);
                 console.log('Text array:', _textArray); // Log the text array
                 arrayPush(_audioArray, currentMessage);

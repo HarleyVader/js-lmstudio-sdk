@@ -8,22 +8,13 @@ const { Server } = require("socket.io");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
-//const { LMStudioClient } = require('@lmstudio/sdk');
 
 const PORT = 6969;
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-/*
-try {
- client = new LMStudioClient({
-    baseUrl: "ws://192.168.0.178:1234",
-  });
-} catch (error) {
-  console.error('Error initializing LMStudioClient:', error);
-}
-*/
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
