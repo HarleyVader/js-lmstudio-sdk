@@ -177,9 +177,10 @@ io.on("connection", (socket) => {
     } else if (msg.type === "messageHistory") {
       saveSessionHistories(msg.data, msg.socketId);
     } else if (msg.type === 'response') {
-      console.log(`Response from worker: ${msg}`);
-      io.to(msg.socketId).emit("response", msg.data);
-      console.log(`Response to ${msg.socketId}: ${msg.data}`);
+      const responseData = typeof msg.data === 'object' ? JSON.stringify(msg.data) : msg.data;
+      console.log(`Response from worker: ${responseData}`);
+      io.to(msg.socketId).emit("response", responseData);
+      console.log(`Response to ${msg.socketId}: ${responseData}`);
     }
   });
 
