@@ -69,10 +69,10 @@
         const triggerToggles = document.getElementById('trigger-toggles');
         const activateAll = document.getElementById('activate-all');
 
-        const socket = io();
+        const socket = io('https://bambisleep.chat');
         socket.on('disconnect', () => {
             console.log('Disconnected');
-            alert('Bambi disconnected! \n refresh bambisleep.chat');
+            alert('Bambi disconnected!\nrefresh bambisleep.chat');
         });
 
         socket.on("update", (message) => {

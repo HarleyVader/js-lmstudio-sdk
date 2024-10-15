@@ -15,6 +15,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+app.use(cors({
+  origin: 'https://bambisleep.chat',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+  credentials: true
+}));
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
