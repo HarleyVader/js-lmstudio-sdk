@@ -70,14 +70,6 @@
         const activateAll = document.getElementById('activate-all');
 
         const socket = io();
-        socket.on('connect', () => {
-            console.log('Connected successfully');
-        });
-
-        socket.on('connect_error', (err) => {
-            console.error('Connection Error:', err, 'Message:', err.message);
-        });
-
         socket.on('disconnect', () => {
             console.log('Disconnected');
             alert('Bambi disconnected! \n refresh bambisleep.chat');
