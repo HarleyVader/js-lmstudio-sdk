@@ -75,6 +75,10 @@
             alert('Bambi disconnected!\nrefresh bambisleep.chat');
         });
 
+        socket.on('connect', () => {
+            console.log('Connected');
+        });
+
         socket.on("update", (message) => {
             unhideUpdateElement();
         });
