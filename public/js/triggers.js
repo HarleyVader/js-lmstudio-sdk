@@ -27,6 +27,7 @@ const listOfTriggers = [
   "BAMBI THROAT LOCK",
   "BAMBI POSTURE LOCK",
 ];
+let currentMessage = '';
 
 function createToggleButtons() {
   const container = document.getElementById("trigger-toggles");
