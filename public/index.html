@@ -120,7 +120,7 @@
             }
         });
 
-        function flashTriggers(trigger, duration) {
+        function flashTrigger(trigger, duration) {
             const container = document.getElementById("eye");
             container.innerHTML = "";
             const span = document.createElement("span");
@@ -148,7 +148,7 @@
                 for (let i = 0; i < _textArray.length; i++) {
                     arrayPush(_audioArray, _textArray[i]);
 
-                    flashTriggers(_textArray[i], duration);
+                    flashTrigger(_textArray[i], duration);
                     const messageElement = document.createElement('p');
                     messageElement.textContent = _textArray[i];
 
