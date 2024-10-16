@@ -126,13 +126,13 @@
             const duration = audio.duration * 1000; // Convert to milliseconds
             await new Promise(resolve => setTimeout(resolve, duration));
 
-            setTimeout(() => {
+            await setTimeout(() => {
                 console.log('Audio has finished playing');
                 for (let i = 0; i < _textArray.length; i++) {
+                    arrayPush(_audioArray, _textArray[i]);
                     const messageElement = document.createElement('p');
                     messageElement.textContent = _textArray.shift();
-
-                    arrayPush(_audioArray, _textArray[i]);
+                    console.log('Text reply: ', messageElement.textContent);
                     sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
 
                     if (response.firstChild) {
@@ -140,6 +140,7 @@
                     } else {
                         response.appendChild(messageElement);
                     }
+                    
                 }
             }, duration);
         });
