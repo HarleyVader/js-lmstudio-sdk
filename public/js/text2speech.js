@@ -5,7 +5,7 @@ let duration = 0;
 function arrayPush(_audioArray, e) {
   document.querySelector("#audio").hidden = true;
 
-  let URL = `/api/tts?text=${encodeURIComponent(e)}`;
+  let URL = `https://bambisleep.chat/api/tts?text=${encodeURIComponent(e)}`;
   _audioArray.push(URL);
 
   console.log("audioArray ", _audioArray);
