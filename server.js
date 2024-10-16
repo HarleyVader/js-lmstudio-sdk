@@ -210,7 +210,7 @@ app.use("/api/tts", (req, res) => {
   } else {
     const text = req.query.text;
     axios
-      .get(`http://172.19.156.141:5002/api/tts`, {
+      .get(`http://192.168.0.178:5002/api/tts`, {
         params: { text },
         responseType: 'arraybuffer'
       })
