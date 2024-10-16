@@ -54,7 +54,7 @@
     <script src="js/psychodelic-trigger-mania.js"></script>
     <script src="js/text2speech.js"></script>
     <script src="js/responsive.js"></script>
-    <script src="js/triggers.js"></script>
+    <!-- <script src="js/triggers.js"></script> -->
     <script src="js/webhook.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -120,6 +120,25 @@
             }
         });
 
+        function flashTriggers(trigger, duration) {
+            const container = document.getElementById("eye");
+            container.innerHTML = "";
+            const span = document.createElement("span");
+            span.textContent = trigger;
+            span.style.display = "flex";
+            span.style.justifyContent = "center";
+            span.style.alignItems = "center";
+            span.style.fontSize = "48px";
+            span.style.fontWeight = "bold";
+            span.style.color = "pink";
+            span.style.marginRight = "0";
+            container.appendChild(span);
+
+            setTimeout(() => {
+                container.innerHTML = "";
+            }, duration);
+        }
+
         audio.addEventListener('loadedmetadata', async () => {
             const duration = audio.duration * 1000; // Convert to milliseconds
             await new Promise(resolve => setTimeout(resolve, duration));
@@ -131,7 +150,7 @@
 
                     flashTriggers(_textArray[i], duration);
                     const messageElement = document.createElement('p');
-                    messageElement.textContent = _textArray.shift();
+                    messageElement.textContent = _textArray[i];
 
                     console.log('Text reply: ', messageElement.textContent);
                     sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
@@ -141,7 +160,7 @@
                     } else {
                         response.appendChild(messageElement);
                     }
-
+                    _textArray.shift()
                 }
             }, duration);
         });
