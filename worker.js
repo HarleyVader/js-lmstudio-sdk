@@ -10,6 +10,8 @@ let collarText;
 async function checkTriggers(triggers) {
   if (!triggers) {
     return triggers;
+  } else {
+    return triggers;
   }
 }
 

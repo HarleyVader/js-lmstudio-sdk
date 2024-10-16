@@ -156,7 +156,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  app.on("triggers", (triggers) => {
+  socket.on("triggers", (triggers) => {
     console.log(`Triggers from ${socket.id}: ${triggers}`);
     worker.postMessage({ type: "triggers", triggers });
   });
