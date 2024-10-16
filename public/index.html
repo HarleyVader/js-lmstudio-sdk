@@ -24,7 +24,6 @@
                 <button id="submit" type="submit">Submit</button>
                 <br>
                 <div id="user-prompt"></div>
-                <br>
             </div>
             <div>
                 <div id="audiomessage">
@@ -65,9 +64,7 @@
         const submit = document.getElementById('submit');
         const response = document.getElementById('response');
         const userPrompt = document.getElementById('user-prompt');
-        const updateElement = document.getElementById('update-element');
-        const triggerToggles = document.getElementById('trigger-toggles');
-        const activateAll = document.getElementById('activate-all');
+        
 
         const socket = io('wss://bambisleep.chat');
         socket.on('disconnect', () => {
