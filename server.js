@@ -209,8 +209,9 @@ app.use("/api/tts", (req, res) => {
     return res.status(400).send("Invalid input: text must be a string");
   } else {
     const text = req.query.text;
+    const serverAddress = getServerAddress();
     axios
-      .get(`http://192.168.0.178:5002/api/tts`, {
+      .get(`http://${serverAddress}:5002/api/tts`, {
         params: { text },
         responseType: 'arraybuffer'
       })
@@ -238,12 +239,12 @@ function getServerAddress() {
   return '127.0.0.1';
 }
 
-wss.listen(WSS_PORT, '0.0.0.0', () => {
+wss.listen(WSS_PORT, () => {
   console.log(`Server is running on https://${getServerAddress()}:${WSS_PORT}`);
 });
 
 // Start the server
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
   console.log(`Server is running on http://${getServerAddress()}:${PORT}`);
 });
 
