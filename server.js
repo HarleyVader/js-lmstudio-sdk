@@ -105,35 +105,35 @@ io.on("connection", (socket) => {
   app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
   });
-  /*
-    app.get('/history', (req, res) => {
-      fs.readFile(path.join(__dirname, 'public', 'chatHistory.json'), (err, data) => {
+
+  app.get('/history', (req, res) => {
+    fs.readFile(path.join(__dirname, 'public', 'chatHistory.json'), (err, data) => {
+      if (err) throw err;
+      const chatHistory = JSON.parse(data);
+      res.render('history', { chatHistory });
+    });
+  });
+
+  app.post('/vote/:index/:type', (req, res) => {
+    fs.readFile(path.join(__dirname, 'public', 'chatHistory.json'), (err, data) => {
+      if (err) throw err;
+      const chatHistory = JSON.parse(data);
+      const index = req.params.index;
+      const type = req.params.type;
+
+      if (type === 'up') {
+        chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
+      } else if (type === 'down') {
+        chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+      }
+
+      fs.writeFile(path.join(__dirname, 'public', 'chatHistrory.json'), JSON.stringify(chatHistory), (err) => {
         if (err) throw err;
-        const chatHistory = JSON.parse(data);
-        res.render('history', { chatHistory });
+        res.json({ votes: chatHistory[index].votes });
       });
     });
-  
-    app.post('/vote/:index/:type', (req, res) => {
-      fs.readFile(path.join(__dirname, 'public', 'chatHistory.json'), (err, data) => {
-        if (err) throw err;
-        const chatHistory = JSON.parse(data);
-        const index = req.params.index;
-        const type = req.params.type;
-  
-        if (type === 'up') {
-          chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
-        } else if (type === 'down') {
-          chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
-        }
-  
-        fs.writeFile(path.join(__dirname, 'public', 'chatHistrory.json'), JSON.stringify(chatHistory), (err) => {
-          if (err) throw err;
-          res.json({ votes: chatHistory[index].votes });
-        });
-      });
-    });
-  */
+  });
+
   app.get("/help", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "help.html"));
   });
@@ -206,26 +206,26 @@ rl.on("line", async (line) => {
 
 app.use("/api/tts", (req, res) => {
   const text = req.query.text;
-  const speaker_idx = 'jenny/jenny';
+  // const speaker_idx = 'jenny/jenny';
 
   if (typeof text !== "string") {
-      return res.status(400).send("Invalid input: text must be a string");
+    return res.status(400).send("Invalid input: text must be a string");
   } else {
-      axios
-          .get(`http://192.168.0.178:5002/api/tts`, {
-              params: { text, speaker_idx },
-              responseType: 'arraybuffer'
-          })
-          .then((response) => {
-              res.setHeader("Content-Type", "audio/wav");
-              res.setHeader("Content-Length", response.data.length);
-              res.send(response.data);
-          })
-          .catch((error) => {
-              console.error("Error fetching TTS audio:", error);
-              console.error("Error details:", error.response ? error.response.data : error.message);
-              res.status(500).send("Error fetching TTS audio");
-          });
+    axios
+      .get(`http://192.168.0.178:5002/api/tts`, {
+        params: { text, /* speaker_idx */ },
+        responseType: 'arraybuffer'
+      })
+      .then((response) => {
+        res.setHeader("Content-Type", "audio/wav");
+        res.setHeader("Content-Length", response.data.length);
+        res.send(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching TTS audio:", error);
+        console.error("Error details:", error.response ? error.response.data : error.message);
+        res.status(500).send("Error fetching TTS audio");
+      });
   }
 });
 

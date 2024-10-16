@@ -110,27 +110,37 @@
 
         socket.on('response', async (message) => {
             currentMessage += message;
-            const triggerFound = listOfTriggers.some(trigger => currentMessage.includes(trigger));
-            console.log('Trigger found:', triggerFound); // Log if a trigger is found
 
             if ((currentMessage.match(/[,.!?]/) && !currentMessage.match(/\d+\./)) || (triggerFound === true && currentMessage.match(/[,.!?]/))) {
                 _textArray.push(currentMessage);
-                console.log('Text array:', _textArray); // Log the text array
-                arrayPush(_audioArray, currentMessage);
-                const messageElement = document.createElement('p');
-                messageElement.textContent = _textArray.shift();
-                sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
-                if (response.firstChild) {
-                    response.insertBefore(messageElement, response.firstChild);
-                } else {
-                    response.appendChild(messageElement);
-                }
+                console.log('Text array:', _textArray);
                 currentMessage = '';
-                if (state) {
-                    do_tts(_audioArray);
+            }
+
+            if (_textArray >= 0) {
+                for (let i = 0; i < _textArray.length; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    const messageElement = document.createElement('p');
+                    messageElement.textContent = _textArray[i];
+                    const triggerFound = listOfTriggers.some(trigger => messageElement.textContent.includes(trigger));
+                    console.log('Trigger found:', triggerFound);
+                    arrayPush(_audioArray, _textArray[i]);
+                    sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
+                    if (response.firstChild) {
+                        response.insertBefore(messageElement, response.firstChild);
+                    } else {
+                        response.appendChild(messageElement);
+                    }
                 }
             }
+
+            if (state) {
+                do_tts(_audioArray);
+            }
         });
+
+
+
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
