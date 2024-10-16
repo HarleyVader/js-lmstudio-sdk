@@ -82,27 +82,32 @@
             unhideUpdateElement();
         });
 
+        let debounceTimeout;
         submit.addEventListener('click', () => {
-            const message = textarea.value.trim(); // Trim the input value
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                handleClick();
+            }, 200);
+        });
 
+        function handleClick() {
+            const message = textarea.value.trim();
             if (message === '') {
                 alert('Message cannot be empty');
                 return;
             }
-
             userPrompt.textContent = message;
             sendTriggers();
-
             try {
                 socket.emit('message', message);
                 sendMessageToDiscord(`${socket.id} user: ${message}`);
             } catch (error) {
                 console.error('Error sending message:', error);
             }
-
             textarea.value = '';
             textarea.style.height = 'inherit';
-        });
+        }
+
 
 
         socket.on('response', async (message) => {
