@@ -64,7 +64,7 @@
         const submit = document.getElementById('submit');
         const response = document.getElementById('response');
         const userPrompt = document.getElementById('user-prompt');
-        
+
 
         const socket = io('wss://bambisleep.chat');
         socket.on('disconnect', () => {
@@ -83,18 +83,27 @@
         });
 
         submit.addEventListener('click', () => {
-            const message = textarea.value;
-            if (message.trim() === '') {
+            const message = textarea.value.trim(); // Trim the input value
+
+            if (message === '') {
                 alert('Message cannot be empty');
                 return;
             }
+
             userPrompt.textContent = message;
             sendTriggers();
-            socket.emit('message', message);
-            sendMessageToDiscord(socket.id + " user: " + message);
+
+            try {
+                socket.emit('message', message);
+                sendMessageToDiscord(`${socket.id} user: ${message}`);
+            } catch (error) {
+                console.error('Error sending message:', error);
+            }
+
             textarea.value = '';
             textarea.style.height = 'inherit';
         });
+
 
         socket.on('response', async (message) => {
             currentMessage += message;
