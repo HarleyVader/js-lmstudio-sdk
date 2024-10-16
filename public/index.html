@@ -111,11 +111,13 @@
 
             if ((currentMessage.match(/[,.!?]/) && !currentMessage.match(/\d+\./)) || (triggerFound === true && currentMessage.match(/[,.!?]/))) {
                 _textArray.push(currentMessage);
+                
                 console.log('Text array:', _textArray);
                 currentMessage = '';
             }
 
             if (state) {
+                arrayPush(_audioArray, _textArray[0]);
                 do_tts(_audioArray);
             }
         });
