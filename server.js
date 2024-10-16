@@ -206,7 +206,7 @@ rl.on("line", async (line) => {
 
 app.use("/api/tts", (req, res) => {
   const text = req.query.text;
-  const speaker_idx = 'jenny';
+  const speaker_idx = 'jenny/jenny';
 
   if (typeof text !== "string") {
       return res.status(400).send("Invalid input: text must be a string");
