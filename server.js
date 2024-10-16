@@ -210,7 +210,7 @@ app.use("/api/tts", (req, res) => {
   } else {
     const text = req.query.text;
     axios
-      .get(`http://[::1]:5002/api/tts?text=${text}`, { responseType: 'arraybuffer' })
+      .get(`http://127.0.0.1:5002/api/tts?text=${encodeURIComponent(text)}`, { responseType: 'arraybuffer' })
       .then((response) => {
         res.setHeader("Content-Type", "audio/wav");
         res.setHeader("Content-Length", response.data.length);
