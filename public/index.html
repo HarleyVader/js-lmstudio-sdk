@@ -123,16 +123,15 @@
 
         audio.addEventListener('loadedmetadata', async () => {
             const duration = audio.duration * 1000; // Convert to milliseconds
-            //await new Promise(resolve => setTimeout(resolve, duration));
+            await new Promise(resolve => setTimeout(resolve, duration));
 
             await setTimeout(() => {
                 console.log('Audio has finished playing');
                 for (let i = 0; i < _textArray.length; i++) {
                     arrayPush(_audioArray, _textArray[i]);
                     const messageElement = document.createElement('p');
-                    flashTriggers(_textArray[i]);                
+                    flashTriggers(_textArray[i], duration);                
                     
-
                     messageElement.textContent = _textArray.shift();
                     
                     console.log('Text reply: ', messageElement.textContent);

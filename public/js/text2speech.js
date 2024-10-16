@@ -45,7 +45,6 @@ async function do_tts(_audioArray) {
   audio.onerror = function (e) {
     console.error("Error playing audio:", e);
     document.querySelector("#message").textContent = "Error playing audio.";
-    state = true;
   };
 };
 
