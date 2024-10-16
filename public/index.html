@@ -66,16 +66,14 @@
         const userPrompt = document.getElementById('user-prompt');
 
 
-        const socket = io('wss://bambisleep.chat');
+        const socket = io();
         socket.on('disconnect', () => {
             console.log('Disconnected');
             alert('Bambi disconnected!\nrefresh bambisleep.chat');
         });
 
         socket.on('connect', () => {
-            console.log('Connected');
-            console.log('Connected to BambiSleep chat server');
-            console.log('Socket ID:', socket.id);
+            console.log('Connected to BambiSleep chat server! Socket ID:', socket.id);
         });
 
         socket.on("update", (message) => {
