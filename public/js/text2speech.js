@@ -3,14 +3,13 @@ let _audioArray = [];
 let duration = 0;
 
 function arrayPush(_audioArray, e) {
-  //console.log("URL ", URL);
   document.querySelector("#audio").hidden = true;
 
-  let URL = `https://bambisleep.chat/api/tts?text=${encodeURIComponent(e)}` //+ "&speaker_id=" + encodeURIComponent(speaker_id) + "&style_wav=" + encodeURIComponent(style_wav) + "&language_id=" + encodeURIComponent(language_id);
+  let URL = `https://bambisleep.chat/api/tts?text=${encodeURIComponent(e)}`;
   _audioArray.push(URL);
 
   console.log("audioArray ", _audioArray);
-  console.log("lenght ", _audioArray.length);
+  console.log("length ", _audioArray.length);
   return _audioArray;
 }
 
@@ -42,6 +41,11 @@ async function do_tts(_audioArray) {
     console.log("audio ended");
     document.querySelector("#message").textContent = "Finished!";
     play();
+  };
+  audio.onerror = function (e) {
+    console.error("Error playing audio:", e);
+    document.querySelector("#message").textContent = "Error playing audio.";
+    state = true;
   };
 };
 

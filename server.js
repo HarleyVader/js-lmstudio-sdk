@@ -206,11 +206,14 @@ rl.on("line", async (line) => {
 
 app.use("/api/tts", (req, res) => {
   if (typeof req.query.text !== "string") {
-    return res.status(469).send("Invalid input: text must be an encodeURIComponent");
+    return res.status(400).send("Invalid input: text must be a string");
   } else {
     const text = req.query.text;
     axios
-      .get(`http://127.0.0.1:5002/api/tts?text=${encodeURIComponent(text)}`, { responseType: 'arraybuffer' })
+      .get(`http://127.0.0.1:5002/api/tts`, {
+        params: { text },
+        responseType: 'arraybuffer'
+      })
       .then((response) => {
         res.setHeader("Content-Type", "audio/wav");
         res.setHeader("Content-Length", response.data.length);
