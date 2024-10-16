@@ -112,13 +112,12 @@
             if ((currentMessage.match(/[,.!?]/) && !currentMessage.match(/\d+\./)) || (triggerFound === true && currentMessage.match(/[,.!?]/))) {
                 _textArray.push(currentMessage);
                 console.log('Text array:', _textArray);
+                if (state) {
+                    arrayPush(_audioArray, currentMessage);
+                    do_tts(_audioArray);
+                }
+                currentMessage = '';
             }
-
-            if (state) {
-                arrayPush(_audioArray, currentMessage);
-                do_tts(_audioArray);
-            }
-            currentMessage = '';
         });
 
         audio.addEventListener('loadedmetadata', async () => {
@@ -129,11 +128,11 @@
                 console.log('Audio has finished playing');
                 for (let i = 0; i < _textArray.length; i++) {
                     arrayPush(_audioArray, _textArray[i]);
+
+                    flashTriggers(_textArray[i], duration);
                     const messageElement = document.createElement('p');
-                    flashTriggers(_textArray[i], duration);                
-                    
                     messageElement.textContent = _textArray.shift();
-                    
+
                     console.log('Text reply: ', messageElement.textContent);
                     sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
 
@@ -142,7 +141,7 @@
                     } else {
                         response.appendChild(messageElement);
                     }
-                    
+
                 }
             }, duration);
         });
