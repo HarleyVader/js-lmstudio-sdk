@@ -205,27 +205,30 @@ rl.on("line", async (line) => {
 });
 
 app.use("/api/tts", (req, res) => {
-  if (typeof req.query.text !== "string") {
-    return res.status(400).send("Invalid input: text must be a string");
+  const text = req.query.text;
+  const speaker_idx = 'jenny';
+
+  if (typeof text !== "string") {
+      return res.status(400).send("Invalid input: text must be a string");
   } else {
-    const text = req.query.text;
-    axios
-      .get(`http://192.168.0.178:5002/api/tts`, {
-        params: { text },
-        responseType: 'arraybuffer'
-      })
-      .then((response) => {
-        res.setHeader("Content-Type", "audio/wav");
-        res.setHeader("Content-Length", response.data.length);
-        res.send(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching TTS audio:", error);
-        console.error("Error details:", error.response ? error.response.data : error.message);
-        res.status(500).send("Error fetching TTS audio");
-      });
+      axios
+          .get(`http://192.168.0.178:5002/api/tts`, {
+              params: { text, speaker_idx },
+              responseType: 'arraybuffer'
+          })
+          .then((response) => {
+              res.setHeader("Content-Type", "audio/wav");
+              res.setHeader("Content-Length", response.data.length);
+              res.send(response.data);
+          })
+          .catch((error) => {
+              console.error("Error fetching TTS audio:", error);
+              console.error("Error details:", error.response ? error.response.data : error.message);
+              res.status(500).send("Error fetching TTS audio");
+          });
   }
 });
+
 
 function getServerAddress() {
   const interfaces = os.networkInterfaces();
