@@ -209,9 +209,8 @@ app.use("/api/tts", (req, res) => {
     return res.status(400).send("Invalid input: text must be a string");
   } else {
     const text = req.query.text;
-    const serverAddress = getServerAddress();
     axios
-      .get(`http://${serverAddress}:5002/api/tts`, {
+      .get(`http://172.19.156.141:5002/api/tts`, {
         params: { text },
         responseType: 'arraybuffer'
       })
