@@ -210,7 +210,7 @@ app.use("/api/tts", (req, res) => {
   } else {
     const text = req.query.text;
     axios
-      .get(`http://127.0.0.1:5002/api/tts`, {
+      .get(`http://192.168.0.178:5002/api/tts`, {
         params: { text },
         responseType: 'arraybuffer'
       })
@@ -238,12 +238,12 @@ function getServerAddress() {
   return '127.0.0.1';
 }
 
-wss.listen(WSS_PORT, () => {
+wss.listen(WSS_PORT, '0.0.0.0', () => {
   console.log(`Server is running on https://${getServerAddress()}:${WSS_PORT}`);
 });
 
 // Start the server
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://${getServerAddress()}:${PORT}`);
 });
 
