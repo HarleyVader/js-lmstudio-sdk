@@ -139,32 +139,24 @@
             }, duration);
         }
 
-        audio.addEventListener('onplay', async () => {
-            flashTrigger(currentText, audio.duration)
-        })
-
         audio.addEventListener('loadedmetadata', async () => {
             const duration = audio.duration * 1000; // Convert to milliseconds
             await new Promise(resolve => setTimeout(resolve, duration));
-            
-            await setTimeout(() => {
-                console.log('Audio has finished playing');
-                while (_textArray.length > 0) {
-                    const currentText = _textArray.shift();
-                    arrayPush(_audioArray, currentText);
 
-                    const messageElement = document.createElement('p');
-                    messageElement.textContent = currentText;
-                    console.log('Text reply: ', messageElement.textContent);
-                    sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
+            const currentText = _textArray.shift();
+            arrayPush(_audioArray, currentText);
+            flashTrigger(currentText, duration)
+            const messageElement = document.createElement('p');
+            messageElement.textContent = currentText;
+            console.log('Text reply: ', messageElement.textContent);
+            sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
 
-                    if (response.firstChild) {
-                        response.insertBefore(messageElement, response.firstChild);
-                    } else {
-                        response.appendChild(messageElement);
-                    }
-                }
-            }, duration);
+            if (response.firstChild) {
+                response.insertBefore(messageElement, response.firstChild);
+            } else {
+                response.appendChild(messageElement);
+            }
+
         });
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
