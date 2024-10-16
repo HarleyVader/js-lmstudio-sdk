@@ -161,13 +161,9 @@ io.on("connection", (socket) => {
     worker.postMessage({ type: "triggers", triggers });
   });
 
-  app.on("disconnect", async () => {
+  socket.on("disconnect", async () => {
     worker.postMessage({ type: "disconnect", socketId: socket.id });
-    terminator();
-  });
-
-  app.on("error", (error) => {
-    console.error(`Error from ${socket.id}: ${error}`);
+    terminator(socket.id);
   });
 
   worker.on("message", (msg) => {
@@ -184,15 +180,15 @@ io.on("connection", (socket) => {
     }
   });
 
-  function terminator() {
-    userSessions.delete(socket.id);
-    const worker = workers.get(socket.id);
+  function terminator(socketId) {
+    userSessions.delete(socketId);
+    const worker = workers.get(socketId);
     if (worker) {
-      worker.terminate(socket.id);
+      worker.terminate();
     }
-    workers.delete(socket.id);
-    socketStore.delete(socket.id);
-    console.log(`Client disconnected: ${socket.id} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`);
+    workers.delete(socketId);
+    socketStore.delete(socketId);
+    console.log(`Client disconnected: ${socketId} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`);
   }
 });
 
