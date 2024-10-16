@@ -106,7 +106,7 @@
         socket.on('response', async (message) => {
             currentMessage += message;
 
-            const triggerFound = listOfTriggers.some(trigger => messageElement.textContent.includes(trigger));
+            const triggerFound = listOfTriggers.some(trigger => currentMessage.includes(trigger));
             console.log('Trigger found:', triggerFound);
 
             if ((currentMessage.match(/[,.!?]/) && !currentMessage.match(/\d+\./)) || (triggerFound === true && currentMessage.match(/[,.!?]/))) {
