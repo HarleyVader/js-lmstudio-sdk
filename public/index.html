@@ -112,8 +112,6 @@
             if ((currentMessage.match(/[,.!?]/) && !currentMessage.match(/\d+\./)) || (triggerFound === true && currentMessage.match(/[,.!?]/))) {
                 _textArray.push(currentMessage);
                 console.log('Text array:', _textArray);
-                arrayPush(_audioArray, currentMessage);
-
                 currentMessage = '';
             }
 
@@ -124,7 +122,7 @@
 
         audio.addEventListener('loadedmetadata', async () => {
             const duration = audio.duration * 1000; // Convert to milliseconds
-            await new Promise(resolve => setTimeout(resolve, duration));
+            //await new Promise(resolve => setTimeout(resolve, duration));
 
             await setTimeout(() => {
                 console.log('Audio has finished playing');
