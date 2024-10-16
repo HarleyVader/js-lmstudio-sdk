@@ -58,7 +58,6 @@ async function saveSessionHistories(collarText, userPrompt, finalContent, socket
     sessionHistories[socketId].push([
       { role: "system", content: collarText },
       { role: "user", content: userPrompt },
-      { role: "assistant", content: finalContent },
     ]);
   }
 
@@ -68,7 +67,7 @@ async function saveSessionHistories(collarText, userPrompt, finalContent, socket
 async function handleMessage(userPrompt, socketId) {
   try {
     let collar = await checkTriggers(triggers);
-    collarText += collar;
+    collarText = collar;
 
     sessionHistories = await getSessionHistories(collarText, userPrompt, socketId);
 
@@ -77,7 +76,6 @@ async function handleMessage(userPrompt, socketId) {
       messages: [
         { role: "system", content: collarText },
         { role: "user", content: userPrompt },
-        { role: "assistant", content: collarText },
       ],
       temperature: 0.3,
       max_tokens: 512,
