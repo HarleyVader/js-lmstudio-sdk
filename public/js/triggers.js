@@ -112,6 +112,10 @@ function getEnabledToggleButtons() {
 }
 
 function flashTriggers(trigger, duration) {
+  if (!duration) {
+    duration = 450;
+  }
+
   const container = document.getElementById("eye");
   container.innerHTML = "";
   const span = document.createElement("span");
