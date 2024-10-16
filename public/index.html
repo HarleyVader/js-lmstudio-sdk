@@ -140,22 +140,21 @@
         }
 
         audio.addEventListener('onplay', async () => {
-            
+            flashTrigger(currentText, audio.duration)
         })
 
         audio.addEventListener('loadedmetadata', async () => {
             const duration = audio.duration * 1000; // Convert to milliseconds
             await new Promise(resolve => setTimeout(resolve, duration));
-
             
             await setTimeout(() => {
                 console.log('Audio has finished playing');
-                for (let i = 0; i < _textArray.length; i++) {
-                    arrayPush(_audioArray, _textArray[i]);
+                while (_textArray.length > 0) {
+                    const currentText = _textArray.shift();
+                    arrayPush(_audioArray, currentText);
 
                     const messageElement = document.createElement('p');
-                    messageElement.textContent = _textArray[i];
-                    flashTrigger(messageElement.textContent, duration);
+                    messageElement.textContent = currentText;
                     console.log('Text reply: ', messageElement.textContent);
                     sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
 
@@ -164,7 +163,6 @@
                     } else {
                         response.appendChild(messageElement);
                     }
-                    _textArray.shift()
                 }
             }, duration);
         });
