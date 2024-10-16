@@ -96,17 +96,12 @@
             }
             userPrompt.textContent = message;
             sendTriggers();
-            try {
-                socket.emit('message', message);
-                sendMessageToDiscord(`${socket.id} user: ${message}`);
-            } catch (error) {
-                console.error('Error sending message:', error);
-            }
+            socket.emit('message', message);
+            sendMessageToDiscord(`${socket.id} user: ${message}`);
+            
             textarea.value = '';
             textarea.style.height = 'inherit';
         }
-
-
 
         socket.on('response', async (message) => {
             currentMessage += message;
@@ -114,12 +109,26 @@
             if ((currentMessage.match(/[,.!?]/) && !currentMessage.match(/\d+\./)) || (triggerFound === true && currentMessage.match(/[,.!?]/))) {
                 _textArray.push(currentMessage);
                 console.log('Text array:', _textArray);
+                arrayPush(_audioArray, currentMessage);
+
                 currentMessage = '';
             }
 
-            if (_textArray >= 0) {
+            if (state) {
+                do_tts(_audioArray);
+            }
+        });
+
+        
+        
+
+        audio.addEventListener('loadedmetadata', async () => {
+            const duration = audio.duration * 1000; // Convert to milliseconds
+            await new Promise(resolve => setTimeout(resolve, duration));
+
+            setTimeout(() => {
+                console.log('Audio has finished playing');
                 for (let i = 0; i < _textArray.length; i++) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
                     const messageElement = document.createElement('p');
                     messageElement.textContent = _textArray[i];
                     const triggerFound = listOfTriggers.some(trigger => messageElement.textContent.includes(trigger));
@@ -132,13 +141,8 @@
                         response.appendChild(messageElement);
                     }
                 }
-            }
-
-            if (state) {
-                do_tts(_audioArray);
-            }
+            }, duration);
         });
-
 
 
     </script>

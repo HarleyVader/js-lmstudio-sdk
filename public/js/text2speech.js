@@ -1,6 +1,7 @@
 let state = true;
 let _audioArray = [];
 let duration = 0;
+const audio = document.getElementById('audio');
 
 function arrayPush(_audioArray, e) {
   document.querySelector("#audio").hidden = true;
@@ -24,7 +25,7 @@ function arrayShift(_audioArray) {
 async function do_tts(_audioArray) {
   state = false;
   document.querySelector("#message").textContent = "Synthesizing...";
-  let audio = document.querySelector("audio");
+
   let currentURL = arrayShift(_audioArray);
   audio.src = currentURL;
   console.log("audio.src ", audio.src);
