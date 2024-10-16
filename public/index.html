@@ -116,8 +116,8 @@
                     arrayPush(_audioArray, currentMessage);
                     do_tts(_audioArray);
                 }
-                currentMessage = '';
             }
+            currentMessage = '';
         });
 
         audio.addEventListener('loadedmetadata', async () => {
