@@ -146,11 +146,10 @@ io.on("connection", (socket) => {
 
       let chatHistory;
       try {
-        chatHistory = JSON.parse(data);
+        chatHistory = data ? JSON.parse(data) : [];
       } catch (parseErr) {
         console.error('Error parsing chat history JSON:', parseErr);
-        res.status(500).send('Error parsing chat history JSON');
-        return;
+        chatHistory = [];
       }
 
       res.render('history', { chatHistory });
