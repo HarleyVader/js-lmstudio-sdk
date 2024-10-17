@@ -113,7 +113,7 @@ async function handleMessage(userPrompt, socketId) {
 
     response.data.on('end', () => {
       parentPort.postMessage({ 'response': finalContent });
-      sessionHistories = saveSessionHistories(collarText, userPrompt, finalContent, socketId);
+     session = saveSessionHistories(collarText, userPrompt, finalContent, socketId);
       
     });
 
@@ -130,7 +130,7 @@ parentPort.on("message", async (msg) => {
     //parentPort.postMessage({ 'log': `Message to worker: ${msg.data}` });
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "disconnect") {
-    sendSessionHistories(sessionHistories, msg.socketId);
+    await sendSessionHistories(session, msg.socketId);
     //parentPort.postMessage({ 'log': `Session Histories: ${JSON.stringify(sessionHistories)}` });
   }
   
@@ -144,15 +144,16 @@ async function handleResponse(response, socketId) {
   });
 }
 
-async function sendSessionHistories(sessionHistories, socketId) {
-  sessionHistories[socketId] = sessionHistories;
-  if (sessionHistories[socketId] !== 0) {
+async function sendSessionHistories(session, socketId) {
+  sessionHistories[socketId] = session;
+  if (sessionHistories[socketId].lenght !== 0) {
     parentPort.postMessage({
       type: "messageHistory",
       data: sessionHistories[socketId],
       socketId: socketId,
     });
-  } else {
     parentPort.postMessage("log", sessionHistories, socketId);
+  } else {
+    parentPort.postMessage("log", "No session history to send", socketId);
   }
 }
