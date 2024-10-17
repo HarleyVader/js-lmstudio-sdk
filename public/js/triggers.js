@@ -111,11 +111,7 @@ function getEnabledToggleButtons() {
   return enabledToggleButtons;
 }
 
-function flashTriggers(trigger, duration) {
-  if (!duration) {
-    duration = 450;
-  }
-
+function flashTriggers(trigger) {
   const container = document.getElementById("eye");
   container.innerHTML = "";
   const span = document.createElement("span");
@@ -128,10 +124,7 @@ function flashTriggers(trigger, duration) {
   span.style.color = "pink";
   span.style.marginRight = "0";
   container.appendChild(span);
-
-  setTimeout(() => {
-    container.innerHTML = "";
-  }, duration);
+  
 }
 
 function toggleTriggers() {
