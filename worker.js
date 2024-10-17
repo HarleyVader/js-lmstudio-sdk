@@ -140,14 +140,15 @@ async function handleResponse(response, socketId) {
   });
 }
 
-async function sendSessionHistories(session, socketId) {
+async function sendSessionHistories(socketId) {
+  const session = sessionHistories[socketId];
   if (session && Array.isArray(session) && session.length !== 0) {
     parentPort.postMessage({
       type: "messageHistory",
       data: session,
       socketId: socketId,
     });
-    parentPort.postMessage({ type: "log", data: "Session: " + session, socketId: socketId });
+    parentPort.postMessage({ type: "log", data: "Session: " + JSON.stringify(session), socketId: socketId });
   } else {
     parentPort.postMessage({ type: "log", data: "No session history to send", socketId: socketId });
   }
