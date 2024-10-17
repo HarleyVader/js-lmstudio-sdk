@@ -213,7 +213,7 @@ io.on("connection", (socket) => {
     if (msg.type === "log") {
       console.log(chalk.cyan(msg.data, msg.socketId));
     } else if (msg.type === "messageHistory") {
-      await saveSessionHistories(msg.data, msg.socketId);
+      saveSessionHistories(msg.data, msg.socketId);
       terminator(msg.socketId);
     } else if (msg.type === 'response') {
       const responseData = typeof msg.data === 'object' ? JSON.stringify(msg.data) : msg.data;

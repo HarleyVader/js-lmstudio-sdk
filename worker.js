@@ -113,7 +113,8 @@ async function handleMessage(userPrompt, socketId) {
 
     response.data.on('end', () => {
       parentPort.postMessage({ 'response': finalContent });
-      saveSessionHistories(collarText, userPrompt, finalContent, socketId);
+      sessionHistories = saveSessionHistories(collarText, userPrompt, finalContent, socketId);
+      
     });
 
   } catch (error) {
@@ -127,10 +128,10 @@ parentPort.on("message", async (msg) => {
   if (msg.type === "triggers") {
     triggers = msg.triggers;
   } else if (msg.type === "message") {
-    parentPort.postMessage({ 'log': `Message to worker: ${msg.data}` });
+    //parentPort.postMessage({ 'log': `Message to worker: ${msg.data}` });
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "disconnect") {
-    await handleDisconnect(sessionHistories, msg.socketId);
+    sendSessionHistories(sessionHistories, msg.socketId);
     parentPort.postMessage({ 'log': `Session Histories: ${JSON.stringify(sessionHistories)}` });
   }
   
@@ -144,9 +145,9 @@ async function handleResponse(response, socketId) {
   });
 }
 
-async function handleDisconnect(sessionHistories, socketId) {
-  
-  if (sessionHistories[socketId]) {
+async function sendSessionHistories(sessionHistories, socketId) {
+  sessionHistories[socketId] = sessionHistories;
+  if (sessionHistories[socketId] !== 0) {
     parentPort.postMessage({
       type: "messageHistory",
       data: sessionHistories[socketId],
