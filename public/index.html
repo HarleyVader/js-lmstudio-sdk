@@ -116,6 +116,7 @@
                 if (state) {
                     arrayPush(_audioArray, currentMessage);
                     do_tts(_audioArray);
+                    flashTrigger(currentMessage, duration);
                     _textArray.shift();
                 }
                 currentMessage = '';
@@ -152,7 +153,7 @@
             if (_textArray.length > 0) {
                 text = _textArray.shift();
             }
-            const duration = audio.duration * 1000;
+            const duration = audio.duration * 1100;
             new Promise(resolve => setTimeout(resolve, duration));
             arrayPush(_audioArray, text);
             flashTrigger(text, duration);
