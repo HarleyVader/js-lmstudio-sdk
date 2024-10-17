@@ -111,7 +111,7 @@
 
             if ((currentMessage.match(/[,.!?]/) && !currentMessage.match(/\d+\./)) || (triggerFound === true && currentMessage.match(/[,.!?]/))) {
                 _textArray.push(currentMessage);
-                arrayPush(_audioArray, currentText);
+                
                 console.log('Text array:', _textArray);
                 if (state) {
                     do_tts(_audioArray);
@@ -144,6 +144,7 @@
 
         audio.addEventListener('play', () => {
             const currentText = _textArray[0]; // Assuming the first element is the current text
+            arrayPush(_audioArray, currentText);
             const duration = audio.duration * 1000; // Convert to milliseconds
             flashTrigger(currentText, duration);
         });
