@@ -81,8 +81,7 @@
                     })
                     .catch(error => console.error('Error fetching role.json:', error));
             }
-
-            window.onload(fetchRole());
+            window.onload = fetchRole;
         </script>
         <section id="commitment">
             <h2>My Commitment</h2>
