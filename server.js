@@ -188,9 +188,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("message", (message) => {
-    console.log(chalk.yellow(`Message from ${socket.id}: ${message}`));
+    //console.log(chalk.yellow(`Message from ${socket.id}: ${message}`));
     const filteredMessage = filter(message);
-    console.log(chalk.yellow(`Filtered message: ${filteredMessage}`));
+    //console.log(chalk.yellow(`Filtered message: ${filteredMessage}`));
     worker.postMessage({
       type: "message",
       data: filteredMessage,
@@ -217,9 +217,9 @@ io.on("connection", (socket) => {
       terminator(msg.socketId);
     } else if (msg.type === 'response') {
       const responseData = typeof msg.data === 'object' ? JSON.stringify(msg.data) : msg.data;
-      console.log(chalk.cyan(`Response from worker: ${responseData}`));
+      //console.log(chalk.cyan(`Response from worker: ${responseData}`));
       io.to(msg.socketId).emit("response", responseData);
-      console.log(chalk.cyan(`Response to ${msg.socketId}: ${responseData}`));
+      //console.log(chalk.cyan(`Response to ${msg.socketId}: ${responseData}`));
     }
   });
 
