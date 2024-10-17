@@ -121,7 +121,7 @@
                 fetch('../role.json')
                     .then(response => response.json())
                     .then(data => {
-                        const role = data.role.join(', ').toUpperCase();
+                        const role = data.role.toUpperCase();
                         document.getElementById('role').innerText = role;
                     })
                     .catch(error => console.error('Error fetching role.json:', error));
