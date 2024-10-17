@@ -115,6 +115,7 @@
                 console.log('Text array:', _textArray);
                 if (state) {
                     arrayPush(_audioArray, _textArray[0]);
+                    _textArray.shift();
                     do_tts(_audioArray);
                 }
                 currentMessage = '';
@@ -146,9 +147,10 @@
         });
 
         audio.addEventListener('loadedmetadata', async () => {
+            const duration = audio.duration * 1000;
+            await new Promise(resolve => setTimeout(resolve, duration));
+
             if (_textArray.length > 0) {
-                const duration = audio.duration * 1000;
-                await new Promise(resolve => setTimeout(resolve, duration));
                 arrayPush(_audioArray, _textArray[0]);
                 flashTrigger(_textArray[0], duration);
                 const messageElement = document.createElement('p');
