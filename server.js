@@ -165,13 +165,13 @@ io.on("connection", (socket) => {
     worker.postMessage({ type: "disconnect", socketId: socket.id });
   });
 
-  worker.on("message", (msg) => {
+  worker.on("message", async (msg) => {
     console.log(`Message from worker: ${JSON.stringify(msg)}`);
     if (msg.type === "log") {
       console.log(msg.data, msg.socketId);
     } else if (msg.type === "messageHistory") {
-      saveSessionHistories(msg.data, msg.socketId);
-      terminator(socket.id);
+      await saveSessionHistories(msg.data, msg.socketId);
+      terminator(msg.socketId);
     } else if (msg.type === 'response') {
       const responseData = typeof msg.data === 'object' ? JSON.stringify(msg.data) : msg.data;
       console.log(`Response from worker: ${responseData}`);
