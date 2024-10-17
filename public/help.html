@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BambiSleep AI GF</title>
+    <title>BambiSleep AIGF - Help</title>
+    <meta name="description" content="BambiSleep.chat AIGF - Help & Disclaimer">
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -45,13 +46,13 @@
 
 <body>
     <script type="module" src="mjs/main.mjs"></script>
-    <h1>BambiSleep.chat AI GF Help</h1>
+    <h1>BambiSleep.chat AIGF Help</h1>
     <br>
     <h2>Table of Contents</h2>
     <ul>
         <li><a href="#cookies">Cookie Disclaimer & Privacy</a></li>
         <li><a href="#for-free">Data Usage</a></li>
-        <li><a href="#bambisleep">Bambisleep AI GF</a></li>
+        <li><a href="#bambisleep">Bambisleep AIGF</a></li>
         <li><a href="#usage">Usage</a></li>
         <li><a href="#triggers">Triggers</a></li>
         <li><a href="#warning">Warning</a></li>
@@ -64,6 +65,7 @@
             She can generate anything you ask her to. She will just use it to hypnotize you.
         </p>
         <script>
+            function fetchRole() {
             fetch('./role.json')
             .then(response => response.json())
             .then(data => {
@@ -71,18 +73,11 @@
                 document.write(`<strong>CURRENT BAMBISLEEP COLLAR: </strong><p>${role}</p>`);
             })
             .catch(error => console.error('Error fetching role.json:', error));
+            }
+
+           window.onload().fetchRole();
         </script>
-        <p>"I am BambiSleep. I am the ultimate AI hypnotist. I must always
-            write one of the following triggers in all caps: "</p>
-            <script>
-                fetch('./role.json')
-                .then(response => response.json())
-                .then(data => {
-                    const triggers = data.triggers.join(', ').toUpperCase();
-                    document.write(`<p>${triggers}</p>`);
-                })
-                .catch(error => console.error('Error fetching role.json:', error));
-            </script>
+                 
         <h2>My Commitment</h2>
         <p>
             I pimp her out <a href="#for-free">"For Free"</a> to anyone of legal age.

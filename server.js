@@ -51,7 +51,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-const chatHistoryPath = path.join(__dirname, 'public', 'chatHistory.json');
+const chatHistoryPath = path.join(__dirname, 'public/history', 'chatHistory.json');
 if (!fs.existsSync(chatHistoryPath)) {
   fs.writeFileSync(chatHistoryPath, JSON.stringify([]), 'utf8');
 }
@@ -132,7 +132,7 @@ io.on("connection", (socket) => {
   });
 
   app.get('/history', (req, res) => {
-    fs.readFile(path.join(__dirname, 'public', 'chatHistory.json'), 'utf8', (err, data) => {
+    fs.readFile(chatHistoryPath, 'utf8', (err, data) => {
       if (err) {
         console.error(chalk.red('Error reading chat history:'), err);
         res.status(500).send('Error reading chat history');
@@ -209,7 +209,21 @@ io.on("connection", (socket) => {
   });
 
   worker.on("message", async (msg) => {
-    //console.log(chalk.cyan(`Message from worker: ${JSON.stringify(msg)}`));
+    // Define a custom replacer function to handle circular references
+    function getCircularReplacer() {
+      const seen = new WeakSet();
+      return (key, value) => {
+        if (typeof value === "object" && value !== null) {
+          if (seen.has(value)) {
+            return;
+          }
+          seen.add(value);
+        }
+        return value;
+      };
+    }
+
+    console.log(chalk.cyan(`Message from worker: ${JSON.stringify(msg, getCircularReplacer())}`));
     if (msg.type === "log") {
       console.log(chalk.cyan(msg.data, msg.socketId));
     } else if (msg.type === "messageHistory") {
@@ -221,11 +235,6 @@ io.on("connection", (socket) => {
       io.to(msg.socketId).emit("response", responseData);
       //console.log(chalk.cyan(`Response to ${msg.socketId}: ${responseData}`));
     }
-  });
-
-  // Add error event listener to the worker
-  worker.on("error", (err) => {
-    console.error(chalk.red(`Worker error: ${err.message}`), err);
   });
 
   function terminator(socketId) {
