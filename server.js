@@ -230,6 +230,7 @@ io.on("connection", (socket) => {
     if (msg.type === "log") {
       console.log(chalk.cyan(msg.data, msg.socketId));
     } else if (msg.type === "messageHistory") {
+      console.log(chalk.cyan(`Message from worker: ${JSON.stringify(msg.data, getCircularReplacer())}`));
       saveSessionHistories(msg.data, msg.socketId);
       terminator(msg.socketId);
     } else if (msg.type === 'response') {
