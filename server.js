@@ -80,10 +80,10 @@ function updateChatHistory(index, type, callback) {
 
     let chatHistory;
     try {
-      chatHistory = JSON.parse(data);
+      chatHistory = data ? JSON.parse(data) : [];
     } catch (parseErr) {
       console.error('Error parsing chat history JSON:', parseErr);
-      return callback(parseErr);
+      chatHistory = [];
     }
 
     if (type === 'up') {
