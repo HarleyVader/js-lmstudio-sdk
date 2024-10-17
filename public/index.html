@@ -139,7 +139,7 @@
             }, duration);
         }
         audio.addEventListener('ended', () => {
-            const currentText = _textArray.shift(); // Remove the first element from the array
+            _textArray.shift(); // Remove the first element from the array
         });
 
         audio.addEventListener('play', () => {
