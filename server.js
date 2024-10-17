@@ -3,28 +3,19 @@ const os = require('os');
 const path = require('path');
 const fs = require("fs");
 const http = require("http");
-const https = require('https');
 const { Worker } = require("worker_threads");
 const { Server } = require("socket.io");
 const readline = require("readline");
 const cors = require('cors');
 const axios = require("axios");
+const chalk = require('chalk');
 
 const PORT = 6969;
-const WSS_PORT = 4848;
-/*
-const options = {
-  key: fs.readFileSync(path.join(os.homedir(), 'conf/web/bambisleep.chat/ssl/bambisleep.chat.key')),
-  cert: fs.readFileSync(path.join(os.homedir(), 'conf/web/bambisleep.chat/ssl/bambisleep.chat.pem'))
-};
-*/
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-/*
-const httpsServer = https.createServer(options, app);
-const wss = new Server(httpsServer);
-*/
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -45,68 +36,6 @@ function filter(message) {
     .join(" ");
 }
 
-let sessionHistories = {};
-
-async function saveSessionHistories(data, socketId) {
-  sessionHistories[socketId] = data;
-
-  if (!sessionHistories[socketId]) {
-    console.error(`No valid session history found for socket ID: ${socketId}`);
-    return;
-  } else if (sessionHistories[socketId]) {
-    const Histories = Array.from(sessionHistories[socketId]);
-    const jsonHistory = JSON.stringify(Histories);
-    const fileName = `${socketId}.json`;
-    const filePath = path.join(__dirname, "history", fileName);
-
-    fs.writeFile(filePath, jsonHistory, (error) => {
-      if (error) {
-        console.error(`Error saving message history for socket ID: ${socketId}`, error);
-      } else {
-        console.log(`Message history saved for socket ID: ${socketId}`);
-      }
-    });
-  }
-}
-
-function updateChatHistory(index, type, callback) {
-  const chatHistoryPath = path.join(__dirname, 'public', 'chatHistory.json');
-
-  // Check if chatHistory.json exists, if not, create it with an empty array
-  if (!fs.existsSync(chatHistoryPath)) {
-    fs.writeFileSync(chatHistoryPath, JSON.stringify([]), 'utf8');
-  } else {
-    fs.readFile(chatHistoryPath, 'utf8', (err, data) => {
-      if (err) {
-        console.error('Error reading chat history:', err);
-        return callback(err);
-      }
-
-      let chatHistory;
-      try {
-        chatHistory = data ? JSON.parse(data) : [];
-      } catch (parseErr) {
-        console.error('Error parsing chat history JSON:', parseErr);
-        chatHistory = [];
-      }
-
-      if (type === 'up') {
-        chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
-      } else if (type === 'down') {
-        chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
-      }
-
-      fs.writeFile(chatHistoryPath, JSON.stringify(chatHistory), (err) => {
-        if (err) {
-          console.error('Error saving chat history:', err);
-          return callback(err);
-        }
-        callback(null, chatHistory[index].votes);
-      });
-    });
-  }
-};
-
 let userSessions = new Set();
 let workers = new Map();
 let socketStore = new Map();
@@ -120,6 +49,67 @@ app.use(cors({
 
 app.use(express.static(path.join(__dirname, "public")));
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+const chatHistoryPath = path.join(__dirname, 'public', 'chatHistory.json');
+if (!fs.existsSync(chatHistoryPath)) {
+  fs.writeFileSync(chatHistoryPath, JSON.stringify([]), 'utf8');
+}
+
+// Function to save session histories
+async function saveSessionHistories(data, socketId) {
+  let sessionHistories = data;
+
+  if (!sessionHistories[socketId]) {
+    console.error(chalk.red(`No valid session history found for socket ID: ${socketId}`));
+    return;
+  } else if (sessionHistories[socketId]) {
+    const Histories = Array.from(sessionHistories[socketId]);
+    const jsonHistory = JSON.stringify(Histories);
+    const fileName = `${socketId}.json`;
+    const filePath = path.join(__dirname, "history", fileName);
+
+    fs.writeFile(filePath, jsonHistory, (error) => {
+      if (error) {
+        console.error(chalk.red(`Error saving message history for socket ID: ${socketId}`), error);
+      } else {
+        console.log(chalk.green(`Message history saved for socket ID: ${socketId}`));
+      }
+    });
+  }
+}
+
+// Function to update chat history
+function updateChatHistory(index, type, callback) {
+  fs.readFile(chatHistoryPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error(chalk.red('Error reading chat history:'), err);
+      return callback(err);
+    }
+
+    let chatHistory;
+    try {
+      chatHistory = data ? JSON.parse(data) : [];
+    } catch (parseErr) {
+      console.error(chalk.red('Error parsing chat history JSON:'), parseErr);
+      chatHistory = [];
+    }
+
+    if (type === 'up') {
+      chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
+    } else if (type === 'down') {
+      chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+    }
+
+    fs.writeFile(chatHistoryPath, JSON.stringify(chatHistory), (err) => {
+      if (err) {
+        console.error(chalk.red('Error saving chat history:'), err);
+        return callback(err);
+      }
+      callback(null, chatHistory[index].votes);
+    });
+  });
+}
 
 // Handle connection
 io.on("connection", (socket) => {
@@ -131,7 +121,7 @@ io.on("connection", (socket) => {
 
   // Store the socket object in the shared context
   socketStore.set(socket.id, socket);
-  console.log(`Client connected: ${socket.id} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`);
+  console.log(chalk.blue(`Client connected: ${socket.id} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`));
 
   // Ensure socket.request.app is defined
   socket.request.app = app;
@@ -144,7 +134,7 @@ io.on("connection", (socket) => {
   app.get('/history', (req, res) => {
     fs.readFile(path.join(__dirname, 'public', 'chatHistory.json'), 'utf8', (err, data) => {
       if (err) {
-        console.error('Error reading chat history:', err);
+        console.error(chalk.red('Error reading chat history:'), err);
         res.status(500).send('Error reading chat history');
         return;
       }
@@ -153,7 +143,7 @@ io.on("connection", (socket) => {
       try {
         chatHistory = data ? JSON.parse(data) : [];
       } catch (parseErr) {
-        console.error('Error parsing chat history JSON:', parseErr);
+        console.error(chalk.red('Error parsing chat history JSON:'), parseErr);
         chatHistory = [];
       }
 
@@ -198,9 +188,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("message", (message) => {
-    console.log(`Message from ${socket.id}: ${message}`);
+    console.log(chalk.yellow(`Message from ${socket.id}: ${message}`));
     const filteredMessage = filter(message);
-    console.log(`Filtered message: ${filteredMessage}`);
+    console.log(chalk.yellow(`Filtered message: ${filteredMessage}`));
     worker.postMessage({
       type: "message",
       data: filteredMessage,
@@ -210,7 +200,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("triggers", (triggers) => {
-    console.log(`Triggers from ${socket.id}: ${triggers}`);
+    console.log(chalk.magenta(`Triggers from ${socket.id}: ${triggers}`));
     worker.postMessage({ type: "triggers", triggers });
   });
 
@@ -219,23 +209,23 @@ io.on("connection", (socket) => {
   });
 
   worker.on("message", async (msg) => {
-    console.log(`Message from worker: ${JSON.stringify(msg)}`);
+    console.log(chalk.cyan(`Message from worker: ${JSON.stringify(msg)}`));
     if (msg.type === "log") {
-      console.log(msg.data, msg.socketId);
+      console.log(chalk.cyan(msg.data, msg.socketId));
     } else if (msg.type === "messageHistory") {
       await saveSessionHistories(msg.data, msg.socketId);
       terminator(msg.socketId);
     } else if (msg.type === 'response') {
       const responseData = typeof msg.data === 'object' ? JSON.stringify(msg.data) : msg.data;
-      console.log(`Response from worker: ${responseData}`);
+      console.log(chalk.cyan(`Response from worker: ${responseData}`));
       io.to(msg.socketId).emit("response", responseData);
-      console.log(`Response to ${msg.socketId}: ${responseData}`);
+      console.log(chalk.cyan(`Response to ${msg.socketId}: ${responseData}`));
     }
   });
 
   // Add error event listener to the worker
   worker.on("error", (err) => {
-    console.error(`Worker error: ${err.message}`, err);
+    console.error(chalk.red(`Worker error: ${err.message}`), err);
   });
 
   function terminator(socketId) {
@@ -246,19 +236,19 @@ io.on("connection", (socket) => {
     }
     workers.delete(socketId);
     socketStore.delete(socketId);
-    console.log(`Client disconnected: ${socketId} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`);
+    console.log(chalk.red(`Client disconnected: ${socketId} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`));
   }
 });
 
 rl.on("line", async (line) => {
   if (line === "update") {
-    console.log("Update mode");
+    console.log(chalk.green("Update mode"));
     io.emit("update");
   } else if (line === "normal") {
     io.emit("update");
-    console.log("Normal mode");
+    console.log(chalk.green("Normal mode"));
   } else {
-    console.log("Invalid command! update or normal");
+    console.log(chalk.red("Invalid command! update or normal"));
   }
 });
 
@@ -280,13 +270,12 @@ app.use("/api/tts", (req, res) => {
         res.send(response.data);
       })
       .catch((error) => {
-        console.error("Error fetching TTS audio:", error);
-        console.error("Error details:", error.response ? error.response.data : error.message);
+        console.error(chalk.red("Error fetching TTS audio:"), error);
+        console.error(chalk.red("Error details:"), error.response ? error.response.data : error.message);
         res.status(500).send("Error fetching TTS audio");
       });
   }
 });
-
 
 function getServerAddress() {
   const interfaces = os.networkInterfaces();
@@ -299,16 +288,11 @@ function getServerAddress() {
   }
   return '127.0.0.1';
 }
-/*
-wss.listen(WSS_PORT, () => {
-  console.log(`Server is running on https://${getServerAddress()}:${WSS_PORT}`);
-});
-*/
+
 // Start the server
 server.listen(PORT, () => {
-  console.log(`Server is running on http://${getServerAddress()}:${PORT}`);
+  console.log(chalk.green(`Server is running on http://${getServerAddress()}:${PORT}`));
 });
-
 /* removed /images due to lack of images to show
 socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
 
