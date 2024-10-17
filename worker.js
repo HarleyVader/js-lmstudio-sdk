@@ -2,7 +2,6 @@ const { parentPort } = require("worker_threads");
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const { type } = require("os");
 
 let sessionHistories = {}; // Initialize sessionHistories as an empty object
 let triggers;
@@ -46,7 +45,7 @@ async function getSessionHistories(collarText, userPrompt, socketId) {
   return sessionHistories[socketId];
 }
 
-async function saveSessionHistories(collarText, userPrompt, finalContent, socketId) {
+async function saveSessionHistories(finalContent, socketId) {
   if (!sessionHistories) {
     sessionHistories = {};
   }
@@ -56,11 +55,9 @@ async function saveSessionHistories(collarText, userPrompt, finalContent, socket
   }
 
   if (sessionHistories[socketId].length !== 0) {
-    sessionHistories[socketId].push([
-      { role: "system", content: collarText },
-      { role: "user", content: userPrompt },
-      { role: "assistant", content: finalContent },
-    ]);
+    sessionHistories[socketId].push(
+      { role: "assistant", content: finalContent }
+    );
   }
 
   return sessionHistories[socketId];
@@ -71,14 +68,16 @@ async function handleMessage(userPrompt, socketId) {
     let collar = await checkTriggers(triggers);
     collarText += collar;
 
-    sessionHistories = await getSessionHistories(collarText, userPrompt, socketId);
+
+    if (finalContent) {
+      sessionHistories[socketId] = await saveSessionHistories(finalContent, socketId);
+    } else {
+      sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
+    }
 
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', {
       model: "llama-3.1-8b-lexi-uncensored-v2",
-      messages: [
-        { role: "system", content: collarText },
-        { role: "user", content: userPrompt },
-      ],
+      messages: sessionHistories[socketId],
       temperature: 0.7,
       max_tokens: 512,
       stream: true,
@@ -111,10 +110,9 @@ async function handleMessage(userPrompt, socketId) {
       }
     });
 
-    response.data.on('end', () => {
+    response.data.on('end', async () => {
       parentPort.postMessage({ 'response': finalContent });
-     session = saveSessionHistories(collarText, userPrompt, finalContent, socketId);
-      
+      sessionHistories[socketId] = await saveSessionHistories(collarText, userPrompt, finalContent, socketId);
     });
 
   } catch (error) {
@@ -127,13 +125,10 @@ parentPort.on("message", async (msg) => {
   if (msg.type === "triggers") {
     triggers = msg.triggers;
   } else if (msg.type === "message") {
-    //parentPort.postMessage({ 'log': `Message to worker: ${msg.data}` });
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "disconnect") {
-    await sendSessionHistories(session, msg.socketId);
-    //parentPort.postMessage({ 'log': `Session Histories: ${JSON.stringify(sessionHistories)}` });
+    await sendSessionHistories(sessionHistories[msg.socketId], msg.socketId);
   }
-  
 });
 
 async function handleResponse(response, socketId) {
@@ -145,15 +140,14 @@ async function handleResponse(response, socketId) {
 }
 
 async function sendSessionHistories(session, socketId) {
-  sessionHistories[socketId] = session;
-  if (sessionHistories[socketId].lenght !== 0) {
+  if (session && session.length !== 0) {
     parentPort.postMessage({
       type: "messageHistory",
-      data: sessionHistories[socketId],
+      data: session,
       socketId: socketId,
     });
-    parentPort.postMessage("log", sessionHistories, socketId);
+    parentPort.postMessage({ type: "log", data: session, socketId: socketId });
   } else {
-    parentPort.postMessage("log", "No session history to send", socketId);
+    parentPort.postMessage({ type: "log", data: "No session history to send", socketId: socketId });
   }
 }
