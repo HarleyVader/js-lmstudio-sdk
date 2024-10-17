@@ -130,7 +130,7 @@ parentPort.on("message", async (msg) => {
     parentPort.postMessage({ 'log': `Message to worker: ${msg.data}` });
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "disconnect") {
-    await handleDisconnect(msg.socketId);
+    await handleDisconnect(sessionHistories, msg.socketId);
     parentPort.postMessage({ 'log': `Session Histories: ${JSON.stringify(sessionHistories)}` });
   }
   
@@ -144,7 +144,7 @@ async function handleResponse(response, socketId) {
   });
 }
 
-async function handleDisconnect(socketId) {
+async function handleDisconnect(sessionHistories, socketId) {
   
   if (sessionHistories[socketId]) {
     parentPort.postMessage({
