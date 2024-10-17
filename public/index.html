@@ -142,28 +142,26 @@
         }
         audio.addEventListener('ended', () => {
             if ((_textArray.length > 0) && (audio.duration === 0)) {
-                _textArray.shift(); // Remove the first element from the array
+                do_tts(_audioArray);
             }
         });
 
         audio.addEventListener('loadedmetadata', async () => {
-            if ((_textArray.length > 0) && (audio.duration === 0)) {
-                const duration = audio.duration * 1000;
-                await new Promise(resolve => setTimeout(resolve, duration));
-                arrayPush(_audioArray, _textArray[0]);
-                flashTrigger(_textArray[0], duration);
-                const messageElement = document.createElement('p');
-                messageElement.textContent = _textArray[0];
-                console.log('Text reply: ', messageElement.textContent);
-                sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
+            text = _textArray.shift();
+            const duration = audio.duration * 1000;
+            await new Promise(resolve => setTimeout(resolve, duration));
+            arrayPush(_audioArray, text);
+            flashTrigger(text, duration);
+            const messageElement = document.createElement('p');
+            messageElement.textContent = text;
+            console.log('Text reply: ', messageElement.textContent);
+            sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
 
-                if (response.firstChild) {
-                    response.insertBefore(messageElement, response.firstChild);
-                } else {
-                    response.appendChild(messageElement);
-                }
+            if (response.firstChild) {
+                response.insertBefore(messageElement, response.firstChild);
+            } else {
+                response.appendChild(messageElement);
             }
-
         });
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
