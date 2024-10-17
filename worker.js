@@ -36,10 +36,10 @@ async function getSessionHistories(collarText, userPrompt, socketId) {
   }
 
   if (sessionHistories[socketId].length === 0) {
-    sessionHistories[socketId].push([
+    sessionHistories[socketId].push(
       { role: "system", content: collarText },
-      { role: "user", content: userPrompt },
-    ]);
+      { role: "user", content: userPrompt }
+    );
   }
 
   return sessionHistories[socketId];
@@ -79,6 +79,8 @@ async function handleMessage(userPrompt, socketId) {
       max_tokens: 512,
       stream: true,
     };
+
+    console.log('Request Data:', JSON.stringify(requestData, null, 2)); // Log the request data
 
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', requestData, {
       responseType: 'stream',
