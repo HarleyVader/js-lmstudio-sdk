@@ -11,17 +11,16 @@ const axios = require("axios");
 const chalk = require('chalk');
 
 const bambisleepChalk = {
-  primary: chalk.hex('rgba(17, 39, 39, 1)'),
-  primaryAlt: chalk.hex('rgba(33, 105, 105, 1)'),
-  secondary: chalk.hex('rgba(31, 1, 23, 1)'),
-  tertiary: chalk.hex('rgba(242, 242, 242, 1)'),
-  button: chalk.hex('rgba(212, 4, 108, 1)'),
-  buttonAlt: chalk.hex('rgba(17, 0, 0, 1)'),
-  secondaryAlt: chalk.hex('rgba(1, 124, 138, 1)'),
-  error: chalk.hex('rgba(212, 4, 108, 1)').bold,
-  success: chalk.hex('rgba(33, 105, 105, 1)').bold,
-  info: chalk.hex('rgba(1, 124, 138, 1)').bold,
-  warning: chalk.hex('rgba(17, 39, 39, 1)').bold
+  primary: chalk.hex('#112727'),
+  primaryAlt: chalk.hex('#216969'),
+  secondary: chalk.hex('#1f0117'),
+  tertiary: chalk.hex('#f2f2f2'),
+  button: chalk.hex('#d4046c'),
+  buttonAlt: chalk.hex('#110000'),
+  error: chalk.hex('#d4046c').bold,
+  success: chalk.hex('#216969').bold,
+  info: chalk.hex('#017c8a').bold,
+  warning: chalk.hex('#112727').bold
 };
 
 const PORT = 6969;
@@ -255,13 +254,17 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", async () => {
-    await worker.postMessage({ type: "disconnect", socketId: socket.id });
+    worker.postMessage({ type: "disconnect", socketId: socket.id });
     terminator(socket.id);
+  });
+
+  worker.on('error', (err) => {
+    console.error(bambisleepChalk.error('Worker error:'), err);
   });
 
   worker.on("messageHistory", async (msg) => {
     console.log(bambisleepChalk.info(`Message from worker: ${JSON.stringify(msg, getCircularReplacer())}`));
-    saveSessionHistories(msg.data, msg.socketId);
+    saveSessionHistories(msg.socketId);
   });
 
   worker.on("message", async (msg) => {

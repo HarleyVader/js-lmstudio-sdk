@@ -2,6 +2,20 @@ const { parentPort } = require("worker_threads");
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const chalk = require('chalk');
+
+const bambisleepChalk = {
+  primary: chalk.hex('#112727'),
+  primaryAlt: chalk.hex('#216969'),
+  secondary: chalk.hex('#1f0117'),
+  tertiary: chalk.hex('#f2f2f2'),
+  button: chalk.hex('#d4046c'),
+  buttonAlt: chalk.hex('#110000'),
+  error: chalk.hex('#d4046c').bold,
+  success: chalk.hex('#216969').bold,
+  info: chalk.hex('#017c8a').bold,
+  warning: chalk.hex('#112727').bold
+};
 
 let sessionHistories = {}; // Initialize sessionHistories as an empty object
 let triggers;
@@ -18,7 +32,7 @@ async function checkTriggers(triggers) {
 if (!collarText) {
   fs.readFile(path.join(__dirname, 'role.json'), 'utf8', (err, data) => {
     if (err) {
-      console.error('Error reading role.json:', err);
+      console.error(bambisleepChalk.error('Error reading role.json:'), err);
       return;
     }
     const roleData = JSON.parse(data);
@@ -80,7 +94,7 @@ async function handleMessage(userPrompt, socketId) {
       stream: true,
     };
 
-    console.log('Request Data:', JSON.stringify(requestData, null, 2)); // Log the request data
+    console.log(bambisleepChalk.info('Request Data:'), JSON.stringify(requestData, null, 2)); // Log the request data
 
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', requestData, {
       responseType: 'stream',
@@ -116,11 +130,10 @@ async function handleMessage(userPrompt, socketId) {
     });
 
   } catch (error) {
-    console.error('Error handling message:', error);
+    console.error(bambisleepChalk.error('Error handling message:'), error);
     parentPort.postMessage({ 'log': `Error handling message: ${error}` });
   }
 }
-
 
 parentPort.on("message", async (msg) => {
   if (msg.type === "triggers") {
