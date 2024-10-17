@@ -78,7 +78,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Ensure the directory for session histories exists
-const sessionHistoriesDir = path.join(__dirname, 'sessionHistories');
+const sessionHistoriesDir = path.join(__dirname, 'history');
 if (!fs.existsSync(sessionHistoriesDir)) {
   fs.mkdirSync(sessionHistoriesDir, { recursive: true });
 }
@@ -116,6 +116,7 @@ async function saveSessionHistories(socketId) {
   const sessionHistoryPath = path.join(sessionHistoriesDir, `${socketId}.json`);
 
   fs.writeFile(sessionHistoryPath, JSON.stringify({ content: finalContent }), (err) => {
+    console.log(bambisleepChalk.info(`Session history saved to file: ${socketId}`));
     if (err) {
       console.error(bambisleepChalk.error('Error saving session history:'), err);
     }
@@ -287,12 +288,11 @@ rl.on("line", async (line) => {
     io.emit("update");
     console.log(bambisleepChalk.success("Normal mode"));
   } else if (line === "save") {
-      for (const socketId of userSessions) {
-        await saveSessionHistories(socketId);
-        console.log(bambisleepChalk.success(`Session history saved to file: ${socketId}`));
-      }
-} else {
-    console.log(bambisleepChalk.error("Invalid command! update or normal"));
+    for (const socketId of userSessions) {
+      await saveSessionHistories(socketId);
+    }
+  } else {
+    console.log(bambisleepChalk.error("Invalid command! update, normal or save"));
   }
 });
 
