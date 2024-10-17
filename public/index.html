@@ -13,25 +13,55 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
+<style>
+    #bambiTextarea {
+        display: block;
+    }
+
+    .lightning-button.pushed {
+        background-color: green;
+        color: white;
+    }
+
+    .mode-textareas textarea {
+        display: none;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .mode-textareas textarea.active {
+        display: block;
+    }
+</style>
 
 <body>
     <script type="module" src="mjs/main.mjs"></script>
     <div id="chat-container">
         <div id="user-input">
             <h1>BambiSleep AIGF 👁️</h1>
-            <textarea id="textarea" oninput="autoExpand(this)" placeholder="Talk to BambiSleep"></textarea>
-            <div>
-                <button id="submit" type="submit">Submit</button>
+            <div class="mode-buttons">
+                <button class="lightning-button" id="bambi" type="bambi">Bambi</button>
+                <button class="lightning-button" id="collar" type="collar">Collar</button>
+                <button class="lightning-button" id="triggers" type="triggers">Triggers</button>
+            </div>
+            <div class="mode-textareas">
+                <textarea id="bambiTextarea" oninput="autoExpand(this)" placeholder="Talk to BambiSleep"></textarea>
+                <textarea id="collarTextarea" oninput="autoExpand(this)"
+                    placeholder="Put Collar on BambiSleep"></textarea>
+                <textarea id="triggersTextarea" oninput="autoExpand(this)"
+                    placeholder="Add Triggers to BambiSleep"></textarea>
                 <br>
-                <div id="user-prompt"></div>
+                <button id="submit" type="submit">Submit</button>
+                <button id="triggers" type="triggers">Triggers</button>
+                <button id="activate-all">All On</button>
             </div>
             <div>
+                <div id="user-prompt"></div>
+                <br>
                 <div id="audiomessage">
                     <audio id="audio" hidden controls src></audio>
                     <p id="message"></p>
                 </div>
-                <button id="activate-all">All On</button>
-                <br>
             </div>
             <br>
             <div id="trigger-toggles">
@@ -51,6 +81,7 @@
             </div>
         </div>
     </div>
+
     <script src="js/psychodelic-trigger-mania.js"></script>
     <script src="js/text2speech.js"></script>
     <script src="js/responsive.js"></script>
@@ -65,7 +96,6 @@
         const response = document.getElementById('response');
         const userPrompt = document.getElementById('user-prompt');
 
-
         const socket = io();
         socket.on('disconnect', () => {
             console.log('Disconnected');
@@ -79,29 +109,6 @@
         socket.on("update", (message) => {
             unhideUpdateElement();
         });
-
-        let debounceTimeout;
-        submit.addEventListener('click', () => {
-            clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(() => {
-                handleClick();
-            }, 200);
-        });
-
-        function handleClick() {
-            const message = textarea.value.trim();
-            if (message === '') {
-                alert('Message cannot be empty');
-                return;
-            }
-            userPrompt.textContent = message;
-            sendTriggers();
-            socket.emit('message', message);
-            sendMessageToDiscord(`${socket.id} user: ${message}`);
-
-            textarea.value = '';
-            textarea.style.height = 'inherit';
-        }
 
         socket.on('response', async (message) => {
             currentMessage += message;
@@ -138,10 +145,12 @@
                 container.innerHTML = "";
             }, duration);
         }
+
         function handleAudioEnded() {
             if (_textArray.length > 0 || audio.currentTime === 0) {
-            text = _textArray.shift();
+                text = _textArray.shift();
             }
+
             arrayPush(_audioArray, text);
             do_tts(_audioArray);
         }
@@ -157,16 +166,81 @@
             sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
 
             if (response.firstChild) {
-            response.insertBefore(messageElement, response.firstChild);
+                response.insertBefore(messageElement, response.firstChild);
             } else {
-            response.appendChild(messageElement);
+                response.appendChild(messageElement);
             }
         }
 
         audio.addEventListener('ended', handleAudioEnded);
         audio.addEventListener('play', handleAudioPlay);
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('.mode-buttons .lightning-button');
+            const textareas = {
+                bambi: document.getElementById('bambiTextarea'),
+                collar: document.getElementById('collarTextarea'),
+                triggers: document.getElementById('triggersTextarea')
+            };
+            const submitButton = document.getElementById('submit');
 
-        
+            function validateTextarea() {
+                if (textareas.bambi.value.trim() === '') {
+                    submitButton.disabled = true;
+                    submitButton.style.backgroundColor = '#8B0000';
+                    submitButton.style.color = 'white';
+                } else {
+                    submitButton.disabled = false;
+                    submitButton.style.backgroundColor = '';
+                    submitButton.style.color = '';
+                }
+            }
+
+            textareas.triggers.addEventListener('input', () => {
+                const lines = textareas.triggers.value.split('\n').filter(line => line.trim() !== '');
+                triggerList.length = 0; // Clear the list
+                triggerList.push(...lines);
+                listOfTriggers = lines.map(line => line.trim());
+                setTimeout(createToggleButtons, 3000);
+            });
+
+            textareas.bambi.addEventListener('input', validateTextarea);
+            validateTextarea(); // Initial validation
+
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    buttons.forEach(btn => btn.classList.remove('pushed'));
+                    button.classList.add('pushed');
+
+                    Object.keys(textareas).forEach(key => {
+                        textareas[key].style.display = 'none';
+                    });
+                    textareas[button.id].style.display = 'block';
+                });
+            });
+
+            function sendMessage(messages) {
+                if (Object.values(messages).some(message => message.trim() === '')) {
+                    alert('All messages cannot be empty');
+                    return;
+                }
+                socket.emit('messages', messages);
+                console.log('Messages sent:', messages);
+            }
+
+            document.getElementById('submit').addEventListener('click', () => {
+                const messages = {
+                    bambis: textareas.bambis.value.trim(),
+                    collar: textareas.collar.value.trim(),
+                    triggers: textareas.triggers.value.trim()
+                };
+                sendMessage(messages);
+                Object.keys(textareas).forEach(key => {
+                    textareas[key].value = '';
+                });
+            });
+        });
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>

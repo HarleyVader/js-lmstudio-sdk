@@ -13,18 +13,19 @@ const axios = require("axios");
 const PORT = 6969;
 const WSS_PORT = 4848;
 
+/*
 const options = {
   key: fs.readFileSync(path.join(os.homedir(), 'conf/web/bambisleep.chat/ssl/bambisleep.chat.key')),
   cert: fs.readFileSync(path.join(os.homedir(), 'conf/web/bambisleep.chat/ssl/bambisleep.chat.pem'))
 };
-
+*/
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-
+/*
 const httpsServer = https.createServer(options, app);
 const wss = new Server(httpsServer);
-
+*/
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -108,29 +109,56 @@ io.on("connection", (socket) => {
 
   app.get('/history', (req, res) => {
     fs.readFile(path.join(__dirname, 'public', 'chatHistory.json'), (err, data) => {
-      if (err) throw err;
-      const chatHistory = JSON.parse(data);
-      res.render('history', { chatHistory });
+      if (err) {
+        console.error('Error reading chat history file:', err);
+        return res.status(500).send('Internal Server Error');
+      }
+      if (data.length === 0) {
+        console.warn('Chat history file is empty');
+        return res.render('history', { chatHistory: [] });
+      }
+      try {
+        const chatHistory = JSON.parse(data);
+        res.render('history', { chatHistory });
+      } catch (parseErr) {
+        console.error('Error parsing chat history JSON:', parseErr);
+        res.status(500).send('Internal Server Error');
+      }
     });
   });
 
   app.post('/vote/:index/:type', (req, res) => {
     fs.readFile(path.join(__dirname, 'public', 'chatHistory.json'), (err, data) => {
-      if (err) throw err;
-      const chatHistory = JSON.parse(data);
-      const index = req.params.index;
-      const type = req.params.type;
-
-      if (type === 'up') {
-        chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
-      } else if (type === 'down') {
-        chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+      if (err) {
+        console.error('Error reading chat history file:', err);
+        return res.status(500).send('Internal Server Error');
       }
+      if (data.length === 0) {
+        console.warn('Chat history file is empty');
+        return res.status(400).send('Chat history is empty');
+      }
+      try {
+        const chatHistory = JSON.parse(data);
+        const index = req.params.index;
+        const type = req.params.type;
 
-      fs.writeFile(path.join(__dirname, 'public', 'chatHistrory.json'), JSON.stringify(chatHistory), (err) => {
-        if (err) throw err;
-        res.json({ votes: chatHistory[index].votes });
-      });
+        if (type === 'up') {
+          chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
+        } else if (type === 'down') {
+          chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+        }
+
+        fs.writeFile(path.join(__dirname, 'public', 'chatHistory.json'), JSON.stringify(chatHistory), (err) => {
+          if (err) {
+            console.error('Error writing chat history file:', err);
+            return res.status(500).send('Internal Server Error');
+          }
+          res.json({ votes: chatHistory[index].votes });
+        });
+      } catch (parseErr) {
+        console.error('Error parsing chat history JSON:', parseErr);
+        res.status(500).send('Internal Server Error');
+      }
     });
   });
 
@@ -144,21 +172,20 @@ io.on("connection", (socket) => {
     );
   });
 
-  socket.on("message", (message) => {
-    console.log(`Message from ${socket.id}: ${message}`);
-    const filteredMessage = filter(message);
-    console.log(`Filtered message: ${filteredMessage}`);
+  socket.on("messages", (data) => {
+    const { bambis, collar, triggers } = data;
+    console.log(`Messages from ${socket.id}: bambis: ${bambis}, collar: ${collar}, triggers: ${triggers}`);
+    const filteredMessages = {
+      bambis: filter(bambis),
+      collar: filter(collar),
+      triggers: filter(triggers)
+    };
+    console.log(`Filtered messages:`, filteredMessages);
     worker.postMessage({
-      type: "message",
-      data: filteredMessage,
-      triggers: "",
+      type: "messages",
+      data: filteredMessages,
       socketId: socket.id,
     });
-  });
-
-  socket.on("triggers", (triggers) => {
-    console.log(`Triggers from ${socket.id}: ${triggers}`);
-    worker.postMessage({ type: "triggers", triggers });
   });
 
   socket.on("disconnect", async () => {
@@ -229,7 +256,6 @@ app.use("/api/tts", (req, res) => {
   }
 });
 
-
 function getServerAddress() {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
@@ -241,11 +267,11 @@ function getServerAddress() {
   }
   return '127.0.0.1';
 }
-
+/*
 wss.listen(WSS_PORT, () => {
   console.log(`Server is running on https://${getServerAddress()}:${WSS_PORT}`);
 });
-
+*/
 // Start the server
 server.listen(PORT, () => {
   console.log(`Server is running on http://${getServerAddress()}:${PORT}`);

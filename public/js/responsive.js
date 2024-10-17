@@ -8,11 +8,14 @@ function autoExpand(element) {
   element.style.height = height + "px";
 }
 
-textarea.addEventListener("keypress", function (event) {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
-    submit.click();
-  }
+const textareas = document.querySelectorAll('.mode-textareas textarea');
+textareas.forEach(textarea => {
+  textarea.addEventListener("keypress", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      document.getElementById('submit').click();
+    }
+  });
 });
 
 function unhideUpdateElement() {
