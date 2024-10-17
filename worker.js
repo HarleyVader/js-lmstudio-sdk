@@ -121,14 +121,14 @@ async function handleMessage(userPrompt, socketId) {
   }
 }
 
+
 parentPort.on("message", async (msg) => {
   if (msg.type === "triggers") {
     triggers = msg.triggers;
   } else if (msg.type === "message") {
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "disconnect") {
-    const session = sessionHistories[msg.socketId]; // Define session
-    await sendSessionHistories(session, msg.socketId);
+    await sendSessionHistories(sessionHistories[msg.socketId]);
   }
 });
 
@@ -140,15 +140,14 @@ async function handleResponse(response, socketId) {
   });
 }
 
-async function sendSessionHistories(socketId) {
-  const session = sessionHistories[socketId];
-  if (session && Array.isArray(session) && session.length !== 0) {
+async function sendSessionHistories(sessionHistory) {
+  if (sessionHistory && Array.isArray(sessionHistory) && sessionHistory.length !== 0) {
     parentPort.postMessage({
       type: "messageHistory",
-      data: session,
+      data: sessionHistory,
       socketId: socketId,
     });
-    parentPort.postMessage({ type: "log", data: "Session: " + JSON.stringify(session), socketId: socketId });
+    parentPort.postMessage({ type: "log", data: "Session: " + JSON.stringify(sessionHistory), socketId: socketId });
   } else {
     parentPort.postMessage({ type: "log", data: "No session history to send", socketId: socketId });
   }
