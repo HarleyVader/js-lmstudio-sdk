@@ -72,14 +72,15 @@ async function handleMessage(userPrompt, socketId) {
     let collar = await checkTriggers(triggers);
     collarText += collar;
 
-    if (sessionHistories[socketId]) {
-    sessionHistories = sessionHistories[socketId];
-  } else {
     sessionHistories = await getSessionHistories(collarText, userPrompt, socketId);
-  }
+
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', {
       model: "solar-10.7b-instruct-v1.0-uncensored",
-      messages: sessionHistories,
+      messages: [
+        { role: "system", content: collarText },
+        { role: "user", content: userPrompt },
+        { role: "assistant", content: content },
+      ],
       temperature: 0.3,
       max_tokens: 512,
       stream: true,
