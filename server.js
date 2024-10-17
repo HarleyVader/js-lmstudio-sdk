@@ -60,10 +60,10 @@ if (!fs.existsSync(chatHistoryPath)) {
 async function saveSessionHistories(data, socketId) {
   let sessionHistories = data;
 
-  if (!sessionHistories[socketId]) {
+  if (!sessionHistories) {
     console.error(chalk.red(`No valid session history found for socket ID: ${socketId}`));
     return;
-  } else if (sessionHistories[socketId]) {
+  } else if (sessionHistories.length !== 0) {
     const Histories = Array.from(sessionHistories[socketId]);
     const jsonHistory = JSON.stringify(Histories);
     const fileName = `${socketId}.json`;
@@ -79,7 +79,10 @@ async function saveSessionHistories(data, socketId) {
         console.log(chalk.green(`Message history saved for socket ID: ${socketId}`));
       }
     });
+  } else {
+    console.error(chalk.red(`No valid session history found for socket ID: ${socketId}`));
   }
+
 }
 
 // Function to update chat history
