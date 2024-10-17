@@ -223,7 +223,7 @@ io.on("connection", (socket) => {
       };
     }
 
-    console.log(chalk.cyan(`Message from worker: ${JSON.stringify(msg, getCircularReplacer())}`));
+    //console.log(chalk.cyan(`Message from worker: ${JSON.stringify(msg, getCircularReplacer())}`));
     if (msg.type === "log") {
       console.log(chalk.cyan(msg.data, msg.socketId));
     } else if (msg.type === "messageHistory") {

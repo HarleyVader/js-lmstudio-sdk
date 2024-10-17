@@ -80,8 +80,6 @@ async function handleMessage(userPrompt, socketId) {
       stream: true,
     };
 
-    console.log('Request Data:', JSON.stringify(requestData, null, 2)); // Log the request data
-
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', requestData, {
       responseType: 'stream',
     });
