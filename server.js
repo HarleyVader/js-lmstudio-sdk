@@ -72,35 +72,40 @@ async function saveSessionHistories(data, socketId) {
 function updateChatHistory(index, type, callback) {
   const chatHistoryPath = path.join(__dirname, 'public', 'chatHistory.json');
 
-  fs.readFile(chatHistoryPath, 'utf8', (err, data) => {
-    if (err) {
-      console.error('Error reading chat history:', err);
-      return callback(err);
-    }
-
-    let chatHistory;
-    try {
-      chatHistory = data ? JSON.parse(data) : [];
-    } catch (parseErr) {
-      console.error('Error parsing chat history JSON:', parseErr);
-      chatHistory = [];
-    }
-
-    if (type === 'up') {
-      chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
-    } else if (type === 'down') {
-      chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
-    }
-
-    fs.writeFile(chatHistoryPath, JSON.stringify(chatHistory), (err) => {
+  // Check if chatHistory.json exists, if not, create it with an empty array
+  if (!fs.existsSync(chatHistoryPath)) {
+    fs.writeFileSync(chatHistoryPath, JSON.stringify([]), 'utf8');
+  } else {
+    fs.readFile(chatHistoryPath, 'utf8', (err, data) => {
       if (err) {
-        console.error('Error saving chat history:', err);
+        console.error('Error reading chat history:', err);
         return callback(err);
       }
-      callback(null, chatHistory[index].votes);
+
+      let chatHistory;
+      try {
+        chatHistory = data ? JSON.parse(data) : [];
+      } catch (parseErr) {
+        console.error('Error parsing chat history JSON:', parseErr);
+        chatHistory = [];
+      }
+
+      if (type === 'up') {
+        chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
+      } else if (type === 'down') {
+        chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
+      }
+
+      fs.writeFile(chatHistoryPath, JSON.stringify(chatHistory), (err) => {
+        if (err) {
+          console.error('Error saving chat history:', err);
+          return callback(err);
+        }
+        callback(null, chatHistory[index].votes);
+      });
     });
-  });
-}
+  }
+};
 
 let userSessions = new Set();
 let workers = new Map();
@@ -218,7 +223,7 @@ io.on("connection", (socket) => {
     if (msg.type === "log") {
       console.log(msg.data, msg.socketId);
     } else if (msg.type === "messageHistory") {
-      saveSessionHistories(msg.data, msg.socketId);
+      await saveSessionHistories(msg.data, msg.socketId);
       terminator(msg.socketId);
     } else if (msg.type === 'response') {
       const responseData = typeof msg.data === 'object' ? JSON.stringify(msg.data) : msg.data;
