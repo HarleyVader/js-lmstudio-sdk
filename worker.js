@@ -72,13 +72,15 @@ async function handleMessage(userPrompt, socketId) {
 
     sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
 
-    const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', {
+    const requestData = {
       model: "llama-3.1-8b-lexi-uncensored-v2",
       messages: sessionHistories[socketId],
       temperature: 0.7,
       max_tokens: 512,
       stream: true,
-    }, {
+    };
+
+    const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', requestData, {
       responseType: 'stream',
     });
 
