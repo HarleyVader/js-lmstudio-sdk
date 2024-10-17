@@ -123,7 +123,7 @@ io.on("connection", (socket) => {
         chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
       }
 
-      fs.writeFile(path.join(__dirname, 'public', 'chatHistrory.json'), JSON.stringify(chatHistory), (err) => {
+      fs.writeFile(path.join(__dirname, 'public', 'chatHistory.json'), JSON.stringify(chatHistory), (err) => {
         if (err) throw err;
         res.json({ votes: chatHistory[index].votes });
       });
@@ -167,7 +167,7 @@ io.on("connection", (socket) => {
       console.log(msg.data, msg.socketId);
     } else if (msg.type === "messageHistory") {
       console.log('saveSessionHistories: ', saveSessionHistories);
-      
+
       saveSessionHistories(msg.data, msg.socketId);
       terminator(msg.socketId);
     } else if (msg.type === 'response') {
@@ -176,6 +176,11 @@ io.on("connection", (socket) => {
       io.to(msg.socketId).emit("response", responseData);
       console.log(`Response to ${msg.socketId}: ${responseData}`);
     }
+  });
+
+  // Add error event listener to the worker
+  worker.on("error", (err) => {
+    console.error(`Worker error: ${err.message}`, err);
   });
 
   function terminator(socketId) {
