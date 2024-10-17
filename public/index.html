@@ -14,10 +14,6 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <style>
-    #bambiTextarea {
-        display: block;
-    }
-
     .lightning-button.pushed {
         background-color: green;
         color: white;
@@ -31,6 +27,11 @@
 
     .mode-textareas textarea.active {
         display: block;
+    }
+
+    .mode-buttons .lightning-button.invalid {
+        background-color: red;
+        color: white;
     }
 </style>
 
@@ -46,13 +47,10 @@
             </div>
             <div class="mode-textareas">
                 <textarea id="bambiTextarea" oninput="autoExpand(this)" placeholder="Talk to BambiSleep"></textarea>
-                <textarea id="collarTextarea" oninput="autoExpand(this)"
-                    placeholder="Put Collar on BambiSleep"></textarea>
-                <textarea id="triggersTextarea" oninput="autoExpand(this)"
-                    placeholder="Add Triggers to BambiSleep"></textarea>
+                <textarea id="collarTextarea" oninput="autoExpand(this)" placeholder="Put Collar on BambiSleep"></textarea>
+                <textarea id="triggersTextarea" oninput="autoExpand(this)" placeholder="Add Triggers to BambiSleep"></textarea>
                 <br>
                 <button id="submit" type="submit">Submit</button>
-                <button id="triggers" type="triggers">Triggers</button>
                 <button id="activate-all">All On</button>
             </div>
             <div>
@@ -90,6 +88,8 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const _textArray = [];
+        let triggerList = [];
+
 
         const textarea = document.getElementById('textarea');
         const submit = document.getElementById('submit');
@@ -174,8 +174,7 @@
 
         audio.addEventListener('ended', handleAudioEnded);
         audio.addEventListener('play', handleAudioPlay);
-    </script>
-    <script>
+
         document.addEventListener('DOMContentLoaded', () => {
             const buttons = document.querySelectorAll('.mode-buttons .lightning-button');
             const textareas = {
@@ -186,15 +185,13 @@
             const submitButton = document.getElementById('submit');
 
             function validateTextarea() {
-                if (textareas.bambi.value.trim() === '') {
-                    submitButton.disabled = true;
-                    submitButton.style.backgroundColor = '#8B0000';
-                    submitButton.style.color = 'white';
-                } else {
-                    submitButton.disabled = false;
-                    submitButton.style.backgroundColor = '';
-                    submitButton.style.color = '';
-                }
+                Object.keys(textareas).forEach(key => {
+                    if (textareas[key].value.trim() === '') {
+                        document.getElementById(key).classList.add('invalid');
+                    } else {
+                        document.getElementById(key).classList.remove('invalid');
+                    }
+                });
             }
 
             textareas.triggers.addEventListener('input', () => {
@@ -206,6 +203,8 @@
             });
 
             textareas.bambi.addEventListener('input', validateTextarea);
+            textareas.collar.addEventListener('input', validateTextarea);
+            textareas.triggers.addEventListener('input', validateTextarea);
             validateTextarea(); // Initial validation
 
             buttons.forEach(button => {
@@ -231,7 +230,7 @@
 
             document.getElementById('submit').addEventListener('click', () => {
                 const messages = {
-                    bambis: textareas.bambis.value.trim(),
+                    bambis: textareas.bambi.value.trim(),
                     collar: textareas.collar.value.trim(),
                     triggers: textareas.triggers.value.trim()
                 };
@@ -239,6 +238,7 @@
                 Object.keys(textareas).forEach(key => {
                     textareas[key].value = '';
                 });
+                validateTextarea(); // Re-validate after submission
             });
         });
     </script>

@@ -190,7 +190,6 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", async () => {
     worker.postMessage({ type: "disconnect", socketId: socket.id });
-    terminator(socket.id);
   });
 
   worker.on("message", (msg) => {
@@ -199,6 +198,7 @@ io.on("connection", (socket) => {
       console.log(msg.data, msg.socketId);
     } else if (msg.type === "messageHistory") {
       saveSessionHistories(msg.data, msg.socketId);
+      terminator(msg.socketId);
     } else if (msg.type === 'response') {
       const responseData = typeof msg.data === 'object' ? JSON.stringify(msg.data) : msg.data;
       console.log(`Response from worker: ${responseData}`);
