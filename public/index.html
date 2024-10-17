@@ -140,30 +140,27 @@
             }, duration);
         }
         audio.addEventListener('ended', () => {
-            _textArray.shift(); // Remove the first element from the array
-        });
-
-        audio.addEventListener('play', () => {
-            
-            const duration = audio.duration * 1000; // Convert to milliseconds
-            flashTrigger(currentText, duration);
+            if (_textArray.length > 0) {
+                _textArray.shift(); // Remove the first element from the array
+            }
         });
 
         audio.addEventListener('loadedmetadata', async () => {
-            const duration = audio.duration * 1000; // Convert to milliseconds
-            await new Promise(resolve => setTimeout(resolve, duration));
+            if (_textArray.length > 0) {
+                const duration = audio.duration * 1000;
+                await new Promise(resolve => setTimeout(resolve, duration));
+                arrayPush(_audioArray, _textArray[0]);
+                flashTrigger(_textArray[0], duration);
+                const messageElement = document.createElement('p');
+                messageElement.textContent = _textArray[0];
+                console.log('Text reply: ', messageElement.textContent);
+                sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
 
-            arrayPush(_audioArray, _textArray[0]);
-
-            const messageElement = document.createElement('p');
-            messageElement.textContent = _textArray[0];
-            console.log('Text reply: ', messageElement.textContent);
-            sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
-
-            if (response.firstChild) {
-                response.insertBefore(messageElement, response.firstChild);
-            } else {
-                response.appendChild(messageElement);
+                if (response.firstChild) {
+                    response.insertBefore(messageElement, response.firstChild);
+                } else {
+                    response.appendChild(messageElement);
+                }
             }
 
         });
