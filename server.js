@@ -77,23 +77,22 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-const chatHistoryPath = path.join(__dirname, 'history');
+// Ensure the directory for session histories exists
+const sessionHistoriesDir = path.join(__dirname, 'sessionHistories');
+if (!fs.existsSync(sessionHistoriesDir)) {
+  fs.mkdirSync(sessionHistoriesDir, { recursive: true });
+}
+
+// Ensure the chat history file exists
+const chatHistoryPath = path.join(__dirname, 'history', 'chatHistory.json');
 const chatHistoryDir = path.dirname(chatHistoryPath);
 
-// Ensure the directory exists
 if (!fs.existsSync(chatHistoryDir)) {
   fs.mkdirSync(chatHistoryDir, { recursive: true });
 }
 
-// Ensure the file exists
 if (!fs.existsSync(chatHistoryPath)) {
   fs.writeFileSync(chatHistoryPath, JSON.stringify([]), 'utf8');
-}
-
-// Ensure the directory for session histories exists
-const sessionHistoriesDir = path.join(__dirname, 'history');
-if (!fs.existsSync(sessionHistoriesDir)) {
-  fs.mkdirSync(sessionHistoriesDir, { recursive: true });
 }
 
 // Function to save session histories
@@ -117,7 +116,6 @@ async function saveSessionHistories(socketId) {
   const sessionHistoryPath = path.join(sessionHistoriesDir, `${socketId}.json`);
 
   fs.writeFile(sessionHistoryPath, JSON.stringify({ content: finalContent }), (err) => {
-    console.log(bambisleepChalk.info(`Session history saved for ${socketId}`));
     if (err) {
       console.error(bambisleepChalk.error('Error saving session history:'), err);
     }
