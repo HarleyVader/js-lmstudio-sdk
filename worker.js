@@ -40,7 +40,6 @@ async function getSessionHistories(collarText, userPrompt, socketId) {
     sessionHistories[socketId].push([
       { role: "system", content: collarText },
       { role: "user", content: userPrompt },
-      { role: "assistant", content: "" },
     ]);
   }
 
@@ -79,7 +78,6 @@ async function handleMessage(userPrompt, socketId) {
       messages: [
         { role: "system", content: collarText },
         { role: "user", content: userPrompt },
-        { role: "assistant", content: content },
       ],
       temperature: 0.3,
       max_tokens: 512,
