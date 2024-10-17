@@ -6,7 +6,6 @@ const axios = require('axios');
 let sessionHistories = {}; // Initialize sessionHistories as an empty object
 let triggers;
 let collarText;
-let finalContent;
 
 async function checkTriggers(triggers) {
   if (!triggers) {
@@ -69,13 +68,9 @@ async function handleMessage(userPrompt, socketId) {
     let collar = await checkTriggers(triggers);
     collarText += collar;
 
-    if (!finalContent) {
-      sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
-      return sessionHistories[socketId];
-    } else {
-      sessionHistories[socketId] = await saveSessionHistories(finalContent, socketId);
-      return sessionHistories[socketId];
-    }
+    let finalContent = ''; // Declare finalContent at the beginning
+
+    sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
 
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', {
       model: "llama-3.1-8b-lexi-uncensored-v2",
@@ -88,7 +83,6 @@ async function handleMessage(userPrompt, socketId) {
     });
 
     let responseData = '';
-    let finalContent = '';
 
     response.data.on('data', (chunk) => {
       responseData += chunk.toString();
