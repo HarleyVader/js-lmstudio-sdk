@@ -141,13 +141,13 @@
             }, duration);
         }
         audio.addEventListener('ended', () => {
-            if (_textArray.length > 0) {
+            if ((_textArray.length > 0) && (audio.duration === 0)) {
                 _textArray.shift(); // Remove the first element from the array
             }
         });
 
         audio.addEventListener('loadedmetadata', async () => {
-            if (_textArray.length > 0) {
+            if ((_textArray.length > 0) && (audio.duration === 0)) {
                 const duration = audio.duration * 1000;
                 await new Promise(resolve => setTimeout(resolve, duration));
                 arrayPush(_audioArray, _textArray[0]);

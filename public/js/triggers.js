@@ -126,7 +126,7 @@ function flashTriggers(trigger) {
   container.appendChild(span);
 
 }
-
+/*
 function toggleTriggers() {
   let cunter = 0;
   setTimeout(() => {

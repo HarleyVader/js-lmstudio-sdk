@@ -33,7 +33,6 @@ async function do_tts(_audioArray) {
   audio.onloadedmetadata = function () {
     console.log("audio ", audio);
     console.log("audio.duration ", audio.duration);
-    duration = audio.duration * 1000;
     document.querySelector("#message").textContent = "Playing...";
     audio.play();
   };
