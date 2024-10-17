@@ -150,20 +150,39 @@ io.on("connection", (socket) => {
   });
 
   app.post('/vote/:index/:type', (req, res) => {
-    fs.readFile(path.join(__dirname, 'public', 'chatHistory.json'), (err, data) => {
-      if (err) throw err;
-      const chatHistory = JSON.parse(data);
+    const chatHistoryPath = path.join(__dirname, 'public', 'chatHistory.json');
+  
+    fs.readFile(chatHistoryPath, 'utf8', (err, data) => {
+      if (err) {
+        console.error('Error reading chat history:', err);
+        res.status(500).send('Error reading chat history');
+        return;
+      }
+  
+      let chatHistory;
+      try {
+        chatHistory = JSON.parse(data);
+      } catch (parseErr) {
+        console.error('Error parsing chat history JSON:', parseErr);
+        res.status(500).send('Error parsing chat history JSON');
+        return;
+      }
+  
       const index = req.params.index;
       const type = req.params.type;
-
+  
       if (type === 'up') {
         chatHistory[index].votes = (chatHistory[index].votes || 0) + 1;
       } else if (type === 'down') {
         chatHistory[index].votes = (chatHistory[index].votes || 0) - 1;
       }
-
-      fs.writeFile(path.join(__dirname, 'public', 'chatHistory.json'), JSON.stringify(chatHistory), (err) => {
-        if (err) throw err;
+  
+      fs.writeFile(chatHistoryPath, JSON.stringify(chatHistory), (err) => {
+        if (err) {
+          console.error('Error saving chat history:', err);
+          res.status(500).send('Error saving chat history');
+          return;
+        }
         res.json({ votes: chatHistory[index].votes });
       });
     });
