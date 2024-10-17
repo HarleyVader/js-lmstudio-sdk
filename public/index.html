@@ -144,8 +144,7 @@
         });
 
         audio.addEventListener('play', () => {
-            const currentText = _textArray[0]; // Assuming the first element is the current text
-            arrayPush(_audioArray, currentText);
+            
             const duration = audio.duration * 1000; // Convert to milliseconds
             flashTrigger(currentText, duration);
         });
@@ -153,6 +152,8 @@
         audio.addEventListener('loadedmetadata', async () => {
             const duration = audio.duration * 1000; // Convert to milliseconds
             await new Promise(resolve => setTimeout(resolve, duration));
+
+            arrayPush(_audioArray, _textArray[0]);
 
             const messageElement = document.createElement('p');
             messageElement.textContent = _textArray[0];
