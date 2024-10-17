@@ -68,7 +68,6 @@ async function handleMessage(userPrompt, socketId) {
     let collar = await checkTriggers(triggers);
     collarText += collar;
 
-
     if (finalContent) {
       sessionHistories[socketId] = await saveSessionHistories(finalContent, socketId);
     } else {
@@ -112,7 +111,7 @@ async function handleMessage(userPrompt, socketId) {
 
     response.data.on('end', async () => {
       parentPort.postMessage({ 'response': finalContent });
-      sessionHistories[socketId] = await saveSessionHistories(collarText, userPrompt, finalContent, socketId);
+      sessionHistories[socketId] = await saveSessionHistories(finalContent, socketId);
     });
 
   } catch (error) {
@@ -127,7 +126,8 @@ parentPort.on("message", async (msg) => {
   } else if (msg.type === "message") {
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "disconnect") {
-    await sendSessionHistories(sessionHistories[msg.socketId], msg.socketId);
+    const session = sessionHistories[msg.socketId]; // Define session
+    await sendSessionHistories(session, msg.socketId);
   }
 });
 
