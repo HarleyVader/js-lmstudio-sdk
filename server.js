@@ -166,8 +166,6 @@ io.on("connection", (socket) => {
     if (msg.type === "log") {
       console.log(msg.data, msg.socketId);
     } else if (msg.type === "messageHistory") {
-      console.log('saveSessionHistories: ', saveSessionHistories);
-
       saveSessionHistories(msg.data, msg.socketId);
       terminator(msg.socketId);
     } else if (msg.type === 'response') {
