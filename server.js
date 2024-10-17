@@ -69,6 +69,9 @@ async function saveSessionHistories(data, socketId) {
     const fileName = `${socketId}.json`;
     const filePath = path.join(__dirname, "history", fileName);
 
+    // Log the session history
+    console.log(chalk.blue(`Session history for socket ID ${socketId}:`), jsonHistory);
+
     fs.writeFile(filePath, jsonHistory, (error) => {
       if (error) {
         console.error(chalk.red(`Error saving message history for socket ID: ${socketId}`), error);
