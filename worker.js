@@ -80,6 +80,8 @@ async function handleMessage(userPrompt, socketId) {
       stream: true,
     };
 
+    parentPort.postMessage({ 'log': `Request data: ${JSON.stringify(requestData)}` });  // Log request data
+
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', requestData, {
       responseType: 'stream',
     });
@@ -124,9 +126,8 @@ parentPort.on("message", async (msg) => {
     triggers = msg.triggers;
   } else if (msg.type === "message") {
     await handleMessage(msg.data, msg.socketId);
-  } else if (msg.type === "disconnect") {
-    const session = sessionHistories[msg.socketId]; // Define session
-    await sendSessionHistories(session, msg.socketId);
+  } else if (msg.type === "disconnect") { 
+    await sendSessionHistories(sessionHistories[msg.socketId], msg.socketId);
   }
 });
 
@@ -138,11 +139,11 @@ async function handleResponse(response, socketId) {
   });
 }
 
-async function sendSessionHistories(session, socketId) {
-  if (session && session.length !== 0) {
+async function sendSessionHistories(sessionHistories, socketId) {
+  if (sessionHistories && sessionHistories[socketId].length !== 0) {
     parentPort.postMessage({
       type: "messageHistory",
-      data: session,
+      data: sessionHistories[msg.socketId],
       socketId: socketId,
     });
     parentPort.postMessage({ type: "log", data: session, socketId: socketId });
