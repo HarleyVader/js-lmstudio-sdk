@@ -6,6 +6,7 @@ const axios = require('axios');
 let sessionHistories = {}; // Initialize sessionHistories as an empty object
 let triggers;
 let collarText;
+let finalContent;
 
 async function checkTriggers(triggers) {
   if (!triggers) {
@@ -68,10 +69,12 @@ async function handleMessage(userPrompt, socketId) {
     let collar = await checkTriggers(triggers);
     collarText += collar;
 
-    if (finalContent) {
-      sessionHistories[socketId] = await saveSessionHistories(finalContent, socketId);
-    } else {
+    if (!finalContent) {
       sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
+      return sessionHistories[socketId];
+    } else {
+      sessionHistories[socketId] = await saveSessionHistories(finalContent, socketId);
+      return sessionHistories[socketId];
     }
 
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', {
