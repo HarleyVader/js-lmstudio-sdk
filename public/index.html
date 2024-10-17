@@ -114,6 +114,7 @@
                 
                 console.log('Text array:', _textArray);
                 if (state) {
+                    arrayPush(_audioArray, _textArray[0]);
                     do_tts(_audioArray);
                 }
                 currentMessage = '';
