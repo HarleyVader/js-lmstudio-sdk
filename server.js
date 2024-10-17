@@ -10,32 +10,18 @@ const cors = require('cors');
 const axios = require("axios");
 const chalk = require('chalk');
 
-bambisleepChalk = chalk;
-
-// Define the project's color scheme
-const colors = {
-  primary: 'rgba(17, 39, 39, 1)',
-  primaryAlt: 'rgba(33, 105, 105, 1)',
-  secondary: 'rgba(31, 1, 23, 1)',
-  tertiary: 'rgba(242, 242, 242, 1)',
-  button: 'rgba(212, 4, 108, 1)',
-  buttonAlt: 'rgba(17, 0, 0, 1)',
-  secondaryAlt: 'rgba(1, 124, 138, 1)'
-};
-
-// Create custom Chalk styles
-bambisleepChalk = {
-  primary: chalk.hex(colors.primary),
-  primaryAlt: chalk.hex(colors.primaryAlt),
-  secondary: chalk.hex(colors.secondary),
-  tertiary: chalk.hex(colors.tertiary),
-  button: chalk.hex(colors.button),
-  buttonAlt: chalk.hex(colors.buttonAlt),
-  secondaryAlt: chalk.hex(colors.secondaryAlt),
-  error: chalk.hex(colors.button).bold,
-  success: chalk.hex(colors.primaryAlt).bold,
-  info: chalk.hex(colors.secondaryAlt).bold,
-  warning: chalk.hex(colors.primary).bold
+const bambisleepChalk = {
+  primary: chalk.hex('rgba(17, 39, 39, 1)'),
+  primaryAlt: chalk.hex('rgba(33, 105, 105, 1)'),
+  secondary: chalk.hex('rgba(31, 1, 23, 1)'),
+  tertiary: chalk.hex('rgba(242, 242, 242, 1)'),
+  button: chalk.hex('rgba(212, 4, 108, 1)'),
+  buttonAlt: chalk.hex('rgba(17, 0, 0, 1)'),
+  secondaryAlt: chalk.hex('rgba(1, 124, 138, 1)'),
+  error: chalk.hex('rgba(212, 4, 108, 1)').bold,
+  success: chalk.hex('rgba(33, 105, 105, 1)').bold,
+  info: chalk.hex('rgba(1, 124, 138, 1)').bold,
+  warning: chalk.hex('rgba(17, 39, 39, 1)').bold
 };
 
 const PORT = 6969;
@@ -92,40 +78,65 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-const chatHistoryPath = path.join(__dirname, 'public/history', 'chatHistory.json');
+const chatHistoryPath = path.join(__dirname, 'history', 'chatHistory.json');
+const chatHistoryDir = path.dirname(chatHistoryPath);
+
+// Ensure the directory exists
+if (!fs.existsSync(chatHistoryDir)) {
+  fs.mkdirSync(chatHistoryDir, { recursive: true });
+}
+
+// Ensure the file exists
 if (!fs.existsSync(chatHistoryPath)) {
   fs.writeFileSync(chatHistoryPath, JSON.stringify([]), 'utf8');
 }
 
 // Function to save session histories
 async function saveSessionHistories(socketId) {
-  if (sessionHistories && sessionHistories[socketId]) {
-    const Histories = Array.from(sessionHistories[socketId]);
-    // Proceed with saving Histories to a JSON file
-    const jsonHistory = JSON.stringify(Histories);
-    const fileName = `${socketId}.json`;
-    const filePath = path.join(__dirname, "/public/history", fileName);
+  const worker = workers.get(socketId);
+  if (!worker) {
+    return;
+  }
 
-    // Log the session history
-    console.log(chalk.blue(`Session history for socket ID ${socketId}:`), jsonHistory);
+  const sessionHistories = worker.sessionHistories;
+  if (!sessionHistories) {
+    return;
+  }
 
-    fs.writeFile(filePath, jsonHistory, (error) => {
-      if (error) {
-        console.error(chalk.red(`Error saving message history for socket ID: ${socketId}`), error);
-      } else {
-        console.log(chalk.green(`Message history saved for socket ID: ${socketId}`));
+  fs.readFile(chatHistoryPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error(bambisleepChalk.error('Error reading chat history:'), err);
+      return;
+    }
+
+    let chatHistory;
+    try {
+      chatHistory = data ? JSON.parse(data) : [];
+    } catch (parseErr) {
+      console.error(bambisleepChalk.error('Error parsing chat history JSON:'), parseErr);
+      chatHistory = [];
+    }
+
+    const sessionHistory = sessionHistories[socketId];
+    if (!sessionHistory) {
+      return;
+    }
+
+    const finalContent = sessionHistory.map((item) => `${item.role}: ${item.content}`).join('\n');
+    chatHistory.push({ content: finalContent });
+    fs.writeFile(chatHistoryPath, JSON.stringify(chatHistory), (err) => {
+      if (err) {
+        console.error(bambisleepChalk.error('Error saving chat history:'), err);
       }
     });
-  } else {
-    console.error(chalk.red(`No valid session history found for socket ID: ${socketId}`));
-  }
+  });
 }
 
 // Function to update chat history
 function updateChatHistory(index, type, callback) {
   fs.readFile(chatHistoryPath, 'utf8', (err, data) => {
     if (err) {
-      console.error(chalk.red('Error reading chat history:'), err);
+      console.error(bambisleepChalk.error('Error reading chat history:'), err);
       return callback(err);
     }
 
@@ -133,7 +144,7 @@ function updateChatHistory(index, type, callback) {
     try {
       chatHistory = data ? JSON.parse(data) : [];
     } catch (parseErr) {
-      console.error(chalk.red('Error parsing chat history JSON:'), parseErr);
+      console.error(bambisleepChalk.error('Error parsing chat history JSON:'), parseErr);
       chatHistory = [];
     }
 
@@ -145,7 +156,7 @@ function updateChatHistory(index, type, callback) {
 
     fs.writeFile(chatHistoryPath, JSON.stringify(chatHistory), (err) => {
       if (err) {
-        console.error(chalk.red('Error saving chat history:'), err);
+        console.error(bambisleepChalk.error('Error saving chat history:'), err);
         return callback(err);
       }
       callback(null, chatHistory[index].votes);
@@ -163,7 +174,7 @@ io.on("connection", (socket) => {
 
   // Store the socket object in the shared context
   socketStore.set(socket.id, socket);
-  console.log(chalk.blue(`Client connected: ${socket.id} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`));
+  console.log(bambisleepChalk.info(`Client connected: ${socket.id} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`));
 
   // Ensure socket.request.app is defined
   socket.request.app = app;
@@ -176,7 +187,7 @@ io.on("connection", (socket) => {
   app.get('/history', (req, res) => {
     fs.readFile(chatHistoryPath, 'utf8', (err, data) => {
       if (err) {
-        console.error(chalk.red('Error reading chat history:'), err);
+        console.error(bambisleepChalk.error('Error reading chat history:'), err);
         res.status(500).send('Error reading chat history');
         return;
       }
@@ -185,7 +196,7 @@ io.on("connection", (socket) => {
       try {
         chatHistory = data ? JSON.parse(data) : [];
       } catch (parseErr) {
-        console.error(chalk.red('Error parsing chat history JSON:'), parseErr);
+        console.error(bambisleepChalk.error('Error parsing chat history JSON:'), parseErr);
         chatHistory = [];
       }
 
@@ -230,9 +241,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("message", (message) => {
-    //console.log(chalk.yellow(`Message from ${socket.id}: ${message}`));
     const filteredMessage = filter(message);
-    //console.log(chalk.yellow(`Filtered message: ${filteredMessage}`));
     worker.postMessage({
       type: "message",
       data: filteredMessage,
@@ -242,29 +251,25 @@ io.on("connection", (socket) => {
   });
 
   socket.on("triggers", (triggers) => {
-    //console.log(chalk.magenta(`Triggers from ${socket.id}: ${triggers}`));
     worker.postMessage({ type: "triggers", triggers });
   });
 
-  socket.on("disconnect", async (socket) => {
-   await worker.postMessage({ type: "disconnect", socketId: socket.id });
-   terminator(msg.socketId);
+  socket.on("disconnect", async () => {
+    await worker.postMessage({ type: "disconnect", socketId: socket.id });
+    terminator(socket.id);
   });
 
   worker.on("messageHistory", async (msg) => {
-    console.log(chalk.cyan(`Message from worker: ${JSON.stringify(msg, getCircularReplacer())}`));
+    console.log(bambisleepChalk.info(`Message from worker: ${JSON.stringify(msg, getCircularReplacer())}`));
     saveSessionHistories(msg.data, msg.socketId);
   });
 
   worker.on("message", async (msg) => {
-    
     if (msg.type === "log") {
-      console.log(chalk.magenta(msg.data, msg.socketId));
+      console.log(bambisleepChalk.info(msg.data, msg.socketId));
     } else if (msg.type === 'response') {
       const responseData = typeof msg.data === 'object' ? JSON.stringify(msg.data) : msg.data;
-      //console.log(chalk.cyan(`Response from worker: ${responseData}`));
       io.to(msg.socketId).emit("response", responseData);
-      //console.log(chalk.cyan(`Response to ${msg.socketId}: ${responseData}`));
     }
   });
 
@@ -276,32 +281,31 @@ io.on("connection", (socket) => {
     }
     workers.delete(socketId);
     socketStore.delete(socketId);
-    console.log(chalk.red(`Client disconnected: ${socketId} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`));
+    console.log(bambisleepChalk.error(`Client disconnected: ${socketId} clients: ${userSessions.size} sockets: ${socketStore.size} workers: ${workers.size}`));
   }
 });
 
 rl.on("line", async (line) => {
   if (line === "update") {
-    console.log(chalk.green("Update mode"));
+    console.log(bambisleepChalk.success("Update mode"));
     io.emit("update");
   } else if (line === "normal") {
     io.emit("update");
-    console.log(chalk.green("Normal mode"));
+    console.log(bambisleepChalk.success("Normal mode"));
   } else {
-    console.log(chalk.red("Invalid command! update or normal"));
+    console.log(bambisleepChalk.error("Invalid command! update or normal"));
   }
 });
 
 app.use("/api/tts", (req, res) => {
   const text = req.query.text;
-  // const speaker_idx = 'jenny/jenny';
 
   if (typeof text !== "string") {
     return res.status(400).send("Invalid input: text must be a string");
   } else {
     axios
       .get(`http://192.168.0.178:5002/api/tts`, {
-        params: { text, /* speaker_idx */ },
+        params: { text },
         responseType: 'arraybuffer'
       })
       .then((response) => {
@@ -310,8 +314,8 @@ app.use("/api/tts", (req, res) => {
         res.send(response.data);
       })
       .catch((error) => {
-        console.error(chalk.red("Error fetching TTS audio:"), error);
-        console.error(chalk.red("Error details:"), error.response ? error.response.data : error.message);
+        console.error(bambisleepChalk.error("Error fetching TTS audio:"), error);
+        console.error(bambisleepChalk.error("Error details:"), error.response ? error.response.data : error.message);
         res.status(500).send("Error fetching TTS audio");
       });
   }
@@ -331,7 +335,7 @@ function getServerAddress() {
 
 // Start the server
 server.listen(PORT, () => {
-  console.log(chalk.green(`Server is running on http://${getServerAddress()}:${PORT}`));
+  console.log(bambisleepChalk.success(`Server is running on http://${getServerAddress()}:${PORT}`));
 });
 /* removed /images due to lack of images to show
 socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
