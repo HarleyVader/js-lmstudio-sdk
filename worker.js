@@ -2,6 +2,7 @@ const { parentPort } = require("worker_threads");
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const { type } = require("os");
 
 let sessionHistories = {}; // Initialize sessionHistories as an empty object
 let triggers;
@@ -130,8 +131,9 @@ parentPort.on("message", async (msg) => {
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "disconnect") {
     await handleDisconnect(msg.socketId);
+    parentPort.postMessage({ 'log': `Session Histories: ${JSON.stringify(sessionHistories)}` });
   }
-  parentPort.postMessage({ 'log': `Session Histories: ${JSON.stringify(sessionHistories)}` });
+  
 });
 
 async function handleResponse(response, socketId) {
@@ -143,11 +145,14 @@ async function handleResponse(response, socketId) {
 }
 
 async function handleDisconnect(socketId) {
+  
   if (sessionHistories[socketId]) {
     parentPort.postMessage({
       type: "messageHistory",
       data: sessionHistories[socketId],
       socketId: socketId,
     });
+  } else {
+    parentPort.postMessage("log", sessionHistories, socketId);
   }
 }
