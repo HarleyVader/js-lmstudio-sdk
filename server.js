@@ -10,7 +10,7 @@ const cors = require('cors');
 const axios = require("axios");
 const chalk = require('chalk');
 
-const bambisleepChalk = new chalk({level: 3});
+bambisleepChalk = chalk;
 
 // Define the project's color scheme
 const colors = {
