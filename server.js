@@ -12,19 +12,19 @@ const axios = require("axios");
 
 const PORT = 6969;
 const WSS_PORT = 4848;
-
+/*
 const options = {
   key: fs.readFileSync(path.join(os.homedir(), 'conf/web/bambisleep.chat/ssl/bambisleep.chat.key')),
   cert: fs.readFileSync(path.join(os.homedir(), 'conf/web/bambisleep.chat/ssl/bambisleep.chat.pem'))
 };
-
+*/
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-
+/*
 const httpsServer = https.createServer(options, app);
 const wss = new Server(httpsServer);
-
+*/
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -170,7 +170,9 @@ io.on("connection", (socket) => {
     if (msg.type === "log") {
       console.log(msg.data, msg.socketId);
     } else if (msg.type === "messageHistory") {
-      await saveSessionHistories(msg.data, msg.socketId);
+      console.log('saveSessionHistories: ', saveSessionHistories);
+      
+      saveSessionHistories(msg.data, msg.socketId);
       terminator(msg.socketId);
     } else if (msg.type === 'response') {
       const responseData = typeof msg.data === 'object' ? JSON.stringify(msg.data) : msg.data;
@@ -241,11 +243,11 @@ function getServerAddress() {
   }
   return '127.0.0.1';
 }
-
+/*
 wss.listen(WSS_PORT, () => {
   console.log(`Server is running on https://${getServerAddress()}:${WSS_PORT}`);
 });
-
+*/
 // Start the server
 server.listen(PORT, () => {
   console.log(`Server is running on http://${getServerAddress()}:${PORT}`);
