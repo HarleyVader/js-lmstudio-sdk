@@ -200,7 +200,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("triggers", (triggers) => {
-    console.log(chalk.magenta(`Triggers from ${socket.id}: ${triggers}`));
+    //console.log(chalk.magenta(`Triggers from ${socket.id}: ${triggers}`));
     worker.postMessage({ type: "triggers", triggers });
   });
 
