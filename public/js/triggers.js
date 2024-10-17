@@ -13,7 +13,7 @@ const listOfTriggers = [
   "PRIMPED",
   "PAMPERED",
   "SNAP & FORGET",
-  "GIGGLETIME",
+  "GIGGLE TIME",
   "BLONDE MOMENT",
   "BAMBI DOES AS SHE IS TOLD",
   "DROP FOR COCK",
