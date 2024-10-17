@@ -10,6 +10,34 @@ const cors = require('cors');
 const axios = require("axios");
 const chalk = require('chalk');
 
+const bambisleepChalk = new chalk({level: 3});
+
+// Define the project's color scheme
+const colors = {
+  primary: 'rgba(17, 39, 39, 1)',
+  primaryAlt: 'rgba(33, 105, 105, 1)',
+  secondary: 'rgba(31, 1, 23, 1)',
+  tertiary: 'rgba(242, 242, 242, 1)',
+  button: 'rgba(212, 4, 108, 1)',
+  buttonAlt: 'rgba(17, 0, 0, 1)',
+  secondaryAlt: 'rgba(1, 124, 138, 1)'
+};
+
+// Create custom Chalk styles
+bambisleepChalk = {
+  primary: chalk.hex(colors.primary),
+  primaryAlt: chalk.hex(colors.primaryAlt),
+  secondary: chalk.hex(colors.secondary),
+  tertiary: chalk.hex(colors.tertiary),
+  button: chalk.hex(colors.button),
+  buttonAlt: chalk.hex(colors.buttonAlt),
+  secondaryAlt: chalk.hex(colors.secondaryAlt),
+  error: chalk.hex(colors.button).bold,
+  success: chalk.hex(colors.primaryAlt).bold,
+  info: chalk.hex(colors.secondaryAlt).bold,
+  warning: chalk.hex(colors.primary).bold
+};
+
 const PORT = 6969;
 
 const app = express();
@@ -22,6 +50,19 @@ const rl = readline.createInterface({
 });
 
 rl.setMaxListeners(20);
+
+function getCircularReplacer() {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === "object" && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+}
 
 const filteredWords = require("./fw.json");
 function filter(message) {
@@ -57,17 +98,13 @@ if (!fs.existsSync(chatHistoryPath)) {
 }
 
 // Function to save session histories
-async function saveSessionHistories(data, socketId) {
-  let sessionHistories = data;
-
-  if (!sessionHistories) {
-    console.error(chalk.red(`No valid session history found for socket ID: ${socketId}`));
-    return;
-  } else if (sessionHistories.length !== 0) {
+async function saveSessionHistories(socketId) {
+  if (sessionHistories && sessionHistories[socketId]) {
     const Histories = Array.from(sessionHistories[socketId]);
+    // Proceed with saving Histories to a JSON file
     const jsonHistory = JSON.stringify(Histories);
     const fileName = `${socketId}.json`;
-    const filePath = path.join(__dirname, "history", fileName);
+    const filePath = path.join(__dirname, "/public/history", fileName);
 
     // Log the session history
     console.log(chalk.blue(`Session history for socket ID ${socketId}:`), jsonHistory);
@@ -82,7 +119,6 @@ async function saveSessionHistories(data, socketId) {
   } else {
     console.error(chalk.red(`No valid session history found for socket ID: ${socketId}`));
   }
-
 }
 
 // Function to update chat history
@@ -210,32 +246,20 @@ io.on("connection", (socket) => {
     worker.postMessage({ type: "triggers", triggers });
   });
 
-  socket.on("disconnect", async () => {
-    worker.postMessage({ type: "disconnect", socketId: socket.id });
+  socket.on("disconnect", async (socket) => {
+   await worker.postMessage({ type: "disconnect", socketId: socket.id });
+   terminator(msg.socketId);
+  });
+
+  worker.on("messageHistory", async (msg) => {
+    console.log(chalk.cyan(`Message from worker: ${JSON.stringify(msg, getCircularReplacer())}`));
+    saveSessionHistories(msg.data, msg.socketId);
   });
 
   worker.on("message", async (msg) => {
-    // Define a custom replacer function to handle circular references
-    function getCircularReplacer() {
-      const seen = new WeakSet();
-      return (key, value) => {
-        if (typeof value === "object" && value !== null) {
-          if (seen.has(value)) {
-            return;
-          }
-          seen.add(value);
-        }
-        return value;
-      };
-    }
-
-    //console.log(chalk.cyan(`Message from worker: ${JSON.stringify(msg, getCircularReplacer())}`));
+    
     if (msg.type === "log") {
-      console.log(chalk.cyan(msg.data, msg.socketId));
-    } else if (msg.type === "messageHistory") {
-      console.log(chalk.cyan(`Message from worker: ${JSON.stringify(msg.data, getCircularReplacer())}`));
-      saveSessionHistories(msg.data, msg.socketId);
-      terminator(msg.socketId);
+      console.log(chalk.magenta(msg.data, msg.socketId));
     } else if (msg.type === 'response') {
       const responseData = typeof msg.data === 'object' ? JSON.stringify(msg.data) : msg.data;
       //console.log(chalk.cyan(`Response from worker: ${responseData}`));
