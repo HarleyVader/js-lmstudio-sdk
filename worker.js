@@ -128,7 +128,7 @@ parentPort.on("message", async (msg) => {
   } else if (msg.type === "message") {
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "disconnect") {
-    await sendSessionHistories(sessionHistories[msg.socketId]);
+    await sendSessionHistories(sessionHistories[msg.socketId], msg.socketId);
   }
 });
 
@@ -140,7 +140,7 @@ async function handleResponse(response, socketId) {
   });
 }
 
-async function sendSessionHistories(sessionHistory) {
+async function sendSessionHistories(sessionHistory, socketId) {
   if (sessionHistory && Array.isArray(sessionHistory) && sessionHistory.length !== 0) {
     parentPort.postMessage({
       type: "messageHistory",
