@@ -59,17 +59,13 @@ async function saveSessionHistories(data, socketId) {
     const fileName = `${socketId}.json`;
     const filePath = path.join(__dirname, "history", fileName);
 
-    await fs
-      .writeFile(filePath, jsonHistory)
-      .then(() => {
+    fs.writeFile(filePath, jsonHistory, (error) => {
+      if (error) {
+        console.error(`Error saving message history for socket ID: ${socketId}`, error);
+      } else {
         console.log(`Message history saved for socket ID: ${socketId}`);
-      })
-      .catch((error) => {
-        console.error(
-          `Error saving message history for socket ID: ${socketId}`,
-          error
-        );
-      });
+      }
+    });
   }
 }
 let userSessions = new Set();
