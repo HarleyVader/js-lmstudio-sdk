@@ -114,9 +114,7 @@
 
                 console.log('Text array:', _textArray);
                 if (state) {
-                    arrayPush(_audioArray, _textArray[0]);
-                    do_tts(_audioArray);
-                    flashTrigger(_textArray[0], duration);
+                    handleAudioEnded()
                 }
                 currentMessage = '';
             }
@@ -140,14 +138,15 @@
                 container.innerHTML = "";
             }, duration);
         }
-        audio.addEventListener('ended', () => {
+        function handleAudioEnded() {
             if (_textArray.length > 0 || audio.currentTime === 0) {
-                text = _textArray.shift();
+            text = _textArray.shift();
             }
             arrayPush(_audioArray, text);
             do_tts(_audioArray);
-        });
-        audio.addEventListener('play', () => {
+        }
+
+        function handleAudioPlay() {
             console.log('Audio is playing');
             const duration = audio.duration * 1000;
             new Promise(resolve => setTimeout(resolve, duration));
@@ -158,19 +157,16 @@
             sendMessageToDiscord(socket.id + " bambi: " + messageElement.textContent);
 
             if (response.firstChild) {
-                response.insertBefore(messageElement, response.firstChild);
+            response.insertBefore(messageElement, response.firstChild);
             } else {
-                response.appendChild(messageElement);
+            response.appendChild(messageElement);
             }
-        });
+        }
 
-        audio.addEventListener('loadedmetadata', () => {
-            
-            
-            
-           
-            
-        });
+        audio.addEventListener('ended', handleAudioEnded);
+        audio.addEventListener('play', handleAudioPlay);
+
+        
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
