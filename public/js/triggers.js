@@ -124,7 +124,7 @@ function flashTriggers(trigger) {
   span.style.color = "pink";
   span.style.marginRight = "0";
   container.appendChild(span);
-  
+
 }
 
 function toggleTriggers() {
@@ -138,7 +138,8 @@ function toggleTriggers() {
   }, 350);
   cunter = 0;
 }
-
+/*
 setInterval(() => {
   toggleTriggers();
 }, 450);
+*/
