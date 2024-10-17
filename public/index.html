@@ -141,6 +141,9 @@
             }, duration);
         }
         audio.addEventListener('ended', () => {
+            if (_textArray.length >= 0) {
+                text = _textArray.shift();
+            }
             do_tts(_audioArray);
         });
         audio.addEventListener('play', () => {
@@ -149,9 +152,7 @@
         });
 
         audio.addEventListener('loadedmetadata', () => {
-            if (_textArray.length > 0) {
-                text = _textArray.shift();
-            }
+            
             const duration = audio.duration * 1100;
             new Promise(resolve => setTimeout(resolve, duration));
             arrayPush(_audioArray, text);
