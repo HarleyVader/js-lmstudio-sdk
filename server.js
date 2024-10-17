@@ -77,7 +77,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-const chatHistoryPath = path.join(__dirname, 'history', 'chatHistory.json');
+const chatHistoryPath = path.join(__dirname, 'history');
 const chatHistoryDir = path.dirname(chatHistoryPath);
 
 // Ensure the directory exists
@@ -88,6 +88,12 @@ if (!fs.existsSync(chatHistoryDir)) {
 // Ensure the file exists
 if (!fs.existsSync(chatHistoryPath)) {
   fs.writeFileSync(chatHistoryPath, JSON.stringify([]), 'utf8');
+}
+
+// Ensure the directory for session histories exists
+const sessionHistoriesDir = path.join(__dirname, 'history');
+if (!fs.existsSync(sessionHistoriesDir)) {
+  fs.mkdirSync(sessionHistoriesDir, { recursive: true });
 }
 
 // Function to save session histories
@@ -102,32 +108,19 @@ async function saveSessionHistories(socketId) {
     return;
   }
 
-  fs.readFile(chatHistoryPath, 'utf8', (err, data) => {
+  const sessionHistory = sessionHistories[socketId];
+  if (!sessionHistory) {
+    return;
+  }
+
+  const finalContent = sessionHistory.map((item) => `${item.role}: ${item.content}`).join('\n');
+  const sessionHistoryPath = path.join(sessionHistoriesDir, `${socketId}.json`);
+
+  fs.writeFile(sessionHistoryPath, JSON.stringify({ content: finalContent }), (err) => {
+    console.log(bambisleepChalk.info(`Session history saved for ${socketId}`));
     if (err) {
-      console.error(bambisleepChalk.error('Error reading chat history:'), err);
-      return;
+      console.error(bambisleepChalk.error('Error saving session history:'), err);
     }
-
-    let chatHistory;
-    try {
-      chatHistory = data ? JSON.parse(data) : [];
-    } catch (parseErr) {
-      console.error(bambisleepChalk.error('Error parsing chat history JSON:'), parseErr);
-      chatHistory = [];
-    }
-
-    const sessionHistory = sessionHistories[socketId];
-    if (!sessionHistory) {
-      return;
-    }
-
-    const finalContent = sessionHistory.map((item) => `${item.role}: ${item.content}`).join('\n');
-    chatHistory.push({ content: finalContent });
-    fs.writeFile(chatHistoryPath, JSON.stringify(chatHistory), (err) => {
-      if (err) {
-        console.error(bambisleepChalk.error('Error saving chat history:'), err);
-      }
-    });
   });
 }
 
@@ -295,7 +288,10 @@ rl.on("line", async (line) => {
   } else if (line === "normal") {
     io.emit("update");
     console.log(bambisleepChalk.success("Normal mode"));
-  } else {
+  } else if (line === "save") {
+    saveSessionHistories(Worker.socketId); 
+    process.exit(0);
+} else {
     console.log(bambisleepChalk.error("Invalid command! update or normal"));
   }
 });
