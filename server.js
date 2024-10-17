@@ -290,7 +290,7 @@ rl.on("line", async (line) => {
     console.log(bambisleepChalk.success("Normal mode"));
   } else if (line === "save") {
     saveSessionHistories(Worker.socketId); 
-    process.exit(0);
+    console.log(bambisleepChalk.success("Session history saved  "));
 } else {
     console.log(bambisleepChalk.error("Invalid command! update or normal"));
   }
