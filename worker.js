@@ -74,7 +74,7 @@ async function handleMessage(userPrompt, socketId) {
     sessionHistories = await getSessionHistories(collarText, userPrompt, socketId);
 
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', {
-      model: "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2-GGUF/Llama-3.1-8B-Lexi-Uncensored_V2_Q8.gguf",
+      model: "Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2-GGUF",
       messages: [
         { role: "system", content: collarText },
         { role: "user", content: userPrompt },
