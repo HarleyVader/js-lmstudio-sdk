@@ -80,9 +80,10 @@ async function saveSessionHistories(finalContent, socketId) {
 async function getLoadedModels() {
   const response = await axios.get('http://192.168.0.178:1234/v1/models');
   console.info(bambisleepChalk.info('Model loading response:'), response.data);
-  const modelIds = response.map(data => data.id);
-  parentPort.postMessage({ 'modelIds': modelIds });
-  return modelIds;
+  const modelIds = response.data.models.map(model => model.id);
+  const firstModelId = modelIds.length > 0 ? modelIds[0] : null; // Assign the first model ID to a variable
+  console.info(bambisleepChalk.info('First model ID:'), firstModelId);
+  return firstModelId;
 }
 
 async function getMessages(socketId) {
@@ -101,16 +102,14 @@ async function handleMessage(userPrompt, socketId) {
 
     sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
 
-    const modelIds = await getLoadedModels(); // Await the model loading
-    if (modelIds.length > 0) {
-    model = populateModel(modelIds[0]); // Use the first model id
-    } else {
+    const modelId = await getLoadedModels(); // Await the model loading and get the first model ID
+    if (!modelId) {
       console.error(bambisleepChalk.error('Model loading failed'));
       return;
     }
 
     const requestData = {
-      model: model, // Use the model id
+      model: modelId, // Use the first model ID
       messages: await getMessages(socketId), // Await the messages
       temperature: 0.7,
       max_tokens: 2048,
@@ -123,7 +122,7 @@ async function handleMessage(userPrompt, socketId) {
 
     let responseData = '';
 
-    response.data.on('data', (chunk) => {
+    response.on('data', (chunk) => {
       responseData += chunk.toString();
 
       const lines = responseData.split('\n');
@@ -145,10 +144,10 @@ async function handleMessage(userPrompt, socketId) {
       }
     });
 
-    response.data.on('end', async () => {
+    response.on('end', async () => {
       parentPort.postMessage({ 'response': finalContent });
       session = await saveSessionHistories(finalContent, socketId);
-      await sendSessionHistories(msg.socketId);
+      await sendSessionHistories(socketId);
     });
 
   } catch (error) {
