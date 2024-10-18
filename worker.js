@@ -156,7 +156,7 @@ async function handleMessage(userPrompt, socketId) {
     response.data.on('end', async () => {
       parentPort.postMessage({ 'response': finalContent });
       session = await saveSessionHistories(finalContent, socketId);
-      await sendSessionHistories(session, msg.socketId);
+      await sendSessionHistories(msg.socketId);
     });
 
   } catch (error) {
@@ -182,15 +182,14 @@ async function handleResponse(response, socketId) {
   });
 }
 
-async function sendSessionHistories(sessionHistory, socketId) {
-  if (sessionHistory && Array.isArray(sessionHistory) && sessionHistory.length !== 0) {
+async function sendSessionHistories(socketId) {
+  if (sessionHistories && sessionHistories[socketId]) {
     parentPort.postMessage({
       type: "messageHistory",
-      data: sessionHistory,
+      data: sessionHistories[socketId],
       socketId: socketId,
     });
-    parentPort.postMessage({ type: "log", data: "Session: " + JSON.stringify(sessionHistory), socketId: socketId });
-  } else {
-    parentPort.postMessage({ type: "log", data: "No session history to send", socketId: socketId });
+    console.log(bambisleepChalk.info(`Session histories sent to client: ${socketId}`));
+    
   }
 }
