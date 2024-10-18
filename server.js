@@ -82,34 +82,6 @@ if (!fs.existsSync(chatHistoryPath)) {
   fs.writeFileSync(chatHistoryPath, JSON.stringify([]), 'utf8');
 }
 
-let sessionHistories = {};
-
-async function saveSessionHistories(data, socketId) {
-  sessionHistories[socketId] = data;
-
-  if (!sessionHistories[socketId]) {
-    console.error(`No valid session history found for socket ID: ${socketId}`);
-    return;
-  } else if (sessionHistories[socketId]) {
-    const Histories = Array.from(sessionHistories[socketId]);
-    const jsonHistory = JSON.stringify(Histories);
-    const fileName = `${socketId}.json`;
-    const filePath = path.join(__dirname, "history", fileName);
-
-    await fs
-      .writeFile(filePath, jsonHistory)
-      .then(() => {
-        console.log(`Message history saved for socket ID: ${socketId}`);
-      })
-      .catch((error) => {
-        console.error(
-          `Error saving message history for socket ID: ${socketId}`,
-          error
-        );
-      });
-  }
-}
-
 // Function to update chat history
 function updateChatHistory(index, type, callback) {
   fs.readFile(chatHistoryPath, 'utf8', (err, data) => {
@@ -237,18 +209,12 @@ io.on("connection", (socket) => {
     //terminator(socket.id);
   });
 
-  worker.on('info', (info) => {
-    console.info(bambisleepChalk.info('Worker error:'), err);
+  worker.on('info', () => {
+    console.info(bambisleepChalk.info('Worker error:'), info);
   });
 
   worker.on('error', (err) => {
     console.error(bambisleepChalk.error('Worker error:'), err);
-  });
-
-  worker.on("messageHistory", async (msg) => {
-    console.log(bambisleepChalk.info(`Message from worker: ${JSON.stringify(msg, getCircularReplacer())}`));
-    saveSessionHistories(msg.data, msg.socketId);
-    terminator(socket.id);
   });
 
   worker.on("message", async (msg) => {

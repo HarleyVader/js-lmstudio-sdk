@@ -94,75 +94,73 @@ async function getMessages(socketId) {
 }
 
 async function handleMessage(userPrompt, socketId) {
-  
-    let collar = await checkTriggers(triggers);
-    collarText += collar;
 
-    let finalContent = ''; // Declare finalContent at the beginning
+  let collar = await checkTriggers(triggers);
+  collarText += collar;
 
-    sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
+  let finalContent = ''; // Declare finalContent at the beginning
 
-    const modelId = await getLoadedModels(); // Await the model loading and get the first model ID
-    if (!modelId) {
-      console.error(bambisleepChalk.error('Model loading failed'));
-      return;
-    }
+  sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
 
-    const requestData = {
-      model: modelId, // Use the first model ID
-      messages: await getMessages(socketId), // Await the messages
-      temperature: 0.7,
-      max_tokens: 2048,
-      stream: true,
-    };
+  const modelId = await getLoadedModels(); // Await the model loading and get the first model ID
+  if (!modelId) {
+    console.error(bambisleepChalk.error('Model loading failed'));
+    return;
+  }
 
-    const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', requestData, {
-      responseType: 'stream',
-    });
+  const requestData = {
+    model: modelId, // Use the first model ID
+    messages: await getMessages(socketId), // Await the messages
+    temperature: 0.7,
+    max_tokens: 2048,
+    stream: true,
+  };
 
-    let responseData = '';
+  const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', requestData, {
+    responseType: 'stream',
+  });
 
-    response.data.on('data', (chunk) => {
-      responseData += chunk.toString();
+  let responseData = '';
 
-      const lines = responseData.split('\n');
-      responseData = lines.pop();
+  response.data.on('data', (chunk) => {
+    responseData += chunk.toString();
 
-      for (const line of lines) {
-        if (line.trim() === 'data: [DONE]') {
-          continue;
-        }
+    const lines = responseData.split('\n');
+    responseData = lines.pop();
 
-        if (line.startsWith('data: ')) {
-          const json = line.substring(6);
-          const parsed = JSON.parse(json);
-          if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
-            finalContent += parsed.choices[0].delta.content;
-            handleResponse(parsed.choices[0].delta.content, socketId);
-          }
+    for (const line of lines) {
+      if (line.trim() === 'data: [DONE]') {
+        continue;
+      }
+
+      if (line.startsWith('data: ')) {
+        const json = line.substring(6);
+        const parsed = JSON.parse(json);
+        if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+          finalContent += parsed.choices[0].delta.content;
+          handleResponse(parsed.choices[0].delta.content, socketId);
         }
       }
-    });
+    }
+  });
 
-    response.data.on('end', async () => {
-      parentPort.postMessage({ 'response': finalContent });
-      session = await saveSessionHistories(finalContent, socketId);
-      await sendSessionHistories(socketId);
-      try {
-        await saveSessionHistoryToFile(socketId);
-        console.info(bambisleepChalk.success(`Session history successfully written to filesystem for: ${socketId}`));
-      } catch (err) {
-        console.error(bambisleepChalk.error('Error saving session history:'), err);
-      } 
+  response.data.on('end', async () => {
+    parentPort.postMessage({ 'response': finalContent });
+    session = await saveSessionHistories(finalContent, socketId);
+    await sendSessionHistories(socketId);
+    try {
+      await saveSessionHistoryToFile(socketId);
+      
+    } catch (err) {
+      console.error(bambisleepChalk.error('Error saving session history:'), err);
+    } finally {
+      console.info(bambisleepChalk.success(`Session history written to file: ${socketId}`));
+    }
+  });
 
-      
-      
-      
-    });
-
-    response.data.on('error', (err) => {
-      console.error(bambisleepChalk.error('Error in response:'), err);
-    });
+  response.data.on('error', (err) => {
+    console.error(bambisleepChalk.error('Error in response:'), err);
+  });
 }
 
 parentPort.on("message", async (msg) => {
@@ -201,19 +199,27 @@ async function saveSessionHistoryToFile(socketId) {
     const historyFolder = path.join(__dirname, 'history');
     const filePath = path.join(historyFolder, `${socketId}.json`);
 
-    // Ensure the history folder exists
-    if (!fs.existsSync(historyFolder)) {
-      fs.mkdirSync(historyFolder);
-    }
-
-    // Write the session history to a file
-    fs.writeFile(filePath, JSON.stringify(sessionHistories[socketId], null, 2), (err) => {
-      if (err) {
-        console.error(bambisleepChalk.error('Error saving session history:'), err);
-      } else {
-        console.log(bambisleepChalk.info(`Session history saved for socketId: ${socketId}`));
+    try {
+      // Ensure the history folder exists
+      if (!fs.existsSync(historyFolder)) {
+        fs.mkdirSync(historyFolder);
       }
-    });
+
+      // Write the session history to a file
+      fs.writeFile(filePath, JSON.stringify(sessionHistories[socketId], null, 2), (err) => {
+        if (err) {
+          if (err.code === 'EACCES') {
+            console.error(bambisleepChalk.error('Permission denied. Unable to save session history:'), err);
+          } else {
+            console.error(bambisleepChalk.error('Error saving session history:'), err);
+          }
+        } else {
+          console.log(bambisleepChalk.info(`Session history saved for socketId: ${socketId}`));
+        }
+      });
+    } catch (err) {
+      console.error(bambisleepChalk.error('Unexpected error occurred while saving session history:'), err);
+    }
   } else {
     console.log(bambisleepChalk.warn(`No session history found for socketId: ${socketId}`));
   }
