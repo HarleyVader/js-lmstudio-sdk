@@ -287,11 +287,10 @@ rl.on("line", async (line) => {
     io.emit("update");
     console.log(bambisleepChalk.success("Normal mode"));
   } else if (line === "save") {
-    for (const socketId of userSessions) {
+    console.log(bambisleepChalk.success("Save mode"));
       sessionHistories(msg.data, msg.socketId);
       console.log(bambisleepChalk.success(`Session history saved: ${socketId}`));
-    }
-  } else {
+    } else {
     console.log(bambisleepChalk.error("Invalid command! update, normal or save"));
   }
 });
