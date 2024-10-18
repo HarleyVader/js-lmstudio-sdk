@@ -122,7 +122,7 @@ async function handleMessage(userPrompt, socketId) {
 
     let responseData = '';
 
-    response.on('data', (chunk) => {
+    response.data.on('data', (chunk) => {
       responseData += chunk.toString();
 
       const lines = responseData.split('\n');
@@ -144,7 +144,7 @@ async function handleMessage(userPrompt, socketId) {
       }
     });
 
-    response.on('end', async () => {
+    response.data.on('end', async () => {
       parentPort.postMessage({ 'response': finalContent });
       session = await saveSessionHistories(finalContent, socketId);
       await sendSessionHistories(socketId);
