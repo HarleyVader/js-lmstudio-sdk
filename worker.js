@@ -124,7 +124,7 @@ async function handleMessage(userPrompt, socketId) {
       stream: true,
     };
 
-    parentPort.postMessage(bambisleepChalk.info('Request Data:'), JSON.stringify(requestData, null, 2)); // Log the request data
+    parentPort.postMessage("Log requestData: ",JSON.stringify(requestData, null, 2)); // Log the request data
 
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', requestData, {
       responseType: 'stream',
@@ -171,7 +171,7 @@ parentPort.on("message", async (msg) => {
   } else if (msg.type === "message") {
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "disconnect") {
-    
+
   }
 });
 
@@ -179,7 +179,7 @@ async function handleResponse(response, socketId) {
   parentPort.postMessage({
     type: "response",
     data: response,
-    socketId: socketId,
+    socketId: socketId
   });
 }
 
