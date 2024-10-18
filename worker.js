@@ -150,7 +150,7 @@ async function handleMessage(userPrompt, socketId) {
       await sendSessionHistories(socketId);
     });
 
-    response.on('error', (err) => {
+    response.data.on('error', (err) => {
       console.error(bambisleepChalk.error('Error in response:'), err);
     });
 }
