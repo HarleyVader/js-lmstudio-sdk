@@ -98,18 +98,25 @@ if (!fs.existsSync(chatHistoryPath)) {
 // Function to get session histories
 async function workersSessionHistories(socketId) {
   const worker = workers.get(socketId);
-
   if (!worker) {
     console.error(bambisleepChalk.error(`No worker found for socket ID: ${socketId}`));
     return;
   }
-  
-  const Histories = Array.from(worker.sessionHistories[socketId]);
+
+  if (!worker.sessionHistories) {
+    worker.sessionHistories = {};
+  }
+
+  if (!worker.sessionHistories[socketId]) {
+    console.error(bambisleepChalk.error(`No valid session history found for socket ID: ${socketId}`));
+    return;
+  }
+
+  const Histories = worker.sessionHistories[socketId];
   const jsonHistory = JSON.stringify(Histories);
   const fileName = `${socketId}.json`;
-  console.log(bambisleepChalk.info(`Saving message history to file: ${fileName}`));
   const filePath = path.join(__dirname, "history", fileName);
-  console.log(bambisleepChalk.info(`Finished save of ${fileName}`));
+
   await fs.promises.writeFile(filePath, jsonHistory)
     .then(() => {
       console.log(bambisleepChalk.success(`Message history saved for socket ID: ${socketId}`));
@@ -118,7 +125,6 @@ async function workersSessionHistories(socketId) {
       console.error(bambisleepChalk.error(`Error saving message history for socket ID: ${socketId}`), error);
     });
 }
-
 // Function to save session histories
 async function sessionHistories(data, socketId) {
   sessionHistories[socketId] = data;
