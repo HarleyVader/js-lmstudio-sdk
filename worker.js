@@ -81,8 +81,8 @@ async function getLoadedModels() {
   try {
     const response = await axios.get('http://192.168.0.178:1234/v1/models');
     const models = response.data.models;
-    console.log(bambisleepChalk.info('Loaded Models:'), models);
-    return models;
+    parentPort.postMessage(bambisleepChalk.info('Loaded Models:'), models);
+    return models[0];
   } catch (error) {
     console.error(bambisleepChalk.error('Error fetching loaded models:'), error);
     return [];
@@ -106,7 +106,7 @@ async function handleMessage(userPrompt, socketId) {
     sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
     //darkidol-llama-3.1-8b-instruct-1.2-uncensored-imat
     const requestData = {
-      model: getLoadedModels()[0].id,
+      model: getLoadedModels(),
       messages: getMessages(socketId),
       temperature: 0.7,
       max_tokens: 2048,
