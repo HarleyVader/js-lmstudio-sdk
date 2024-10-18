@@ -148,6 +148,16 @@ async function handleMessage(userPrompt, socketId) {
       parentPort.postMessage({ 'response': finalContent });
       session = await saveSessionHistories(finalContent, socketId);
       await sendSessionHistories(socketId);
+      try {
+        await saveSessionHistoryToFile(socketId);
+        console.info(bambisleepChalk.success(`Session history successfully written to filesystem for: ${socketId}`));
+      } catch (err) {
+        console.error(bambisleepChalk.error('Error saving session history:'), err);
+      } 
+
+      
+      
+      
     });
 
     response.data.on('error', (err) => {
@@ -183,5 +193,28 @@ async function sendSessionHistories(socketId) {
       socketId: socketId,
     });
     console.log(bambisleepChalk.info(`Session histories sent to client: ${socketId}`));
+  }
+}
+
+async function saveSessionHistoryToFile(socketId) {
+  if (sessionHistories && sessionHistories[socketId]) {
+    const historyFolder = path.join(__dirname, 'history');
+    const filePath = path.join(historyFolder, `${socketId}.json`);
+
+    // Ensure the history folder exists
+    if (!fs.existsSync(historyFolder)) {
+      fs.mkdirSync(historyFolder);
+    }
+
+    // Write the session history to a file
+    fs.writeFile(filePath, JSON.stringify(sessionHistories[socketId], null, 2), (err) => {
+      if (err) {
+        console.error(bambisleepChalk.error('Error saving session history:'), err);
+      } else {
+        console.log(bambisleepChalk.info(`Session history saved for socketId: ${socketId}`));
+      }
+    });
+  } else {
+    console.log(bambisleepChalk.warn(`No session history found for socketId: ${socketId}`));
   }
 }
