@@ -77,6 +77,25 @@ async function saveSessionHistories(finalContent, socketId) {
   return sessionHistories[socketId];
 }
 
+async function getLoadedModels() {
+  try {
+    const response = await axios.get('http://192.168.0.178:1234/v1/models');
+    const models = response.data.models;
+    console.log(bambisleepChalk.info('Loaded Models:'), models);
+    return models;
+  } catch (error) {
+    console.error(bambisleepChalk.error('Error fetching loaded models:'), error);
+    return [];
+  }
+}
+
+async function getMessages(socketId) {
+  if (!sessionHistories || !sessionHistories[socketId]) {
+    return [];
+  }
+  return sessionHistories[socketId];
+}
+
 async function handleMessage(userPrompt, socketId) {
   try {
     let collar = await checkTriggers(triggers);
@@ -85,16 +104,16 @@ async function handleMessage(userPrompt, socketId) {
     let finalContent = ''; // Declare finalContent at the beginning
 
     sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
-
+    //darkidol-llama-3.1-8b-instruct-1.2-uncensored-imat
     const requestData = {
-      model: "darkidol-llama-3.1-8b-instruct-1.2-uncensored-imat",
-      messages: sessionHistories[socketId],
+      model: getLoadedModels()[0].id,
+      messages: getMessages(socketId),
       temperature: 0.7,
-      max_tokens: 512,
+      max_tokens: 2048,
       stream: true,
     };
 
-    console.log(bambisleepChalk.info('Request Data:'), JSON.stringify(requestData, null, 2)); // Log the request data
+    parentPort.postMessage(bambisleepChalk.info('Request Data:'), JSON.stringify(requestData, null, 2)); // Log the request data
 
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', requestData, {
       responseType: 'stream',
@@ -126,7 +145,8 @@ async function handleMessage(userPrompt, socketId) {
 
     response.data.on('end', async () => {
       parentPort.postMessage({ 'response': finalContent });
-      sessionHistories[socketId] = await saveSessionHistories(finalContent, socketId);
+      session = await saveSessionHistories(finalContent, socketId);
+      await sendSessionHistories(session, msg.socketId);
     });
 
   } catch (error) {
@@ -141,7 +161,7 @@ parentPort.on("message", async (msg) => {
   } else if (msg.type === "message") {
     await handleMessage(msg.data, msg.socketId);
   } else if (msg.type === "disconnect") {
-    await sendSessionHistories(sessionHistories[msg.socketId], msg.socketId);
+    
   }
 });
 
