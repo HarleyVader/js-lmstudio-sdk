@@ -98,26 +98,33 @@ if (!fs.existsSync(chatHistoryPath)) {
 // Function to get session histories
 async function workersSessionHistories(socketId) {
   const worker = workers.get(socketId);
+  if (!worker) {
+    console.error(bambisleepChalk.error(`No worker found for socket ID: ${socketId}`));
+    return;
+  }
+
+  if (!worker.sessionHistories) {
+    worker.sessionHistories = {};
+  }
+
   worker.sessionHistories[socketId] = sessionHistories[socketId];
   if (!worker.sessionHistories[socketId]) {
-    worker.sessionHistories[socketId] = sessionHistories[socketId];
     console.error(bambisleepChalk.error(`No valid session history found for socket ID: ${socketId}`));
     return;
-  } else if (worker.sessionHistories[socketId]) {
-    const Histories = Array.from(worker.sessionHistories[socketId]);
-    const jsonHistory = JSON.stringify(Histories);
-    const fileName = `${socketId}.json`;
-    const filePath = path.join(__dirname, "history", fileName);
-
-    await fs
-      .writeFile(filePath, jsonHistory)
-      .then(() => {
-        console.log(bambisleepChalk.success(`Message history saved for socket ID: ${socketId}`));
-      })
-      .catch((error) => {
-        console.error(bambisleepChalk.error(`Error saving message history for socket ID: ${socketId}`), error);
-      });
   }
+
+  const Histories = Array.from(worker.sessionHistories[socketId]);
+  const jsonHistory = JSON.stringify(Histories);
+  const fileName = `${socketId}.json`;
+  const filePath = path.join(__dirname, "history", fileName);
+
+  await fs.promises.writeFile(filePath, jsonHistory)
+    .then(() => {
+      console.log(bambisleepChalk.success(`Message history saved for socket ID: ${socketId}`));
+    })
+    .catch((error) => {
+      console.error(bambisleepChalk.error(`Error saving message history for socket ID: ${socketId}`), error);
+    });
 }
 
 // Function to save session histories
@@ -310,9 +317,12 @@ rl.on("line", async (line) => {
   } else if (line === "normal") {
     io.emit("update");
     console.log(bambisleepChalk.success("Normal mode"));
-  } else  if (line === "save") {
-    workersSessionHistories();
-    console.log(bambisleepChalk.error("Invalid command! update, normal or save"));
+  } else if (line === "save") {
+    for (const socketId of userSessions) {
+      await workersSessionHistories(socketId);
+    }
+  } else {
+    console.log(bambisleepChalk.error("Invalid command! Use 'update', 'normal', or 'save'"));
   }
 });
 
