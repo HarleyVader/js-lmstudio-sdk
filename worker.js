@@ -94,7 +94,7 @@ async function getMessages(socketId) {
 }
 
 async function handleMessage(userPrompt, socketId) {
-  try {
+  
     let collar = await checkTriggers(triggers);
     collarText += collar;
 
@@ -150,9 +150,9 @@ async function handleMessage(userPrompt, socketId) {
       await sendSessionHistories(socketId);
     });
 
-  } catch (error) {
-    console.error(bambisleepChalk.error('worker Error handling message:'), error);
-  }
+    response.on('error', (err) => {
+      console.error(bambisleepChalk.error('Error in response:'), err);
+    });
 }
 
 parentPort.on("message", async (msg) => {
