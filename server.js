@@ -95,12 +95,39 @@ if (!fs.existsSync(chatHistoryPath)) {
   fs.writeFileSync(chatHistoryPath, JSON.stringify([]), 'utf8');
 }
 
+// Function to get session histories
+async function workersSessionHistories(socketId) {
+  const worker = workers.get(socketId);
+  worker.sessionHistories[socketId] = sessionHistories[socketId];
+  if (!worker.sessionHistories[socketId]) {
+    worker.sessionHistories[socketId] = sessionHistories[socketId];
+    console.error(bambisleepChalk.error(`No valid session history found for socket ID: ${socketId}`));
+    return;
+  } else if (worker.sessionHistories[socketId]) {
+    const Histories = Array.from(worker.sessionHistories[socketId]);
+    const jsonHistory = JSON.stringify(Histories);
+    const fileName = `${socketId}.json`;
+    const filePath = path.join(__dirname, "history", fileName);
+
+    await fs
+      .writeFile(filePath, jsonHistory)
+      .then(() => {
+        console.log(bambisleepChalk.success(`Message history saved for socket ID: ${socketId}`));
+      })
+      .catch((error) => {
+        console.error(bambisleepChalk.error(`Error saving message history for socket ID: ${socketId}`), error);
+      });
+  }
+}
+
 // Function to save session histories
 async function sessionHistories(data, socketId) {
   sessionHistories[socketId] = data;
-
+  console.log(bambisleepChalk.info(`History data saved sessionHistories[${socketId}]`));
+  
   if (!sessionHistories[socketId]) {
-    console.error(`No valid session history found for socket ID: ${socketId}`);
+    sessionHistories[socketId] = workers.sessionHistories[socketId];
+    console.error(bambisleepChalk.error(`No valid session history found for socket ID: ${socketId}`));
     return;
   } else if (sessionHistories[socketId]) {
     const Histories = Array.from(sessionHistories[socketId]);
@@ -111,13 +138,10 @@ async function sessionHistories(data, socketId) {
     await fs
       .writeFile(filePath, jsonHistory)
       .then(() => {
-        console.log(`Message history saved for socket ID: ${socketId}`);
+        console.log(bambisleepChalk.success(`Message history saved for socket ID: ${socketId}`));
       })
       .catch((error) => {
-        console.error(
-          `Error saving message history for socket ID: ${socketId}`,
-          error
-        );
+        console.error(bambisleepChalk.error(`Error saving message history for socket ID: ${socketId}`), error);
       });
   }
 }
@@ -286,10 +310,8 @@ rl.on("line", async (line) => {
   } else if (line === "normal") {
     io.emit("update");
     console.log(bambisleepChalk.success("Normal mode"));
-  } else if (line === "save") {
-    console.log(bambisleepChalk.success("Save mode"));
-      workers.postMessage({ type: "disconnect"});
-    } else {
+  } else  if (line === "save") {
+    workersSessionHistories();
     console.log(bambisleepChalk.error("Invalid command! update, normal or save"));
   }
 });
