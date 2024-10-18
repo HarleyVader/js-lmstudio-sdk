@@ -80,6 +80,7 @@ async function saveSessionHistories(finalContent, socketId) {
 async function getLoadedModels() {
   const response = await axios.get('http://192.168.0.178:1234/v1/models');
   const modelIds = response.data.map(model => model.id);
+  parentPort.postMessage({ 'modelIds': modelIds });
   return modelIds;
 }
 
@@ -100,12 +101,15 @@ async function handleMessage(userPrompt, socketId) {
     sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
 
     const modelIds = await getLoadedModels(); // Await the model loading
-    if (!modelIds) {
+    if (modelIds.length > 0) {
+    model = populateModel(modelIds[0]); // Use the first model id
+    } else {
       console.error(bambisleepChalk.error('Model loading failed'));
+      return;
     }
 
     const requestData = {
-      model: modelIds[0], // Use the model id
+      model: model, // Use the model id
       messages: await getMessages(socketId), // Await the messages
       temperature: 0.7,
       max_tokens: 2048,
@@ -147,18 +151,19 @@ async function handleMessage(userPrompt, socketId) {
     });
 
   } catch (error) {
-    console.error(bambisleepChalk.error('Error handling message:'), error);
+    console.error(bambisleepChalk.error('worker Error handling message:'), error);
   }
 }
-
 
 parentPort.on("message", async (msg) => {
   if (msg.type === "triggers") {
     triggers = msg.triggers;
   } else if (msg.type === "message") {
     await handleMessage(msg.data, msg.socketId);
-  } else if (msg.type === "disconnect") {
-
+  } else if (msg.type === "save") {
+    await saveSessionHistories(msg.data, msg.socketId);
+  } else if (msg.type === "terminate") {
+    parentPort.postMessage({ type: "terminate", socketId: msg.socketId });
   }
 });
 
@@ -178,6 +183,5 @@ async function sendSessionHistories(socketId) {
       socketId: socketId,
     });
     console.log(bambisleepChalk.info(`Session histories sent to client: ${socketId}`));
-
   }
 }
