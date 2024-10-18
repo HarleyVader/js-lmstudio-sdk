@@ -36,19 +36,6 @@ const rl = readline.createInterface({
 
 rl.setMaxListeners(20);
 
-function getCircularReplacer() {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === "object" && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-}
-
 const filteredWords = require("./fw.json");
 function filter(message) {
   if (typeof message !== "string") {
@@ -125,6 +112,7 @@ async function workersSessionHistories(socketId) {
       console.error(bambisleepChalk.error(`Error saving message history for socket ID: ${socketId}`), error);
     });
 }
+
 // Function to save session histories
 async function sessionHistories(data, socketId) {
   sessionHistories[socketId] = data;
@@ -326,7 +314,6 @@ rl.on("line", async (line) => {
 
 app.use("/api/tts", (req, res) => {
   const text = req.query.text;
-
   if (typeof text !== "string") {
     return res.status(400).send("Invalid input: text must be a string");
   } else {
@@ -364,6 +351,9 @@ function getServerAddress() {
 server.listen(PORT, () => {
   console.log(bambisleepChalk.success(`Server is running on http://${getServerAddress()}:${PORT}`));
 });
+
+
+
 /* removed /images due to lack of images to show
 socket.request.app.use("/images", express.static(path.join(__dirname, "images")));
 

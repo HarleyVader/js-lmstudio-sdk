@@ -83,15 +83,16 @@ async function getLoadedModels() {
     const models = response.data.data; // Access the correct array
 
     if (!models || models.length === 0) {
-      throw new Error('No models found');
+      console.error(bambisleepChalk.error('No models found'));
+      return [];
     }
 
-    const model = models[0];
-    parentPort.postMessage({ type: 'info', message: bambisleepChalk.info('Loaded Models:'), model });
-    return model;
+    const modelIds = models.map(model => model.id); // Extract model IDs
+    parentPort.postMessage({ type: 'info', message: bambisleepChalk.info('Loaded Models:'), modelIds });
+    return modelIds;
   } catch (error) {
     console.error(bambisleepChalk.error('Error fetching loaded models:'), error);
-    return null;
+    return [];
   }
 }
 
@@ -113,18 +114,16 @@ async function handleMessage(userPrompt, socketId) {
 
     const model = await getLoadedModels(); // Await the model loading
     if (!model) {
-      throw new Error('Model loading failed');
+      console.error(bambisleepChalk.error('Model loading failed'));
     }
 
     const requestData = {
-      model: model.id, // Use the model id
+      model: model.data.id, // Use the model id
       messages: await getMessages(socketId), // Await the messages
       temperature: 0.7,
       max_tokens: 2048,
       stream: true,
     };
-
-    parentPort.postMessage("Log requestData: ",JSON.stringify(requestData, null, 2)); // Log the request data
 
     const response = await axios.post('http://192.168.0.178:1234/v1/chat/completions', requestData, {
       responseType: 'stream',
