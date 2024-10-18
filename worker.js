@@ -80,13 +80,18 @@ async function saveSessionHistories(finalContent, socketId) {
 async function getLoadedModels() {
   try {
     const response = await axios.get('http://192.168.0.178:1234/v1/models');
-    const models = response.data.models;
+    const models = response.data.data; // Access the correct array
+
+    if (!models || models.length === 0) {
+      throw new Error('No models found');
+    }
+
     const model = models[0];
-    parentPort.postMessage(bambisleepChalk.info('Loaded Models:'), model);
+    parentPort.postMessage({ type: 'info', message: bambisleepChalk.info('Loaded Models:'), model });
     return model;
   } catch (error) {
     console.error(bambisleepChalk.error('Error fetching loaded models:'), error);
-    return [];
+    return null;
   }
 }
 
@@ -105,10 +110,15 @@ async function handleMessage(userPrompt, socketId) {
     let finalContent = ''; // Declare finalContent at the beginning
 
     sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
-    //darkidol-llama-3.1-8b-instruct-1.2-uncensored-imat
+
+    const model = await getLoadedModels(); // Await the model loading
+    if (!model) {
+      throw new Error('Model loading failed');
+    }
+
     const requestData = {
-      model: getLoadedModels(),
-      messages: getMessages(socketId),
+      model: model.id, // Use the model id
+      messages: await getMessages(socketId), // Await the messages
       temperature: 0.7,
       max_tokens: 2048,
       stream: true,
