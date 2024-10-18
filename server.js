@@ -98,21 +98,12 @@ if (!fs.existsSync(chatHistoryPath)) {
 // Function to get session histories
 async function workersSessionHistories(socketId) {
   const worker = workers.get(socketId);
+  
   if (!worker) {
     console.error(bambisleepChalk.error(`No worker found for socket ID: ${socketId}`));
     return;
   }
-
-  if (!worker.sessionHistories) {
-    worker.sessionHistories = {};
-  }
-
-  worker.sessionHistories[socketId] = sessionHistories[socketId];
-  if (!worker.sessionHistories[socketId]) {
-    console.error(bambisleepChalk.error(`No valid session history found for socket ID: ${socketId}`));
-    return;
-  }
-
+  
   const Histories = Array.from(worker.sessionHistories[socketId]);
   const jsonHistory = JSON.stringify(Histories);
   const fileName = `${socketId}.json`;
