@@ -80,7 +80,7 @@ async function saveSessionHistories(finalContent, socketId) {
 async function getLoadedModels() {
   const response = await axios.get('http://192.168.0.178:1234/v1/models');
   console.info(bambisleepChalk.info('Model loading response:'), response.data);
-  const modelIds = response.data.models.map(model => model.id);
+  const modelIds = response.data.data.map(model => model.id); // Corrected the path to access models
   const firstModelId = modelIds.length > 0 ? modelIds[0] : null; // Assign the first model ID to a variable
   console.info(bambisleepChalk.info('First model ID:'), firstModelId);
   return firstModelId;
