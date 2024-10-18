@@ -81,8 +81,9 @@ async function getLoadedModels() {
   try {
     const response = await axios.get('http://192.168.0.178:1234/v1/models');
     const models = response.data.models;
-    parentPort.postMessage(bambisleepChalk.info('Loaded Models:'), models);
-    return models[0];
+    const model = models[0];
+    parentPort.postMessage(bambisleepChalk.info('Loaded Models:'), model);
+    return model;
   } catch (error) {
     console.error(bambisleepChalk.error('Error fetching loaded models:'), error);
     return [];
