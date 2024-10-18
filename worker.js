@@ -78,22 +78,9 @@ async function saveSessionHistories(finalContent, socketId) {
 }
 
 async function getLoadedModels() {
-  try {
-    const response = await axios.get('http://192.168.0.178:1234/v1/models');
-    const models = response.data.data; // Access the correct array
-
-    if (!models || models.length === 0) {
-      console.error(bambisleepChalk.error('No models found'));
-      return [];
-    }
-
-    const modelIds = models.map(model => model.id); // Extract model IDs
-    parentPort.postMessage({ type: 'info', message: bambisleepChalk.info('Loaded Models:'), modelIds });
-    return modelIds;
-  } catch (error) {
-    console.error(bambisleepChalk.error('Error fetching loaded models:'), error);
-    return [];
-  }
+  const response = await axios.get('http://192.168.0.178:1234/v1/models');
+  const modelIds = response.data.map(model => model.id);
+  return modelIds;
 }
 
 async function getMessages(socketId) {
@@ -112,13 +99,13 @@ async function handleMessage(userPrompt, socketId) {
 
     sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
 
-    const model = await getLoadedModels(); // Await the model loading
-    if (!model) {
+    const modelIds = await getLoadedModels(); // Await the model loading
+    if (!modelIds) {
       console.error(bambisleepChalk.error('Model loading failed'));
     }
 
     const requestData = {
-      model: model.data.id, // Use the model id
+      model: modelIds[0], // Use the model id
       messages: await getMessages(socketId), // Await the messages
       temperature: 0.7,
       max_tokens: 2048,
@@ -164,6 +151,7 @@ async function handleMessage(userPrompt, socketId) {
   }
 }
 
+
 parentPort.on("message", async (msg) => {
   if (msg.type === "triggers") {
     triggers = msg.triggers;
@@ -190,6 +178,6 @@ async function sendSessionHistories(socketId) {
       socketId: socketId,
     });
     console.log(bambisleepChalk.info(`Session histories sent to client: ${socketId}`));
-    
+
   }
 }
