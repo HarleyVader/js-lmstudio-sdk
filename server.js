@@ -234,7 +234,11 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", async () => {
     worker.postMessage({ type: "disconnect", socketId: socket.id });
-    terminator(socket.id);
+    //terminator(socket.id);
+  });
+
+  worker.on('info', (info) => {
+    console.info(bambisleepChalk.info('Worker error:'), err);
   });
 
   worker.on('error', (err) => {

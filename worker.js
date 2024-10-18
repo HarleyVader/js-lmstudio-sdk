@@ -79,7 +79,8 @@ async function saveSessionHistories(finalContent, socketId) {
 
 async function getLoadedModels() {
   const response = await axios.get('http://192.168.0.178:1234/v1/models');
-  const modelIds = response.data.map(model => model.id);
+  console.info(bambisleepChalk.info('Model loading response:'), response.data);
+  const modelIds = response.map(data => data.id);
   parentPort.postMessage({ 'modelIds': modelIds });
   return modelIds;
 }
