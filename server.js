@@ -288,7 +288,7 @@ rl.on("line", async (line) => {
     console.log(bambisleepChalk.success("Normal mode"));
   } else if (line === "save") {
     console.log(bambisleepChalk.success("Save mode"));
-      worker.postMessage({ type: "disconnect", socketId: socket.id });
+      Worker.postMessage({ type: "disconnect", socketId: socket.id });
     } else {
     console.log(bambisleepChalk.error("Invalid command! update, normal or save"));
   }
