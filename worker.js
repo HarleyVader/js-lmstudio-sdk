@@ -162,7 +162,6 @@ async function handleMessage(userPrompt, socketId) {
 
   } catch (error) {
     console.error(bambisleepChalk.error('Error handling message:'), error);
-    parentPort.postMessage({ 'log': `Error handling message: ${error}` });
   }
 }
 
