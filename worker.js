@@ -87,7 +87,7 @@ async function handleMessage(userPrompt, socketId) {
     sessionHistories[socketId] = await getSessionHistories(collarText, userPrompt, socketId);
 
     const requestData = {
-      model: "llama-3.1-8b-lexi-uncensored-v2",
+      model: "darkidol-llama-3.1-8b-instruct-1.2-uncensored-imat",
       messages: sessionHistories[socketId],
       temperature: 0.7,
       max_tokens: 512,
